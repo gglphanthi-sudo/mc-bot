@@ -1,7 +1,7 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const path = path = require('path');
+const path = require('path');
 const mineflayer = require('mineflayer');
 
 const app = express();
@@ -14,14 +14,14 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Cơ sở dữ liệu lưu tài khoản
+// Cấu trúc database lưu tài khoản (Mật khẩu admin: 676767)
 const usersDatabase = {
   'admin': { pass: '676767', role: 'admin', active: true }
 };
 
-const activeBots = {};
-const botInfo = {};
-const userSessions = {};
+const activeBots = {}; 
+const botInfo = {}; 
+const userSessions = {}; 
 
 io.on('connection', (socket) => {
 
@@ -30,40 +30,35 @@ io.on('connection', (socket) => {
     const { user, pass, confirmPass } = data;
 
     if (!user || !pass || !confirmPass) {
-      return socket.emit('registerResult', { success: false, msg: 'Vui lòng điền đầy đủ thông tin!' });
+      return socket.emit('registerResult', { success: false, msg: 'Vui lòng điền đầy đủ tất cả thông tin!' });
     }
+
     if (pass !== confirmPass) {
-      return socket.emit('registerResult', { success: false, msg: 'Mật khẩu xác nhận không trùng khớp!' });
+      return socket.emit('registerResult', { success: false, msg: 'Xác nhận mật khẩu không trùng khớp!' });
     }
+
     if (usersDatabase[user]) {
       return socket.emit('registerResult', { success: false, msg: 'Tài khoản này đã tồn tại!' });
     }
 
+    // Tạo tài khoản mới với quyền user
     usersDatabase[user] = { pass: pass, role: 'user', active: true };
-    socket.emit('registerResult', { success: true, msg: 'Đăng ký thành công! Vui lòng đăng nhập.' });
+    socket.emit('registerResult', { success: true, msg: 'Đăng ký thành công! Hãy chuyển sang đăng nhập.' });
   });
 
-  // Xử lý Đăng Nhập
+  // Xử lý Đăng Nhập (Phân biệt rõ tài khoản không tồn tại vs Sai mật khẩu)
   socket.on('loginPanel', (data) => {
     const { user, pass } = data;
-    
-    if (!user || !pass) {
-      return socket.emit('loginResult', { success: false, msg: 'Vui lòng nhập tài khoản và mật khẩu!' });
-    }
-
     const account = usersDatabase[user];
 
-    // Kiểm tra tài khoản tồn tại
     if (!account) {
       return socket.emit('loginResult', { success: false, msg: 'Tài khoản không tồn tại!' });
     }
 
-    // Kiểm tra mật khẩu
     if (account.pass !== pass) {
-      return socket.emit('loginResult', { success: false, msg: 'Sai mật khẩu!' });
+      return socket.emit('loginResult', { success: false, msg: 'Mật khẩu không chính xác!' });
     }
 
-    // Kiểm tra trạng thái khóa
     if (!account.active) {
       return socket.emit('loginResult', { success: false, msg: 'Tài khoản của bạn đã bị khóa bởi Admin!' });
     }
@@ -72,17 +67,20 @@ io.on('connection', (socket) => {
     socket.emit('loginResult', { 
       success: true, 
       msg: 'Đăng nhập thành công!',
-      username: user,
       role: account.role 
     });
   });
 
   const getSession = () => userSessions[socket.id];
 
-  // ===== TÍNH NĂNG ADMIN =====
+  // ===== TÍNH NĂNG DÀNH CHO ADMIN =====
+
+  // Lấy danh sách toàn bộ người dùng
   socket.on('adminGetUsers', () => {
     const session = getSession();
-    if (!session || session.role !== 'admin') return;
+    if (!session || session.role !== 'admin') {
+      return socket.emit('log', { msg: '[BẢO MẬT] Bạn không có quyền Admin!' });
+    }
 
     const userList = Object.keys(usersDatabase).map(u => ({
       username: u,
@@ -93,6 +91,7 @@ io.on('connection', (socket) => {
     socket.emit('adminUserList', userList);
   });
 
+  // Bật / Khóa trạng thái tài khoản
   socket.on('adminToggleUserStatus', (targetUser) => {
     const session = getSession();
     if (!session || session.role !== 'admin') return;
@@ -100,6 +99,9 @@ io.on('connection', (socket) => {
     if (usersDatabase[targetUser] && targetUser !== 'admin') {
       usersDatabase[targetUser].active = !usersDatabase[targetUser].active;
       
+      const statusText = usersDatabase[targetUser].active ? 'Kích hoạt' : 'Khóa';
+      socket.emit('log', { msg: `[ADMIN] Đã ${statusText} tài khoản: ${targetUser}` });
+
       if (!usersDatabase[targetUser].active && activeBots[targetUser]) {
         if (botInfo[targetUser]) botInfo[targetUser].autoReconnect = false;
         activeBots[targetUser].end();
@@ -108,7 +110,19 @@ io.on('connection', (socket) => {
     }
   });
 
-  // ===== QUẢN LÝ BOT =====
+  // Đổi mật khẩu tài khoản người dùng
+  socket.on('adminResetPassword', (data) => {
+    const session = getSession();
+    if (!session || session.role !== 'admin') return;
+
+    const { targetUser, newPass } = data;
+    if (usersDatabase[targetUser] && newPass) {
+      usersDatabase[targetUser].pass = newPass;
+      socket.emit('log', { msg: `[ADMIN] Đã đổi mật khẩu cho tài khoản ${targetUser} thành công.` });
+    }
+  });
+
+  // ===== BẬT / TẮT BOT =====
   socket.on('startBot', (data) => {
     const session = getSession();
     if (!session) return socket.emit('log', { msg: '[BẢO MẬT] Bạn cần đăng nhập để thao tác!' });
@@ -128,14 +142,12 @@ io.on('connection', (socket) => {
     const session = getSession();
     if (!session) return socket.emit('log', { msg: '[BẢO MẬT] Bạn cần đăng nhập để thao tác!' });
 
-    if (botInfo[username]) {
-      botInfo[username].autoReconnect = false;
-    }
+    if (botInfo[username]) botInfo[username].autoReconnect = false;
 
     if (activeBots[username]) {
       activeBots[username].end();
       delete activeBots[username];
-      socket.emit('log', { bot: username, msg: `[STOP] Đã tắt bot ${username}.` });
+      socket.emit('log', { bot: username, msg: `[STOP] Đã dừng bot ${username}.` });
     }
   });
 
