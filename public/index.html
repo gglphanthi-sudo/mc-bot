@@ -122,7 +122,7 @@
   const socket = io();
   let accounts = JSON.parse(localStorage.getItem('mc_bots_list')) || [];
 
-  // Tự động khôi phục phiên đăng nhập nếu đã đăng nhập trước đó
+  // Khôi phục phiên đăng nhập nếu có
   if (sessionStorage.getItem('isLoggedIn') === 'true') {
     const savedUser = sessionStorage.getItem('savedUser');
     const savedPass = sessionStorage.getItem('savedPass');
@@ -148,13 +148,6 @@
     } else {
       alert(res.msg);
       sessionStorage.clear();
-    }
-  });
-
-  socket.on('connect_error', (err) => {
-    if (err.message === 'IP_BLOCKED') {
-      alert('Địa chỉ IP của bạn không có quyền truy cập vào hệ thống này!');
-      document.body.innerHTML = '<h2 style="color:#ff1744; text-align:center;">Truy cập bị từ chối: IP không hợp lệ!</h2>';
     }
   });
 
@@ -197,6 +190,11 @@
     const tbody = document.getElementById('accountTable');
     tbody.innerHTML = '';
 
+    if (accounts.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="3" style="color: #8a6d9b;">Chưa có tài khoản nào được thêm. Hãy thêm tài khoản game ở phía trên!</td></tr>`;
+      return;
+    }
+
     accounts.forEach((acc, index) => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
@@ -238,6 +236,7 @@
     }
   }
 
+  // Lắng nghe log từ Server gửi về và tự động nhận diện trạng thái bot
   socket.on('log', (data) => {
     const logBox = document.getElementById('consoleLog');
     const item = document.createElement('div');
@@ -245,6 +244,15 @@
     item.innerText = data.msg;
     logBox.appendChild(item);
     logBox.scrollTop = logBox.scrollHeight;
+
+    // Tự động quét tên bot trong log để cập nhật trạng thái trực quan nếu bot vào game hoặc rớt mạng
+    if (data.bot) {
+      if (data.msg.includes('Đã xuất hiện ở Sảnh') || data.msg.includes('Đã vào Sảnh')) {
+        updateStatus(data.bot, 'ONLINE');
+      } else if (data.msg.includes('Ngắt kết nối') || data.msg.includes('Đã chủ động ngắt kết nối')) {
+        updateStatus(data.bot, 'OFFLINE');
+      }
+    }
   });
 </script>
 
