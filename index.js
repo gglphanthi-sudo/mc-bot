@@ -16,7 +16,7 @@ app.get('/', (req, res) => {
 
 // Database lưu tài khoản Panel
 const usersDatabase = {
-  'admin': 'caigicungdc'
+  'admin': '676767'
 };
 
 const activeBots = {}; // Lưu instance của bot đang chạy
