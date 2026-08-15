@@ -14,66 +14,77 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Danh sách tài khoản hệ thống (Mặc định có tài khoản admin)
-const systemUsers = {
+// Database lưu tài khoản Panel
+const usersDatabase = {
   'admin': '123456'
 };
 
-const activeBots = {};
+const activeBots = {}; // Lưu instance của bot đang chạy
+const botInfo = {}; // Lưu thông tin mật khẩu & trạng thái tự động kết nối lại
 const authenticatedSockets = new Set();
 
 io.on('connection', (socket) => {
-  // Xử lý Đăng Ký
+
+  // Xử lý Đăng Ký Panel
   socket.on('registerPanel', (data) => {
     const { user, pass } = data;
     if (!user || !pass) {
-      return socket.emit('authResult', { success: false, msg: 'Tài khoản và mật khẩu không được trống!' });
+      return socket.emit('registerResult', { success: false, msg: 'Tài khoản và mật khẩu không được trống!' });
     }
-    if (systemUsers[user]) {
-      return socket.emit('authResult', { success: false, msg: 'Tài khoản này đã tồn tại!' });
+    if (usersDatabase[user]) {
+      return socket.emit('registerResult', { success: false, msg: 'Tài khoản này đã tồn tại!' });
     }
-    
-    // Lưu tài khoản mới
-    systemUsers[user] = pass;
-    authenticatedSockets.add(socket.id);
-    socket.emit('authResult', { success: true, action: 'register', msg: 'Đăng ký thành công! Đã tự động đăng nhập.' });
+
+    usersDatabase[user] = pass;
+    socket.emit('registerResult', { success: true, msg: 'Đăng ký thành công! Hãy đăng nhập ngay.' });
   });
 
-  // Xử lý Đăng Nhập
+  // Xử lý Đăng Nhập Panel
   socket.on('loginPanel', (data) => {
     const { user, pass } = data;
-    if (systemUsers[user] && systemUsers[user] === pass) {
+    if (usersDatabase[user] && usersDatabase[user] === pass) {
       authenticatedSockets.add(socket.id);
-      socket.emit('authResult', { success: true, action: 'login', msg: 'Đăng nhập thành công!' });
+      socket.emit('loginResult', { success: true, msg: 'Đăng nhập thành công!' });
     } else {
-      socket.emit('authResult', { success: false, msg: 'Tài khoản hoặc mật khẩu không chính xác!' });
+      socket.emit('loginResult', { success: false, msg: 'Tài khoản hoặc mật khẩu không chính xác!' });
     }
   });
 
   const checkAuth = () => authenticatedSockets.has(socket.id);
 
-  // Lệnh bật Bot
+  // Lệnh Bật Bot
   socket.on('startBot', (data) => {
     if (!checkAuth()) return socket.emit('log', { msg: '[BẢO MẬT] Bạn cần đăng nhập để thao tác!' });
     const { username, password } = data;
+
+    // Lưu thông tin để phục vụ Auto Reconnect
+    botInfo[username] = { password, autoReconnect: true };
+
     if (activeBots[username]) {
       socket.emit('log', { bot: username, msg: `Bot ${username} đang hoạt động hoặc đang kết nối!` });
       return;
     }
+
     createBot(username, password, socket);
   });
 
-  // Lệnh tắt Bot
+  // Lệnh Tắt Bot
   socket.on('stopBot', (username) => {
     if (!checkAuth()) return socket.emit('log', { msg: '[BẢO MẬT] Bạn cần đăng nhập để thao tác!' });
+    
+    // Tắt tính năng tự động kết nối lại khi chủ động dừng Bot
+    if (botInfo[username]) {
+      botInfo[username].autoReconnect = false;
+    }
+
     if (activeBots[username]) {
       activeBots[username].end();
       delete activeBots[username];
-      socket.emit('log', { bot: username, msg: `Đã ngắt kết nối bot ${username}.` });
+      socket.emit('log', { bot: username, msg: `[STOP] Đã chủ động ngắt kết nối bot ${username}.` });
     }
   });
 
-  // Gửi chat / lệnh
+  // Gửi Chat cho tất cả Bot
   socket.on('sendChat', (msg) => {
     if (!checkAuth()) return socket.emit('log', { msg: '[BẢO MẬT] Bạn cần đăng nhập để thao tác!' });
     Object.keys(activeBots).forEach((botName) => {
@@ -125,6 +136,16 @@ function createBot(username, password, socket) {
   bot.on('end', (reason) => {
     socket.emit('log', { bot: username, msg: `[! ${username}] Ngắt kết nối: ${reason}` });
     delete activeBots[username];
+
+    // Xử lý Auto Reconnect nếu không phải do chủ động tắt
+    if (botInfo[username] && botInfo[username].autoReconnect) {
+      socket.emit('log', { bot: username, msg: `[AUTO-RECONNECT] Sẽ thử kết nối lại sau 10 giây...` });
+      setTimeout(() => {
+        if (botInfo[username] && botInfo[username].autoReconnect && !activeBots[username]) {
+          createBot(username, botInfo[username].password, socket);
+        }
+      }, 10000);
+    }
   });
 
   bot.on('error', (err) => {
