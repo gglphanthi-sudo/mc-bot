@@ -18,15 +18,33 @@ const io = new Server(server);
 
 const PORT = 3000;
 
-const SERVER_HOST = 'kingmc.vn';
-
-const SERVER_PORT = 25565;
 
 
+const CONFIG = {
 
-// Quản lý danh sách bot
+    host: 'kingmc.vn',
 
-const accounts = []; // { id, username, password, status, color, botInstance, autoReconnect, hasJoinedKingSMP, hasExecutedAFK, isLoggedIn }
+    port: 25565,
+
+    username: 'Bensiucapvippro',
+
+    password: 'caigicungdc'
+
+};
+
+
+
+let bot = null;
+
+let isFarming = false;
+
+let autoReconnect = false;
+
+let hasJoinedKingSMP = false;
+
+let hasExecutedAFK = false;
+
+let isLoggedIn = false;
 
 
 
@@ -44,27 +62,15 @@ function logToUI(msg) {
 
 
 
-function emitAccountsUpdate() {
+function updateStatus(status, color) {
 
-    const list = accounts.map(acc => ({
-
-        id: acc.id,
-
-        username: acc.username,
-
-        status: acc.status,
-
-        color: acc.color,
-
-        autoReconnect: acc.autoReconnect
-
-    }));
-
-    io.emit('accounts_update', list);
+    io.emit('status', { status, color });
 
 }
 
 
+
+// Bắt sạch lỗi hệ thống để tránh sập CMD
 
 process.on('uncaughtException', (err) => {
 
@@ -82,41 +88,35 @@ process.on('unhandledRejection', (reason) => {
 
 
 
-function startBotForAccount(acc) {
+function startBot() {
 
-    if (acc.botInstance) return;
-
-
-
-    acc.hasJoinedKingSMP = false;
-
-    acc.hasExecutedAFK = false;
-
-    acc.isLoggedIn = false;
-
-    acc.status = 'CONNECTING...';
-
-    acc.color = 'yellow';
-
-    emitAccountsUpdate();
+    if (bot) return;
 
 
 
-    logToUI(`[BOT ${acc.username}] Đang kết nối tới ${SERVER_HOST}...`);
+    hasJoinedKingSMP = false;
+
+    hasExecutedAFK = false;
+
+    isLoggedIn = false;
+
+    logToUI(`[BOT] Đang kết nối tới ${CONFIG.host}...`);
+
+    updateStatus('CONNECTING...', 'yellow');
 
 
 
     try {
 
-        const bot = mineflayer.createBot({
+        bot = mineflayer.createBot({
 
-            host: SERVER_HOST,
+            host: CONFIG.host,
 
-            port: SERVER_PORT,
+            port: CONFIG.port,
 
-            username: acc.username,
+            username: CONFIG.username,
 
-            password: acc.password,
+            password: CONFIG.password,
 
             auth: 'offline',
 
@@ -128,19 +128,11 @@ function startBotForAccount(acc) {
 
 
 
-        acc.botInstance = bot;
-
-
-
         bot.on('login', () => {
 
-            logToUI(`[✔ ${acc.username}] Bắt tay thành công! Đang vào Sảnh...`);
+            logToUI('[✔] Bắt tay thành công! Đang vào Sảnh...');
 
-            acc.status = 'LOGGING IN...';
-
-            acc.color = 'orange';
-
-            emitAccountsUpdate();
+            updateStatus('LOGGING IN...', 'orange');
 
         });
 
@@ -148,25 +140,27 @@ function startBotForAccount(acc) {
 
         bot.on('spawn', () => {
 
-            if (acc.hasJoinedKingSMP) {
+            isFarming = true;
 
-                logToUI(`[🎉 ${acc.username}] ĐÃ SANG KINGSMP THÀNH CÔNG!`);
+            if (hasJoinedKingSMP) {
 
-                acc.status = 'ONLINE / KINGSMP';
+                logToUI(`[🎉] BOT ĐÃ SANG KINGSMP THÀNH CÔNG!`);
 
-                acc.color = '#00ff88';
+                updateStatus('ONLINE / KINGSMP', '#00ff88');
 
 
 
-                if (!acc.hasExecutedAFK) {
+                // Khi đã vào KingSMP, chờ 4 giây để tải map rồi gõ /afk
+
+                if (!hasExecutedAFK) {
 
                     setTimeout(() => {
 
-                        if (acc.botInstance) {
+                        if (bot) {
 
-                            logToUI(`[SYSTEM ${acc.username}] Gửi lệnh /afk...`);
+                            logToUI('[SYSTEM] Gửi lệnh /afk...');
 
-                            acc.botInstance.chat('/afk');
+                            bot.chat('/afk');
 
                         }
 
@@ -176,15 +170,11 @@ function startBotForAccount(acc) {
 
             } else {
 
-                logToUI(`[✔ ${acc.username}] Đã xuất hiện ở Sảnh!`);
+                logToUI(`[✔] Bot đã xuất hiện ở Sảnh!`);
 
-                acc.status = 'ONLINE / LOBBY';
-
-                acc.color = '#00ff88';
+                updateStatus('ONLINE / LOBBY', '#00ff88');
 
             }
-
-            emitAccountsUpdate();
 
         });
 
@@ -192,41 +182,43 @@ function startBotForAccount(acc) {
 
         bot.on('messagestr', (message) => {
 
-            logToUI(`[SERVER -> ${acc.username}]: ${message}`);
+            logToUI(`[SERVER]: ${message}`);
+
+
 
             const msgLower = message.toLowerCase();
 
-
+            
 
             if (msgLower.includes('/register') || msgLower.includes('/dk')) {
 
-                setTimeout(() => { if (acc.botInstance) acc.botInstance.chat(`/dk ${acc.password} ${acc.password}`); }, 2000);
+                setTimeout(() => { if (bot) bot.chat(`/dk ${CONFIG.password} ${CONFIG.password}`); }, 2000);
 
             } else if (msgLower.includes('/login') || msgLower.includes('/dn')) {
 
-                setTimeout(() => { if (acc.botInstance) acc.botInstance.chat(`/dn ${acc.password}`); }, 2000);
+                setTimeout(() => { if (bot) bot.chat(`/dn ${CONFIG.password}`); }, 2000);
 
             }
 
 
 
-            if (!acc.hasJoinedKingSMP && !acc.isLoggedIn && 
+            if (!hasJoinedKingSMP && !isLoggedIn && 
 
                 (msgLower.includes('đăng nhập thành công') || msgLower.includes('bạn đã đăng nhập'))) {
 
                 
 
-                acc.isLoggedIn = true;
+                isLoggedIn = true;
 
-                logToUI(`[SYSTEM ${acc.username}] Đã đăng nhập! Đợi 5s gõ /menu...`);
+                logToUI('[SYSTEM] Đã đăng nhập! Đợi 5s gõ /menu...');
 
                 setTimeout(() => {
 
-                    if (acc.botInstance && !acc.hasJoinedKingSMP) {
+                    if (bot && !hasJoinedKingSMP) {
 
-                        logToUI(`[SYSTEM ${acc.username}] Đang gõ /menu...`);
+                        logToUI('[SYSTEM] Đang gõ /menu...');
 
-                        acc.botInstance.chat('/menu');
+                        bot.chat('/menu');
 
                     }
 
@@ -242,61 +234,75 @@ function startBotForAccount(acc) {
 
             const rawTitle = JSON.stringify(window.title || '').toLowerCase();
 
-            logToUI(`[SYSTEM ${acc.username}] Menu mở: ${rawTitle}`);
+            logToUI(`[SYSTEM] Menu mở: ${rawTitle}`);
 
 
 
-            if (!acc.hasJoinedKingSMP) {
+            // BƯỚC 1: Chọn KingSMP từ Menu Sảnh (Slot 24)
 
-                setTimeout(async () => {
+            if (!hasJoinedKingSMP) {
 
-                    if (!acc.botInstance || !acc.botInstance.currentWindow) return;
+                setTimeout(() => {
 
-                    logToUI(`[SYSTEM ${acc.username}] Đang click Slot 24 chọn KingSMP...`);
+                    if (!bot || !bot.currentWindow) return;
 
+                    logToUI(`[SYSTEM] Đang click Slot 24 chọn KingSMP...`);
 
-
-                    try {
-
-                        await acc.botInstance.clickWindow(24, 0, 0);
-
-                        acc.hasJoinedKingSMP = true;
-
-                        logToUI(`[✔ ${acc.username}] Gửi lệnh chọn Slot 24 thành công!`);
-
-                    } catch (err) {
-
-                        logToUI(`[⚠️ ${acc.username}] Bỏ qua cảnh báo click: ${err.message}`);
-
-                    }
-
-                }, 3500);
-
-            } else if (acc.hasJoinedKingSMP && !acc.hasExecutedAFK) {
-
-                setTimeout(async () => {
-
-                    if (!acc.botInstance || !acc.botInstance.currentWindow) return;
-
-                    logToUI(`[SYSTEM ${acc.username}] Đang click Slot 1 chọn chế độ AFK...`);
+                    hasJoinedKingSMP = true;
 
 
 
-                    try {
+                    bot.clickWindow(24, 0, 0)
 
-                        await acc.botInstance.clickWindow(1, 0, 0);
+                        .then(() => logToUI(`[✔] Click Slot 24 thành công!`))
 
-                        acc.hasExecutedAFK = true;
+                        .catch(() => logToUI(`[⚠️] Bỏ qua cảnh báo transaction của server`));
 
-                        logToUI(`[🎉 ${acc.username}] ĐÃ CHỌN AFK THÀNH CÔNG!`);
 
-                    } catch (err) {
 
-                        logToUI(`[⚠️ ${acc.username}] Bỏ qua cảnh báo AFK: ${err.message}`);
+                    setTimeout(() => {
 
-                    }
+                        try { bot.closeWindow(window); } catch(e){}
 
-                }, 2000);
+                    }, 500);
+
+
+
+                }, 2500);
+
+            } 
+
+            // BƯỚC 2: Chọn Slot 1 trong Menu AFK
+
+            else if (hasJoinedKingSMP && !hasExecutedAFK) {
+
+                setTimeout(() => {
+
+                    if (!bot || !bot.currentWindow) return;
+
+                    logToUI(`[SYSTEM] Đang click Slot 1 chọn chế độ AFK...`);
+
+                    hasExecutedAFK = true;
+
+
+
+                    bot.clickWindow(1, 0, 0)
+
+                        .then(() => logToUI(`[🎉] ĐÃ CLICK SLOT 1 VÀ VÀO CHẾ ĐỘ AFK THÀNH CÔNG!`))
+
+                        .catch(() => logToUI(`[⚠️] Bỏ qua cảnh báo transaction AFK`));
+
+
+
+                    setTimeout(() => {
+
+                        try { bot.closeWindow(window); } catch(e){}
+
+                    }, 500);
+
+
+
+                }, 1500);
 
             }
 
@@ -306,33 +312,27 @@ function startBotForAccount(acc) {
 
         bot.on('end', (reason) => {
 
-            logToUI(`[! ${acc.username}] Ngắt kết nối: ${reason || 'Mất kết nối từ Server'}`);
+            logToUI(`[!] Ngắt kết nối: ${reason || 'Mất kết nối từ Server'}`);
 
-            acc.botInstance = null;
+            updateStatus('OFFLINE', '#ff4444');
 
-            acc.status = 'OFFLINE';
+            bot = null;
 
-            acc.color = '#ff4444';
+            isFarming = false;
 
-            acc.hasJoinedKingSMP = false;
+            hasJoinedKingSMP = false;
 
-            acc.hasExecutedAFK = false;
+            hasExecutedAFK = false;
 
-            acc.isLoggedIn = false;
-
-            emitAccountsUpdate();
+            isLoggedIn = false;
 
 
 
-            if (acc.autoReconnect) {
+            if (autoReconnect) {
 
-                logToUI(`[SYSTEM ${acc.username}] Tự động kết nối lại sau 5 giây...`);
+                logToUI(`[SYSTEM] Tự động kết nối lại sau 5 giây...`);
 
-                setTimeout(() => {
-
-                    if (acc.autoReconnect && !acc.botInstance) startBotForAccount(acc);
-
-                }, 5000);
+                setTimeout(() => { if (autoReconnect && !bot) startBot(); }, 5000);
 
             }
 
@@ -342,7 +342,7 @@ function startBotForAccount(acc) {
 
         bot.on('error', (err) => {
 
-            logToUI(`[❌ ${acc.username}] Lỗi Bot: ${err.message}`);
+            logToUI(`[❌] Lỗi Bot: ${err.message}`);
 
         });
 
@@ -350,13 +350,9 @@ function startBotForAccount(acc) {
 
     } catch (e) {
 
-        logToUI(`[❌ ${acc.username}] Lỗi khởi tạo: ${e.message}`);
+        logToUI(`[❌] Lỗi khởi tạo: ${e.message}`);
 
-        acc.status = 'OFFLINE';
-
-        acc.color = '#ff4444';
-
-        emitAccountsUpdate();
+        updateStatus('OFFLINE', '#ff4444');
 
     }
 
@@ -364,31 +360,31 @@ function startBotForAccount(acc) {
 
 
 
-function stopBotForAccount(acc) {
+function stopBot() {
 
-    acc.autoReconnect = false;
+    autoReconnect = false;
 
-    acc.hasJoinedKingSMP = false;
+    hasJoinedKingSMP = false;
 
-    acc.hasExecutedAFK = false;
+    hasExecutedAFK = false;
 
-    acc.isLoggedIn = false;
+    isLoggedIn = false;
 
-    if (acc.botInstance) {
+    io.emit('auto_reconnect_status', false);
 
-        acc.botInstance.quit();
+    if (bot) {
 
-        acc.botInstance = null;
+        bot.quit();
+
+        bot = null;
 
     }
 
-    acc.status = 'STOPPED';
+    isFarming = false;
 
-    acc.color = '#ff4444';
+    updateStatus('STOPPED', '#ff4444');
 
-    emitAccountsUpdate();
-
-    logToUI(`[SYSTEM ${acc.username}] Đã dừng Bot.`);
+    logToUI('[SYSTEM] Đã dừng Bot.');
 
 }
 
@@ -396,121 +392,51 @@ function stopBotForAccount(acc) {
 
 io.on('connection', (socket) => {
 
-    emitAccountsUpdate();
+    socket.emit('init', { server: CONFIG.host, botName: CONFIG.username, autoReconnect });
 
+    socket.on('start_farm', () => { if (!isFarming) startBot(); });
 
+    socket.on('stop_farm', () => { stopBot(); });
 
-    socket.on('add_account', ({ username, password }) => {
+    socket.on('toggle_auto_reconnect', () => {
 
-        if (!username || !password) return;
+        autoReconnect = !autoReconnect;
 
-        const id = Date.now().toString();
-
-        const newAcc = {
-
-            id,
-
-            username,
-
-            password,
-
-            status: 'OFFLINE',
-
-            color: '#ff4444',
-
-            botInstance: null,
-
-            autoReconnect: false,
-
-            hasJoinedKingSMP: false,
-
-            hasExecutedAFK: false,
-
-            isLoggedIn: false
-
-        };
-
-        accounts.push(newAcc);
-
-        emitAccountsUpdate();
-
-        logToUI(`[SYSTEM] Đã thêm tài khoản: ${username}`);
+        socket.emit('auto_reconnect_status', autoReconnect);
 
     });
 
 
 
-    socket.on('delete_account', (id) => {
-
-        const index = accounts.findIndex(a => a.id === id);
-
-        if (index !== -1) {
-
-            const acc = accounts[index];
-
-            stopBotForAccount(acc);
-
-            accounts.splice(index, 1);
-
-            emitAccountsUpdate();
-
-            logToUI(`[SYSTEM] Đã xóa tài khoản ID: ${id}`);
-
-        }
-
-    });
-
-
-
-    socket.on('start_acc', (id) => {
-
-        const acc = accounts.find(a => a.id === id);
-
-        if (acc) startBotForAccount(acc);
-
-    });
-
-
-
-    socket.on('stop_acc', (id) => {
-
-        const acc = accounts.find(a => a.id === id);
-
-        if (acc) stopBotForAccount(acc);
-
-    });
-
-
-
-    socket.on('toggle_auto_reconnect', (id) => {
-
-        const acc = accounts.find(a => a.id === id);
-
-        if (acc) {
-
-            acc.autoReconnect = !acc.autoReconnect;
-
-            emitAccountsUpdate();
-
-        }
-
-    });
-
-
+    // Nhận câu chat/lệnh gửi từ giao diện Web
 
     socket.on('send_chat', (cmd) => {
 
-        accounts.forEach(acc => {
+        if (bot) {
 
-            if (acc.botInstance) {
+            bot.chat(cmd);
 
-                acc.botInstance.chat(cmd);
+            logToUI(`[ĐÃ GỬI CHAT]: ${cmd}`);
 
-                logToUI(`[CHAT -> ${acc.username}]: ${cmd}`);
+        } else {
 
-            }
+            logToUI(`[⚠️] Bot chưa online để gửi chat!`);
 
-        });
+        }
+
+    });
+
+
+
+    // Click thủ công Slot từ Web UI nếu cần
+
+    socket.on('click_slot', (slot) => {
+
+        if (bot && bot.currentWindow) {
+
+            bot.clickWindow(slot, 0, 0).catch(() => {});
+
+        }
 
     });
 
@@ -522,5 +448,4 @@ server.listen(PORT, () => {
 
     console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
 
-}); 
-
+});
