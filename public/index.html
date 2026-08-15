@@ -3,286 +3,123 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hệ thống treo shard top 1 kingsmp</title>
+  <title>MC Panel</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
-    body { background-color: #0d0614; color: #fff; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; background-image: radial-gradient(circle at 50% 20%, #2e0835 0%, #0d0614 70%); }
-    
-    /* Khung Đăng Nhập / Đăng Ký */
-    .login-card { background: rgba(22, 11, 31, 0.95); padding: 40px; border-radius: 20px; width: 100%; max-width: 420px; box-shadow: 0 0 40px rgba(230, 0, 126, 0.3); border: 1px solid rgba(255, 0, 128, 0.4); backdrop-filter: blur(10px); text-align: center; }
-    .login-card h2 { font-size: 22px; font-weight: 800; background: linear-gradient(90deg, #ffffff 0%, #ff66cc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; margin-bottom: 25px; letter-spacing: 1px; }
-    .login-card input { width: 100%; padding: 14px 18px; margin-bottom: 15px; border-radius: 10px; border: 1px solid rgba(255, 0, 128, 0.2); background: #160a22; color: #fff; outline: none; font-size: 14px; transition: 0.3s; }
-    .login-card input:focus { border-color: #ff0080; box-shadow: 0 0 12px rgba(255, 0, 128, 0.3); }
-    .login-card button { width: 100%; padding: 14px; background: linear-gradient(135deg, #ff0080 0%, #7928ca 100%); color: white; font-weight: 700; border: none; border-radius: 10px; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(255, 0, 128, 0.3); transition: 0.3s; margin-bottom: 15px; }
-    .login-card button:hover { opacity: 0.9; transform: translateY(-2px); }
-    
-    /* Nút chuyển đổi Đăng ký / Đăng nhập */
-    .switch-mode { font-size: 13px; color: #a082b8; cursor: pointer; }
-    .switch-mode span { color: #ff66cc; font-weight: bold; text-decoration: underline; }
-
-    /* Bảng điều khiển Bot (Ẩn mặc định) */
-    .container { width: 100%; max-width: 900px; background: rgba(22, 11, 31, 0.85); padding: 30px; border-radius: 20px; box-shadow: 0 0 40px rgba(230, 0, 126, 0.15); border: 1px solid rgba(255, 0, 128, 0.2); backdrop-filter: blur(10px); display: none; position: relative; }
-    
-    .btn-logout { position: absolute; top: 25px; right: 25px; background: rgba(255, 23, 68, 0.2); border: 1px solid #ff1744; color: #ff1744; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 12px; transition: 0.3s; }
-    .btn-logout:hover { background: #ff1744; color: #fff; }
-
-    /* Tag & Tiêu đề */
-    .badge-tag { display: inline-block; padding: 6px 16px; background: rgba(255, 0, 128, 0.1); border: 1px solid rgba(255, 0, 128, 0.4); border-radius: 20px; font-size: 12px; font-weight: 600; color: #ff66cc; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
-    .header-box { text-align: center; margin-bottom: 30px; }
-    h1 { font-size: 30px; font-weight: 800; background: linear-gradient(90deg, #ffffff 0%, #ff66cc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-    .subtitle { color: #a082b8; font-size: 14px; }
-
-    /* Form thêm tài khoản Game */
-    .form-group { display: flex; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; }
-    input[type="text"], input[type="password"] { flex: 1; padding: 14px 18px; border-radius: 10px; border: 1px solid rgba(255, 0, 128, 0.2); background: #160a22; color: #fff; outline: none; font-size: 14px; transition: 0.3s; }
-    
-    /* Nút bấm */
-    button { padding: 12px 22px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; font-size: 14px; }
-    .btn-add { background: linear-gradient(135deg, #ff0080 0%, #7928ca 100%); color: white; box-shadow: 0 4px 15px rgba(255, 0, 128, 0.3); }
-    .btn-add:hover { opacity: 0.9; transform: translateY(-2px); }
-    .btn-on { background: #00e676; color: #000; }
-    .btn-off { background: #ff1744; color: white; }
-    .btn-del { background: rgba(255,255,255,0.1); color: #ccc; }
-    .btn-del:hover { background: rgba(255,255,255,0.2); color: #fff; }
-
-    /* Bảng danh sách tài khoản */
-    table { width: 100%; border-collapse: collapse; margin-bottom: 25px; border-radius: 10px; overflow: hidden; }
-    th, td { padding: 14px; text-align: center; border-bottom: 1px solid rgba(255, 0, 128, 0.1); }
-    th { background: rgba(255, 0, 128, 0.08); color: #ff66cc; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
-    td { background: rgba(0, 0, 0, 0.2); font-size: 14px; }
-    .status-off { color: #ff1744; font-weight: 700; }
-    .status-on { color: #00e676; font-weight: 700; }
-
-    /* Khung Console Log */
-    .console-box { background: #07030a; color: #ffb3ec; padding: 18px; border-radius: 12px; height: 280px; overflow-y: auto; font-family: 'Consolas', 'Fira Code', monospace; font-size: 13px; margin-bottom: 20px; border: 1px solid rgba(255, 0, 128, 0.15); box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
-    .log-item { margin-bottom: 6px; word-break: break-all; line-height: 1.5; }
-
-    /* Chat / Gửi lệnh */
-    .chat-box { display: flex; gap: 12px; margin-bottom: 25px; }
-
-    /* Footer Credit */
-    .footer-credit { text-align: center; padding-top: 20px; border-top: 1px solid rgba(255, 0, 128, 0.15); font-size: 13px; color: #8a6d9b; }
-    .footer-credit span { color: #ff66cc; font-weight: 700; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+    body { background-color: #0d0714; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    .card { background: #160d21; border: 1px solid #ff2a8d; border-radius: 12px; padding: 30px; width: 380px; box-shadow: 0 0 20px rgba(255, 42, 141, 0.2); text-align: center; }
+    .badge { background: #3b0a2a; color: #ff2a8d; font-size: 11px; font-weight: bold; padding: 4px 12px; border-radius: 20px; letter-spacing: 1px; display: inline-block; margin-bottom: 12px; }
+    h2 { margin-bottom: 20px; font-size: 22px; }
+    input { width: 100%; padding: 12px; margin-bottom: 12px; background: #231634; border: 1px solid #382252; border-radius: 6px; color: #fff; outline: none; }
+    input:focus { border-color: #ff2a8d; }
+    button { width: 100%; padding: 12px; background: linear-gradient(90deg, #d6007e, #8a00e6); border: none; border-radius: 6px; color: #fff; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    button:hover { opacity: 0.9; }
+    .switch-link { margin-top: 15px; font-size: 13px; color: #aaa; }
+    .switch-link a { color: #ff2a8d; text-decoration: none; font-weight: bold; cursor: pointer; }
+    .alert { margin-bottom: 12px; padding: 10px; border-radius: 6px; font-size: 13px; display: none; }
+    .alert-error { background: #4a151b; color: #ff6b6b; border: 1px solid #8a222c; }
+    .alert-success { background: #154a21; color: #6bff8d; border: 1px solid #228a39; }
   </style>
 </head>
 <body>
 
-<!-- Màn hình Đăng Nhập / Đăng Ký -->
-<div class="login-card" id="authCard">
-  <div class="badge-tag">AUTHENTICATION</div>
-  <h2 id="authTitle">Đăng Nhập Panel</h2>
-  
-  <input type="text" id="panelUser" placeholder="Tài khoản hệ thống">
-  <input type="password" id="panelPass" placeholder="Mật khẩu hệ thống">
-  
-  <button id="authBtn" onclick="submitAuth()">XÁC NHẬN ĐĂNG NHẬP</button>
-
-  <div class="switch-mode" id="switchText" onclick="toggleAuthMode()">
-    Chưa có tài khoản? <span>Đăng ký ngay</span>
-  </div>
-</div>
-
-<!-- Bảng Điều Khiển Bot -->
-<div class="container" id="panelContainer">
-  <button class="btn-logout" onclick="logoutPanel()">Đăng xuất</button>
-  
-  <div class="header-box">
-    <div class="badge-tag">KINGMC SHARD SYSTEM</div>
-    <h1>Hệ thống treo shard top 1 kingsmp</h1>
-    <div class="subtitle">Hệ thống AFK Bot tự động nâng cao · Quản lý tập trung 2026</div>
+  <!-- FORM ĐĂNG NHẬP -->
+  <div class="card" id="loginCard">
+    <span class="badge">AUTHENTICATION</span>
+    <h2>ĐĂNG NHẬP PANEL</h2>
+    <div id="loginMsg" class="alert alert-error"></div>
+    <input type="text" id="loginUser" placeholder="Tài khoản">
+    <input type="password" id="loginPass" placeholder="Mật khẩu">
+    <button onclick="handleLogin()">XÁC NHẬN ĐĂNG NHẬP</button>
+    <div class="switch-link">
+      Chưa có tài khoản? <a onclick="toggleForm('register')">Đăng ký ngay</a>
+    </div>
   </div>
 
-  <!-- Form nhập tài khoản Game -->
-  <div class="form-group">
-    <input type="text" id="accUser" placeholder="Tên tài khoản Game">
-    <input type="password" id="accPass" placeholder="Mật khẩu Game">
-    <button class="btn-add" onclick="addAccount()">Thêm Account</button>
+  <!-- FORM ĐĂNG KÝ -->
+  <div class="card" id="registerCard" style="display: none;">
+    <span class="badge">AUTHENTICATION</span>
+    <h2>ĐĂNG KÝ PANEL</h2>
+    <div id="registerMsg" class="alert alert-error"></div>
+    <input type="text" id="regUser" placeholder="Tài khoản">
+    <input type="password" id="regPass" placeholder="Mật khẩu">
+    <input type="password" id="regConfirmPass" placeholder="Xác nhận mật khẩu">
+    <button onclick="handleRegister()">XÁC NHẬN ĐĂNG KÝ</button>
+    <div class="switch-link">
+      Đã có tài khoản? <a onclick="toggleForm('login')">Đăng nhập</a>
+    </div>
   </div>
 
-  <!-- Danh sách tài khoản đã lưu -->
-  <table>
-    <thead>
-      <tr>
-        <th>Tài khoản</th>
-        <th>Trạng thái</th>
-        <th>Thao tác</th>
-      </tr>
-    </thead>
-    <tbody id="accountTable"></tbody>
-  </table>
+  <script>
+    const socket = io();
 
-  <!-- Khung Console Log -->
-  <div class="console-box" id="consoleLog"></div>
-
-  <!-- Chat / Gửi lệnh -->
-  <div class="chat-box">
-    <input type="text" id="chatMsg" placeholder="Gửi câu chat / lệnh cho TẤT CẢ bot đang online...">
-    <button class="btn-add" onclick="sendChat()">Gửi Tất Cả</button>
-  </div>
-
-  <!-- Footer Credit -->
-  <div class="footer-credit">
-    Credit: <span>meovancat</span> với <span>giaanday</span>
-  </div>
-</div>
-
-<script>
-  const socket = io();
-  let isRegisterMode = false;
-  let accounts = JSON.parse(localStorage.getItem('mc_bots_list')) || [];
-
-  window.onload = () => {
-    if (sessionStorage.getItem('isLoggedIn') === 'true') {
-      const savedUser = sessionStorage.getItem('savedUser');
-      const savedPass = sessionStorage.getItem('savedPass');
-      if (savedUser && savedPass) {
-        socket.emit('loginPanel', { user: savedUser, pass: savedPass });
+    function toggleForm(form) {
+      document.getElementById('loginMsg').style.display = 'none';
+      document.getElementById('registerMsg').style.display = 'none';
+      if (form === 'register') {
+        document.getElementById('loginCard').style.display = 'none';
+        document.getElementById('registerCard').style.display = 'block';
       } else {
-        showAuth();
+        document.getElementById('registerCard').style.display = 'none';
+        document.getElementById('loginCard').style.display = 'block';
       }
-    } else {
-      showAuth();
     }
-  };
 
-  function toggleAuthMode() {
-    isRegisterMode = !isRegisterMode;
-    const title = document.getElementById('authTitle');
-    const btn = document.getElementById('authBtn');
-    const switchText = document.getElementById('switchText');
-
-    if (isRegisterMode) {
-      title.innerText = 'Đăng Ký Tài Khoản';
-      btn.innerText = 'TẠO TÀI KHOẢN MỚI';
-      switchText.innerHTML = 'Đã có tài khoản? <span>Đăng nhập ngay</span>';
-    } else {
-      title.innerText = 'Đăng Nhập Panel';
-      btn.innerText = 'XÁC NHẬN ĐĂNG NHẬP';
-      switchText.innerHTML = 'Chưa có tài khoản? <span>Đăng ký ngay</span>';
+    function showAlert(elementId, msg, isSuccess = false) {
+      const el = document.getElementById(elementId);
+      el.innerText = msg;
+      el.className = `alert ${isSuccess ? 'alert-success' : 'alert-error'}`;
+      el.style.display = 'block';
     }
-  }
 
-  function submitAuth() {
-    const user = document.getElementById('panelUser').value.trim();
-    const pass = document.getElementById('panelPass').value.trim();
-
-    if (!user || !pass) return alert('Vui lòng nhập đầy đủ tài khoản và mật khẩu!');
-
-    sessionStorage.setItem('savedUser', user);
-    sessionStorage.setItem('savedPass', pass);
-
-    if (isRegisterMode) {
-      socket.emit('registerPanel', { user, pass });
-    } else {
+    function handleLogin() {
+      const user = document.getElementById('loginUser').value.trim();
+      const pass = document.getElementById('loginPass').value.trim();
+      if (!user || !pass) {
+        return showAlert('loginMsg', 'Vui lòng nhập đầy đủ tài khoản và mật khẩu!');
+      }
       socket.emit('loginPanel', { user, pass });
     }
-  }
 
-  socket.on('authResult', (res) => {
-    if (res.success) {
-      sessionStorage.setItem('isLoggedIn', 'true');
-      showPanel();
-    } else {
-      alert(res.msg);
-      sessionStorage.clear();
+    function handleRegister() {
+      const user = document.getElementById('regUser').value.trim();
+      const pass = document.getElementById('regPass').value.trim();
+      const confirmPass = document.getElementById('regConfirmPass').value.trim();
+
+      if (!user || !pass || !confirmPass) {
+        return showAlert('registerMsg', 'Vui lòng điền đầy đủ các trường!');
+      }
+      if (pass !== confirmPass) {
+        return showAlert('registerMsg', 'Xác nhận mật khẩu không khớp!');
+      }
+
+      socket.emit('registerPanel', { user, pass, confirmPass });
     }
-  });
 
-  function showAuth() {
-    document.getElementById('authCard').style.display = 'block';
-    document.getElementById('panelContainer').style.display = 'none';
-  }
-
-  function showPanel() {
-    document.getElementById('authCard').style.display = 'none';
-    document.getElementById('panelContainer').style.display = 'block';
-    renderAccounts();
-  }
-
-  function logoutPanel() {
-    sessionStorage.clear();
-    location.reload();
-  }
-
-  function saveAccounts() {
-    localStorage.setItem('mc_bots_list', JSON.stringify(accounts));
-    renderAccounts();
-  }
-
-  function addAccount() {
-    const user = document.getElementById('accUser').value.trim();
-    const pass = document.getElementById('accPass').value.trim();
-
-    if (!user) return alert('Vui lòng nhập tên tài khoản Game!');
-    if (accounts.some(acc => acc.user === user)) return alert('Tài khoản này đã có trong danh sách!');
-
-    accounts.push({ user, pass, status: 'OFFLINE' });
-    document.getElementById('accUser').value = '';
-    document.getElementById('accPass').value = '';
-    saveAccounts();
-  }
-
-  function deleteAccount(index) {
-    stopBot(accounts[index].user);
-    accounts.splice(index, 1);
-    saveAccounts();
-  }
-
-  function renderAccounts() {
-    const tbody = document.getElementById('accountTable');
-    tbody.innerHTML = '';
-
-    accounts.forEach((acc, index) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><b>${acc.user}</b></td>
-        <td><span class="${acc.status === 'ONLINE' ? 'status-on' : 'status-off'}">${acc.status}</span></td>
-        <td>
-          <button class="btn-on" onclick="startBot('${acc.user}', '${acc.pass}')">Bật</button>
-          <button class="btn-off" onclick="stopBot('${acc.user}')">Tắt</button>
-          <button class="btn-del" onclick="deleteAccount(${index})">Xóa</button>
-        </td>
-      `;
-      tbody.appendChild(tr);
+    // Nhận phản hồi từ Server
+    socket.on('loginResult', (data) => {
+      if (data.success) {
+        showAlert('loginMsg', data.msg, true);
+        setTimeout(() => {
+          alert('Đăng nhập thành công! Tiến vào Panel...');
+          // Thêm logic chuyển sang giao diện điều khiển Bot tại đây
+        }, 500);
+      } else {
+        showAlert('loginMsg', data.msg, false);
+      }
     });
-  }
 
-  function startBot(user, pass) {
-    socket.emit('startBot', { username: user, password: pass });
-    updateStatus(user, 'ONLINE');
-  }
-
-  function stopBot(user) {
-    socket.emit('stopBot', user);
-    updateStatus(user, 'OFFLINE');
-  }
-
-  function updateStatus(user, status) {
-    const acc = accounts.find(a => a.user === user);
-    if (acc) {
-      acc.status = status;
-      renderAccounts();
-    }
-  }
-
-  function sendChat() {
-    const msg = document.getElementById('chatMsg').value.trim();
-    if (msg) {
-      socket.emit('sendChat', msg);
-      document.getElementById('chatMsg').value = '';
-    }
-  }
-
-  socket.on('log', (data) => {
-    const logBox = document.getElementById('consoleLog');
-    const item = document.createElement('div');
-    item.className = 'log-item';
-    item.innerText = data.msg;
-    logBox.appendChild(item);
-    logBox.scrollTop = logBox.scrollHeight;
-  });
-</script>
-
+    socket.on('registerResult', (data) => {
+      if (data.success) {
+        showAlert('registerMsg', data.msg, true);
+        setTimeout(() => {
+          toggleForm('login');
+        }, 1500);
+      } else {
+        showAlert('registerMsg', data.msg, false);
+      }
+    });
+  </script>
 </body>
 </html>
