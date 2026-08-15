@@ -1,175 +1,526 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KingMC Multi-Bot Control Panel</title>
-  <script src="/socket.io/socket.io.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: #121212; color: #fff; padding: 20px; display: flex; justify-content: center; }
-    .container { width: 100%; max-width: 900px; background: #1e1e1e; padding: 20px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
-    h1 { text-align: center; color: #00ff88; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
-    
-    /* Form thêm tài khoản */
-    .form-group { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-    input[type="text"], input[type="password"] { flex: 1; padding: 12px; border-radius: 6px; border: 1px solid #333; background: #2a2a2a; color: #fff; outline: none; }
-    button { padding: 12px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-    .btn-add { background: #007bff; color: white; }
-    .btn-add:hover { background: #0056b3; }
-    .btn-on { background: #28a745; color: white; }
-    .btn-off { background: #dc3545; color: white; }
-    .btn-del { background: #6c757d; color: white; }
-    .btn-all { background: #17a2b8; color: white; width: 100%; margin-top: 10px; }
+const express = require('express');
 
-    /* Bảng danh sách tài khoản */
-    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-    th, td { padding: 12px; text-align: center; border-bottom: 1px solid #333; }
-    th { background: #2a2a2a; color: #00ff88; }
-    .status-off { color: #dc3545; font-weight: bold; }
-    .status-on { color: #28a745; font-weight: bold; }
+const http = require('http');
 
-    /* Khung Console Log */
-    .console-box { background: #000; color: #00ff00; padding: 15px; border-radius: 6px; height: 300px; overflow-y: auto; font-family: 'Courier New', Courier, monospace; font-size: 13px; margin-bottom: 15px; }
-    .log-item { margin-bottom: 4px; word-break: break-all; }
+const { Server } = require('socket.io');
 
-    /* Chat/Lệnh Input */
-    .chat-box { display: flex; gap: 10px; margin-bottom: 20px; }
+const mineflayer = require('mineflayer');
 
-    /* Credit footer */
-    .footer-credit { text-align: center; margin-top: 25px; padding-top: 15px; border-top: 1px solid #333; font-size: 14px; color: #888; }
-    .footer-credit span { color: #00ff88; font-weight: bold; }
-  </style>
-</head>
-<body>
 
-<div class="container">
-  <h1>KingMC Multi-Bot Control Panel</h1>
 
-  <!-- Form nhập tài khoản -->
-  <div class="form-group">
-    <input type="text" id="accUser" placeholder="Tên tài khoản Game">
-    <input type="password" id="accPass" placeholder="Mật khẩu">
-    <button class="btn-add" onclick="addAccount()">Thêm Account</button>
-  </div>
+const app = express();
 
-  <!-- Danh sách tài khoản đã lưu -->
-  <table>
-    <thead>
-      <tr>
-        <th>Tài khoản</th>
-        <th>Trạng thái</th>
-        <th>Thao tác</th>
-      </tr>
-    </thead>
-    <tbody id="accountTable">
-      <!-- Dữ liệu render từ localStorage -->
-    </tbody>
-  </table>
+const server = http.createServer(app);
 
-  <!-- Bảng điều khiển Console Log -->
-  <div class="console-box" id="consoleLog"></div>
+const io = new Server(server);
 
-  <!-- Chat / Gửi lệnh -->
-  <div class="chat-box">
-    <input type="text" id="chatMsg" placeholder="Gửi câu chat / lệnh cho TẤT CẢ bot đang online...">
-    <button class="btn-add" onclick="sendChat()">Gửi Tất Cả</button>
-  </div>
 
-  <!-- Phần Credit chân trang -->
-  <div class="footer-credit">
-    Credit: <span>meovancat</span> với <span>giaanday</span> là đẹp :))
-  </div>
-</div>
 
-<script>
-  const socket = io();
-  let accounts = JSON.parse(localStorage.getItem('mc_bots_list')) || [];
+const PORT = 3000;
 
-  // Tự động tải danh sách account khi mở web
-  window.onload = () => {
-    renderAccounts();
-  };
+const SERVER_HOST = 'kingmc.vn';
 
-  function saveAccounts() {
-    localStorage.setItem('mc_bots_list', JSON.stringify(accounts));
-    renderAccounts();
-  }
+const SERVER_PORT = 25565;
 
-  function addAccount() {
-    const user = document.getElementById('accUser').value.trim();
-    const pass = document.getElementById('accPass').value.trim();
 
-    if (!user) return alert('Vui lòng nhập tên tài khoản!');
-    if (accounts.some(acc => acc.user === user)) return alert('Tài khoản này đã có trong danh sách!');
 
-    accounts.push({ user, pass, status: 'OFFLINE' });
-    document.getElementById('accUser').value = '';
-    document.getElementById('accPass').value = '';
-    saveAccounts();
-  }
+// Quản lý danh sách bot
 
-  function deleteAccount(index) {
-    stopBot(accounts[index].user);
-    accounts.splice(index, 1);
-    saveAccounts();
-  }
+const accounts = []; // { id, username, password, status, color, botInstance, autoReconnect, hasJoinedKingSMP, hasExecutedAFK, isLoggedIn }
 
-  function renderAccounts() {
-    const tbody = document.getElementById('accountTable');
-    tbody.innerHTML = '';
 
-    accounts.forEach((acc, index) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><b>${acc.user}</b></td>
-        <td><span class="${acc.status === 'ONLINE' ? 'status-on' : 'status-off'}">${acc.status}</span></td>
-        <td>
-          <button class="btn-on" onclick="startBot('${acc.user}', '${acc.pass}')">Bật</button>
-          <button class="btn-off" onclick="stopBot('${acc.user}')">Tắt</button>
-          <button class="btn-del" onclick="deleteAccount(${index})">Xóa</button>
-        </td>
-      `;
-      tbody.appendChild(tr);
+
+app.use(express.static('public'));
+
+
+
+function logToUI(msg) {
+
+    console.log(msg);
+
+    io.emit('log', msg);
+
+}
+
+
+
+function emitAccountsUpdate() {
+
+    const list = accounts.map(acc => ({
+
+        id: acc.id,
+
+        username: acc.username,
+
+        status: acc.status,
+
+        color: acc.color,
+
+        autoReconnect: acc.autoReconnect
+
+    }));
+
+    io.emit('accounts_update', list);
+
+}
+
+
+
+process.on('uncaughtException', (err) => {
+
+    console.log('[SỜI, ĐÃ BẮT LỖI]:', err.message);
+
+});
+
+
+
+process.on('unhandledRejection', (reason) => {
+
+    console.log('[SỜI, ĐÃ BẮT REJECTION]:', reason?.message || reason);
+
+});
+
+
+
+function startBotForAccount(acc) {
+
+    if (acc.botInstance) return;
+
+
+
+    acc.hasJoinedKingSMP = false;
+
+    acc.hasExecutedAFK = false;
+
+    acc.isLoggedIn = false;
+
+    acc.status = 'CONNECTING...';
+
+    acc.color = 'yellow';
+
+    emitAccountsUpdate();
+
+
+
+    logToUI(`[BOT ${acc.username}] Đang kết nối tới ${SERVER_HOST}...`);
+
+
+
+    try {
+
+        const bot = mineflayer.createBot({
+
+            host: SERVER_HOST,
+
+            port: SERVER_PORT,
+
+            username: acc.username,
+
+            password: acc.password,
+
+            auth: 'offline',
+
+            version: '1.16.5',
+
+            checkTimeoutInterval: 120000
+
+        });
+
+
+
+        acc.botInstance = bot;
+
+
+
+        bot.on('login', () => {
+
+            logToUI(`[✔ ${acc.username}] Bắt tay thành công! Đang vào Sảnh...`);
+
+            acc.status = 'LOGGING IN...';
+
+            acc.color = 'orange';
+
+            emitAccountsUpdate();
+
+        });
+
+
+
+        bot.on('spawn', () => {
+
+            if (acc.hasJoinedKingSMP) {
+
+                logToUI(`[🎉 ${acc.username}] ĐÃ SANG KINGSMP THÀNH CÔNG!`);
+
+                acc.status = 'ONLINE / KINGSMP';
+
+                acc.color = '#00ff88';
+
+
+
+                if (!acc.hasExecutedAFK) {
+
+                    setTimeout(() => {
+
+                        if (acc.botInstance) {
+
+                            logToUI(`[SYSTEM ${acc.username}] Gửi lệnh /afk...`);
+
+                            acc.botInstance.chat('/afk');
+
+                        }
+
+                    }, 4000);
+
+                }
+
+            } else {
+
+                logToUI(`[✔ ${acc.username}] Đã xuất hiện ở Sảnh!`);
+
+                acc.status = 'ONLINE / LOBBY';
+
+                acc.color = '#00ff88';
+
+            }
+
+            emitAccountsUpdate();
+
+        });
+
+
+
+        bot.on('messagestr', (message) => {
+
+            logToUI(`[SERVER -> ${acc.username}]: ${message}`);
+
+            const msgLower = message.toLowerCase();
+
+
+
+            if (msgLower.includes('/register') || msgLower.includes('/dk')) {
+
+                setTimeout(() => { if (acc.botInstance) acc.botInstance.chat(`/dk ${acc.password} ${acc.password}`); }, 2000);
+
+            } else if (msgLower.includes('/login') || msgLower.includes('/dn')) {
+
+                setTimeout(() => { if (acc.botInstance) acc.botInstance.chat(`/dn ${acc.password}`); }, 2000);
+
+            }
+
+
+
+            if (!acc.hasJoinedKingSMP && !acc.isLoggedIn && 
+
+                (msgLower.includes('đăng nhập thành công') || msgLower.includes('bạn đã đăng nhập'))) {
+
+                
+
+                acc.isLoggedIn = true;
+
+                logToUI(`[SYSTEM ${acc.username}] Đã đăng nhập! Đợi 5s gõ /menu...`);
+
+                setTimeout(() => {
+
+                    if (acc.botInstance && !acc.hasJoinedKingSMP) {
+
+                        logToUI(`[SYSTEM ${acc.username}] Đang gõ /menu...`);
+
+                        acc.botInstance.chat('/menu');
+
+                    }
+
+                }, 5000);
+
+            }
+
+        });
+
+
+
+        bot.on('windowOpen', (window) => {
+
+            const rawTitle = JSON.stringify(window.title || '').toLowerCase();
+
+            logToUI(`[SYSTEM ${acc.username}] Menu mở: ${rawTitle}`);
+
+
+
+            if (!acc.hasJoinedKingSMP) {
+
+                setTimeout(async () => {
+
+                    if (!acc.botInstance || !acc.botInstance.currentWindow) return;
+
+                    logToUI(`[SYSTEM ${acc.username}] Đang click Slot 24 chọn KingSMP...`);
+
+
+
+                    try {
+
+                        await acc.botInstance.clickWindow(24, 0, 0);
+
+                        acc.hasJoinedKingSMP = true;
+
+                        logToUI(`[✔ ${acc.username}] Gửi lệnh chọn Slot 24 thành công!`);
+
+                    } catch (err) {
+
+                        logToUI(`[⚠️ ${acc.username}] Bỏ qua cảnh báo click: ${err.message}`);
+
+                    }
+
+                }, 3500);
+
+            } else if (acc.hasJoinedKingSMP && !acc.hasExecutedAFK) {
+
+                setTimeout(async () => {
+
+                    if (!acc.botInstance || !acc.botInstance.currentWindow) return;
+
+                    logToUI(`[SYSTEM ${acc.username}] Đang click Slot 1 chọn chế độ AFK...`);
+
+
+
+                    try {
+
+                        await acc.botInstance.clickWindow(1, 0, 0);
+
+                        acc.hasExecutedAFK = true;
+
+                        logToUI(`[🎉 ${acc.username}] ĐÃ CHỌN AFK THÀNH CÔNG!`);
+
+                    } catch (err) {
+
+                        logToUI(`[⚠️ ${acc.username}] Bỏ qua cảnh báo AFK: ${err.message}`);
+
+                    }
+
+                }, 2000);
+
+            }
+
+        });
+
+
+
+        bot.on('end', (reason) => {
+
+            logToUI(`[! ${acc.username}] Ngắt kết nối: ${reason || 'Mất kết nối từ Server'}`);
+
+            acc.botInstance = null;
+
+            acc.status = 'OFFLINE';
+
+            acc.color = '#ff4444';
+
+            acc.hasJoinedKingSMP = false;
+
+            acc.hasExecutedAFK = false;
+
+            acc.isLoggedIn = false;
+
+            emitAccountsUpdate();
+
+
+
+            if (acc.autoReconnect) {
+
+                logToUI(`[SYSTEM ${acc.username}] Tự động kết nối lại sau 5 giây...`);
+
+                setTimeout(() => {
+
+                    if (acc.autoReconnect && !acc.botInstance) startBotForAccount(acc);
+
+                }, 5000);
+
+            }
+
+        });
+
+
+
+        bot.on('error', (err) => {
+
+            logToUI(`[❌ ${acc.username}] Lỗi Bot: ${err.message}`);
+
+        });
+
+
+
+    } catch (e) {
+
+        logToUI(`[❌ ${acc.username}] Lỗi khởi tạo: ${e.message}`);
+
+        acc.status = 'OFFLINE';
+
+        acc.color = '#ff4444';
+
+        emitAccountsUpdate();
+
+    }
+
+}
+
+
+
+function stopBotForAccount(acc) {
+
+    acc.autoReconnect = false;
+
+    acc.hasJoinedKingSMP = false;
+
+    acc.hasExecutedAFK = false;
+
+    acc.isLoggedIn = false;
+
+    if (acc.botInstance) {
+
+        acc.botInstance.quit();
+
+        acc.botInstance = null;
+
+    }
+
+    acc.status = 'STOPPED';
+
+    acc.color = '#ff4444';
+
+    emitAccountsUpdate();
+
+    logToUI(`[SYSTEM ${acc.username}] Đã dừng Bot.`);
+
+}
+
+
+
+io.on('connection', (socket) => {
+
+    emitAccountsUpdate();
+
+
+
+    socket.on('add_account', ({ username, password }) => {
+
+        if (!username || !password) return;
+
+        const id = Date.now().toString();
+
+        const newAcc = {
+
+            id,
+
+            username,
+
+            password,
+
+            status: 'OFFLINE',
+
+            color: '#ff4444',
+
+            botInstance: null,
+
+            autoReconnect: false,
+
+            hasJoinedKingSMP: false,
+
+            hasExecutedAFK: false,
+
+            isLoggedIn: false
+
+        };
+
+        accounts.push(newAcc);
+
+        emitAccountsUpdate();
+
+        logToUI(`[SYSTEM] Đã thêm tài khoản: ${username}`);
+
     });
-  }
 
-  function startBot(user, pass) {
-    socket.emit('startBot', { username: user, password: pass });
-    updateStatus(user, 'ONLINE');
-  }
 
-  function stopBot(user) {
-    socket.emit('stopBot', user);
-    updateStatus(user, 'OFFLINE');
-  }
 
-  function updateStatus(user, status) {
-    const acc = accounts.find(a => a.user === user);
-    if (acc) {
-      acc.status = status;
-      renderAccounts();
-    }
-  }
+    socket.on('delete_account', (id) => {
 
-  function sendChat() {
-    const msg = document.getElementById('chatMsg').value.trim();
-    if (msg) {
-      socket.emit('sendChat', msg);
-      document.getElementById('chatMsg').value = '';
-    }
-  }
+        const index = accounts.findIndex(a => a.id === id);
 
-  // Nhận Log từ Server gửi về
-  socket.on('log', (data) => {
-    const logBox = document.getElementById('consoleLog');
-    const item = document.createElement('div');
-    item.className = 'log-item';
-    item.innerText = data.msg;
-    logBox.appendChild(item);
-    logBox.scrollTop = logBox.scrollHeight;
-  });
-</script>
+        if (index !== -1) {
 
-</body>
-</html>
+            const acc = accounts[index];
+
+            stopBotForAccount(acc);
+
+            accounts.splice(index, 1);
+
+            emitAccountsUpdate();
+
+            logToUI(`[SYSTEM] Đã xóa tài khoản ID: ${id}`);
+
+        }
+
+    });
+
+
+
+    socket.on('start_acc', (id) => {
+
+        const acc = accounts.find(a => a.id === id);
+
+        if (acc) startBotForAccount(acc);
+
+    });
+
+
+
+    socket.on('stop_acc', (id) => {
+
+        const acc = accounts.find(a => a.id === id);
+
+        if (acc) stopBotForAccount(acc);
+
+    });
+
+
+
+    socket.on('toggle_auto_reconnect', (id) => {
+
+        const acc = accounts.find(a => a.id === id);
+
+        if (acc) {
+
+            acc.autoReconnect = !acc.autoReconnect;
+
+            emitAccountsUpdate();
+
+        }
+
+    });
+
+
+
+    socket.on('send_chat', (cmd) => {
+
+        accounts.forEach(acc => {
+
+            if (acc.botInstance) {
+
+                acc.botInstance.chat(cmd);
+
+                logToUI(`[CHAT -> ${acc.username}]: ${cmd}`);
+
+            }
+
+        });
+
+    });
+
+});
+
+
+
+server.listen(PORT, () => {
+
+    console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
+
+}); 
+
