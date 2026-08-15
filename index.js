@@ -14,8 +14,8 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Danh sách tài khoản người dùng đăng ký (Mặc định tạo sẵn nick admin)
-const usersDatabase = {
+// Danh sách tài khoản hệ thống (Mặc định có tài khoản admin)
+const systemUsers = {
   'admin': '123456'
 };
 
@@ -23,34 +23,33 @@ const activeBots = {};
 const authenticatedSockets = new Set();
 
 io.on('connection', (socket) => {
-
   // Xử lý Đăng Ký
   socket.on('registerPanel', (data) => {
     const { user, pass } = data;
     if (!user || !pass) {
-      return socket.emit('registerResult', { success: false, msg: 'Tài khoản và mật khẩu không được trống!' });
+      return socket.emit('authResult', { success: false, msg: 'Tài khoản và mật khẩu không được trống!' });
     }
-    if (usersDatabase[user]) {
-      return socket.emit('registerResult', { success: false, msg: 'Tài khoản này đã tồn tại!' });
+    if (systemUsers[user]) {
+      return socket.emit('authResult', { success: false, msg: 'Tài khoản này đã tồn tại!' });
     }
-
+    
     // Lưu tài khoản mới
-    usersDatabase[user] = pass;
-    socket.emit('registerResult', { success: true, msg: 'Đăng ký thành công! Hãy đăng nhập ngay.' });
+    systemUsers[user] = pass;
+    authenticatedSockets.add(socket.id);
+    socket.emit('authResult', { success: true, action: 'register', msg: 'Đăng ký thành công! Đã tự động đăng nhập.' });
   });
 
   // Xử lý Đăng Nhập
   socket.on('loginPanel', (data) => {
     const { user, pass } = data;
-    if (usersDatabase[user] && usersDatabase[user] === pass) {
+    if (systemUsers[user] && systemUsers[user] === pass) {
       authenticatedSockets.add(socket.id);
-      socket.emit('loginResult', { success: true, msg: 'Đăng nhập thành công!' });
+      socket.emit('authResult', { success: true, action: 'login', msg: 'Đăng nhập thành công!' });
     } else {
-      socket.emit('loginResult', { success: false, msg: 'Tài khoản hoặc mật khẩu không chính xác!' });
+      socket.emit('authResult', { success: false, msg: 'Tài khoản hoặc mật khẩu không chính xác!' });
     }
   });
 
-  // Kiểm tra xác thực
   const checkAuth = () => authenticatedSockets.has(socket.id);
 
   // Lệnh bật Bot
@@ -74,7 +73,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Gửi chat
+  // Gửi chat / lệnh
   socket.on('sendChat', (msg) => {
     if (!checkAuth()) return socket.emit('log', { msg: '[BẢO MẬT] Bạn cần đăng nhập để thao tác!' });
     Object.keys(activeBots).forEach((botName) => {
