@@ -9,13 +9,24 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
     body { background-color: #0d0614; color: #fff; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; background-image: radial-gradient(circle at 50% 20%, #2e0835 0%, #0d0614 70%); }
     
-    /* Container chính */
-    .container { width: 100%; max-width: 900px; background: rgba(22, 11, 31, 0.85); padding: 30px; border-radius: 20px; box-shadow: 0 0 40px rgba(230, 0, 126, 0.15); border: 1px solid rgba(255, 0, 128, 0.2); backdrop-filter: blur(10px); }
+    /* Khung Đăng Nhập */
+    .login-card { background: rgba(22, 11, 31, 0.9); padding: 40px; border-radius: 20px; width: 100%; max-width: 420px; box-shadow: 0 0 40px rgba(230, 0, 126, 0.2); border: 1px solid rgba(255, 0, 128, 0.3); backdrop-filter: blur(10px); text-align: center; }
+    .login-card h2 { font-size: 22px; font-weight: 800; background: linear-gradient(90deg, #ffffff 0%, #ff66cc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; margin-bottom: 25px; letter-spacing: 1px; }
+    .login-card input { width: 100%; padding: 14px 18px; margin-bottom: 15px; border-radius: 10px; border: 1px solid rgba(255, 0, 128, 0.2); background: #160a22; color: #fff; outline: none; font-size: 14px; transition: 0.3s; }
+    .login-card input:focus { border-color: #ff0080; box-shadow: 0 0 12px rgba(255, 0, 128, 0.3); }
+    .login-card button { width: 100%; padding: 14px; background: linear-gradient(135deg, #ff0080 0%, #7928ca 100%); color: white; font-weight: 700; border: none; border-radius: 10px; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(255, 0, 128, 0.3); transition: 0.3s; }
+    .login-card button:hover { opacity: 0.9; transform: translateY(-2px); }
+
+    /* Container Bảng điều khiển (Ẩn mặc định) */
+    .container { width: 100%; max-width: 900px; background: rgba(22, 11, 31, 0.85); padding: 30px; border-radius: 20px; box-shadow: 0 0 40px rgba(230, 0, 126, 0.15); border: 1px solid rgba(255, 0, 128, 0.2); backdrop-filter: blur(10px); display: none; position: relative; }
     
+    .btn-logout { position: absolute; top: 25px; right: 25px; background: rgba(255, 23, 68, 0.2); border: 1px solid #ff1744; color: #ff1744; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 12px; transition: 0.3s; }
+    .btn-logout:hover { background: #ff1744; color: #fff; }
+
     /* Tag & Tiêu đề */
     .badge-tag { display: inline-block; padding: 6px 16px; background: rgba(255, 0, 128, 0.1); border: 1px solid rgba(255, 0, 128, 0.4); border-radius: 20px; font-size: 12px; font-weight: 600; color: #ff66cc; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
     .header-box { text-align: center; margin-bottom: 30px; }
-    h1 { font-size: 32px; font-weight: 800; background: linear-gradient(90deg, #ffffff 0%, #ff66cc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    h1 { font-size: 30px; font-weight: 800; background: linear-gradient(90deg, #ffffff 0%, #ff66cc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
     .subtitle { color: #a082b8; font-size: 14px; }
 
     /* Form thêm tài khoản */
@@ -54,7 +65,19 @@
 </head>
 <body>
 
-<div class="container">
+<!-- Màn hình Đăng Nhập -->
+<div class="login-card" id="loginCard">
+  <div class="badge-tag">AUTHENTICATION</div>
+  <h2>Đăng Nhập Panel</h2>
+  <input type="text" id="panelUser" placeholder="Tài khoản hệ thống">
+  <input type="password" id="panelPass" placeholder="Mật khẩu hệ thống">
+  <button onclick="loginPanel()">XÁC NHẬN ĐĂNG NHẬP</button>
+</div>
+
+<!-- Bảng Điều Khiển Bot -->
+<div class="container" id="panelContainer">
+  <button class="btn-logout" onclick="logoutPanel()">Đăng xuất</button>
+  
   <div class="header-box">
     <div class="badge-tag">KINGMC SHARD SYSTEM</div>
     <h1>Hệ thống treo shard top 1 kingsmp</h1>
@@ -99,9 +122,52 @@
   const socket = io();
   let accounts = JSON.parse(localStorage.getItem('mc_bots_list')) || [];
 
-  window.onload = () => {
+  // Tự động khôi phục phiên đăng nhập nếu đã đăng nhập trước đó
+  if (sessionStorage.getItem('isLoggedIn') === 'true') {
+    const savedUser = sessionStorage.getItem('savedUser');
+    const savedPass = sessionStorage.getItem('savedPass');
+    if (savedUser && savedPass) {
+      socket.emit('loginPanel', { user: savedUser, pass: savedPass });
+    }
+  }
+
+  function loginPanel() {
+    const user = document.getElementById('panelUser').value.trim();
+    const pass = document.getElementById('panelPass').value.trim();
+    if (!user || !pass) return alert('Vui lòng nhập đầy đủ thông tin!');
+    
+    sessionStorage.setItem('savedUser', user);
+    sessionStorage.setItem('savedPass', pass);
+    socket.emit('loginPanel', { user, pass });
+  }
+
+  socket.on('loginResult', (res) => {
+    if (res.success) {
+      sessionStorage.setItem('isLoggedIn', 'true');
+      showPanel();
+    } else {
+      alert(res.msg);
+      sessionStorage.clear();
+    }
+  });
+
+  socket.on('connect_error', (err) => {
+    if (err.message === 'IP_BLOCKED') {
+      alert('Địa chỉ IP của bạn không có quyền truy cập vào hệ thống này!');
+      document.body.innerHTML = '<h2 style="color:#ff1744; text-align:center;">Truy cập bị từ chối: IP không hợp lệ!</h2>';
+    }
+  });
+
+  function showPanel() {
+    document.getElementById('loginCard').style.display = 'none';
+    document.getElementById('panelContainer').style.display = 'block';
     renderAccounts();
-  };
+  }
+
+  function logoutPanel() {
+    sessionStorage.clear();
+    location.reload();
+  }
 
   function saveAccounts() {
     localStorage.setItem('mc_bots_list', JSON.stringify(accounts));
