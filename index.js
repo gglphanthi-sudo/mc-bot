@@ -14,26 +14,52 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// TÀI KHOẢN & MẬT KHẨU TRANG PANEL (Thay đổi tại đây)
+// ================= BẢO MẬT & TÀI KHOẢN =================
 const ADMIN_ACCOUNT = {
-  user: 'admin',
-  pass: '123456'
+  user: 'admin',      // Tài khoản đăng nhập web
+  pass: '123456'      // Mật khẩu đăng nhập web
 };
 
+// Cấu hình chặn IP (Nếu bật true thì chỉ các IP trong list mới truy cập/điều khiển được)
+const RESTRICT_IP = false; // Đổi thành true nếu bạn muốn bật tính năng lọc IP
+const ALLOWED_IPS = [
+  '127.0.0.1',
+  '::1'
+  // Thêm IP của bạn vào đây nếu muốn chặn các IP khác, ví dụ: '113.161.x.x'
+];
+// =========================================================
+
 const activeBots = {};
+const authenticatedSockets = new Set();
+
+io.use((socket, next) => {
+  const clientIp = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
+  if (RESTRICT_IP) {
+    const isAllowed = ALLOWED_IPS.some(ip => clientIp.includes(ip));
+    if (!isAllowed) {
+      return next(new Error('IP_BLOCKED'));
+    }
+  }
+  next();
+});
 
 io.on('connection', (socket) => {
-  // Xử lý đăng nhập Web Panel
+  // Xử lý Đăng Nhập
   socket.on('loginPanel', (data) => {
     if (data.user === ADMIN_ACCOUNT.user && data.pass === ADMIN_ACCOUNT.pass) {
+      authenticatedSockets.add(socket.id);
       socket.emit('loginResult', { success: true, msg: 'Đăng nhập thành công!' });
     } else {
-      socket.emit('loginResult', { success: false, msg: 'Tài khoản hoặc mật khẩu Panel không chính xác!' });
+      socket.emit('loginResult', { success: false, msg: 'Tài khoản hoặc mật khẩu không chính xác!' });
     }
   });
 
+  // Kiểm tra xác thực trước khi thực hiện các tác vụ
+  const checkAuth = () => authenticatedSockets.has(socket.id);
+
   // Lệnh bật Bot từ Web
   socket.on('startBot', (data) => {
+    if (!checkAuth()) return socket.emit('log', { msg: '[BẢO MẬT] Bạn cần đăng nhập để thao tác!' });
     const { username, password } = data;
     if (activeBots[username]) {
       socket.emit('log', { bot: username, msg: `Bot ${username} đang hoạt động hoặc đang kết nối!` });
@@ -44,6 +70,7 @@ io.on('connection', (socket) => {
 
   // Lệnh tắt Bot từ Web
   socket.on('stopBot', (username) => {
+    if (!checkAuth()) return socket.emit('log', { msg: '[BẢO MẬT] Bạn cần đăng nhập để thao tác!' });
     if (activeBots[username]) {
       activeBots[username].end();
       delete activeBots[username];
@@ -53,11 +80,16 @@ io.on('connection', (socket) => {
 
   // Gửi chat hoặc lệnh từ Web Panel
   socket.on('sendChat', (msg) => {
+    if (!checkAuth()) return socket.emit('log', { msg: '[BẢO MẬT] Bạn cần đăng nhập để thao tác!' });
     Object.keys(activeBots).forEach((botName) => {
       if (activeBots[botName]) {
         activeBots[botName].chat(msg);
       }
     });
+  });
+
+  socket.on('disconnect', () => {
+    authenticatedSockets.delete(socket.id);
   });
 });
 
