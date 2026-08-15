@@ -26,7 +26,7 @@ const CONFIG = {
 
     port: 25565,
 
-    username: 'Bensiucapvippro',
+    username: 'Catnosaur',
 
     password: 'caigicungdc'
 
