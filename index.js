@@ -1,7 +1,7 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const path = require('path');
+const path = path = require('path');
 const mineflayer = require('mineflayer');
 
 const app = express();
@@ -14,65 +14,76 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Database lưu tài khoản Panel (Đã cập nhật mật khẩu admin: 676767)
+// Cơ sở dữ liệu lưu tài khoản
 const usersDatabase = {
   'admin': { pass: '676767', role: 'admin', active: true }
 };
 
-const activeBots = {}; // Lưu instance của bot đang chạy
-const botInfo = {}; // Lưu thông tin mật khẩu & trạng thái tự động kết nối lại
-const userSessions = {}; // Lưu thông tin phiên kết nối socket -> user
+const activeBots = {};
+const botInfo = {};
+const userSessions = {};
 
 io.on('connection', (socket) => {
 
-  // Xử lý Đăng Ký Panel (Mặc định tài khoản mới có role là 'user')
+  // Xử lý Đăng Ký
   socket.on('registerPanel', (data) => {
-    const { user, pass } = data;
-    if (!user || !pass) {
-      return socket.emit('registerResult', { success: false, msg: 'Tài khoản và mật khẩu không được trống!' });
+    const { user, pass, confirmPass } = data;
+
+    if (!user || !pass || !confirmPass) {
+      return socket.emit('registerResult', { success: false, msg: 'Vui lòng điền đầy đủ thông tin!' });
+    }
+    if (pass !== confirmPass) {
+      return socket.emit('registerResult', { success: false, msg: 'Mật khẩu xác nhận không trùng khớp!' });
     }
     if (usersDatabase[user]) {
       return socket.emit('registerResult', { success: false, msg: 'Tài khoản này đã tồn tại!' });
     }
 
     usersDatabase[user] = { pass: pass, role: 'user', active: true };
-    socket.emit('registerResult', { success: true, msg: 'Đăng ký thành công! Hãy đăng nhập ngay.' });
+    socket.emit('registerResult', { success: true, msg: 'Đăng ký thành công! Vui lòng đăng nhập.' });
   });
 
-  // Xử lý Đăng Nhập Panel
+  // Xử lý Đăng Nhập
   socket.on('loginPanel', (data) => {
     const { user, pass } = data;
+    
+    if (!user || !pass) {
+      return socket.emit('loginResult', { success: false, msg: 'Vui lòng nhập tài khoản và mật khẩu!' });
+    }
+
     const account = usersDatabase[user];
 
-    if (account && account.pass === pass) {
-      if (!account.active) {
-        return socket.emit('loginResult', { success: false, msg: 'Tài khoản của bạn đã bị khóa bởi Admin!' });
-      }
-
-      userSessions[socket.id] = { user, role: account.role };
-      socket.emit('loginResult', { 
-        success: true, 
-        msg: 'Đăng nhập thành công!',
-        role: account.role 
-      });
-    } else {
-      socket.emit('loginResult', { success: false, msg: 'Tài khoản hoặc mật khẩu không chính xác!' });
+    // Kiểm tra tài khoản tồn tại
+    if (!account) {
+      return socket.emit('loginResult', { success: false, msg: 'Tài khoản không tồn tại!' });
     }
+
+    // Kiểm tra mật khẩu
+    if (account.pass !== pass) {
+      return socket.emit('loginResult', { success: false, msg: 'Sai mật khẩu!' });
+    }
+
+    // Kiểm tra trạng thái khóa
+    if (!account.active) {
+      return socket.emit('loginResult', { success: false, msg: 'Tài khoản của bạn đã bị khóa bởi Admin!' });
+    }
+
+    userSessions[socket.id] = { user, role: account.role };
+    socket.emit('loginResult', { 
+      success: true, 
+      msg: 'Đăng nhập thành công!',
+      username: user,
+      role: account.role 
+    });
   });
 
-  // Kiểm tra xác thực socket
   const getSession = () => userSessions[socket.id];
 
-  // ===== TÍNH NĂNG DÀNH CHO ADMIN =====
-
-  // Admin lấy danh sách tất cả tài khoản người dùng
+  // ===== TÍNH NĂNG ADMIN =====
   socket.on('adminGetUsers', () => {
     const session = getSession();
-    if (!session || session.role !== 'admin') {
-      return socket.emit('log', { msg: '[BẢO MẬT] Bạn không có quyền Admin!' });
-    }
+    if (!session || session.role !== 'admin') return;
 
-    // Trả về danh sách tài khoản
     const userList = Object.keys(usersDatabase).map(u => ({
       username: u,
       role: usersDatabase[u].role,
@@ -82,7 +93,6 @@ io.on('connection', (socket) => {
     socket.emit('adminUserList', userList);
   });
 
-  // Admin bật / khóa trạng thái tài khoản
   socket.on('adminToggleUserStatus', (targetUser) => {
     const session = getSession();
     if (!session || session.role !== 'admin') return;
@@ -90,10 +100,6 @@ io.on('connection', (socket) => {
     if (usersDatabase[targetUser] && targetUser !== 'admin') {
       usersDatabase[targetUser].active = !usersDatabase[targetUser].active;
       
-      const statusText = usersDatabase[targetUser].active ? 'Kích hoạt' : 'Khóa';
-      socket.emit('log', { msg: `[ADMIN] Đã ${statusText} tài khoản: ${targetUser}` });
-
-      // Nếu bị khóa, ngắt các bot đang chạy của user đó
       if (!usersDatabase[targetUser].active && activeBots[targetUser]) {
         if (botInfo[targetUser]) botInfo[targetUser].autoReconnect = false;
         activeBots[targetUser].end();
@@ -102,20 +108,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Admin đặt lại mật khẩu mới cho người dùng
-  socket.on('adminResetPassword', (data) => {
-    const session = getSession();
-    if (!session || session.role !== 'admin') return;
-
-    const { targetUser, newPass } = data;
-    if (usersDatabase[targetUser] && newPass) {
-      usersDatabase[targetUser].pass = newPass;
-      socket.emit('log', { msg: `[ADMIN] Đã đổi mật khẩu cho tài khoản ${targetUser} thành công.` });
-    }
-  });
-
-  // ===== BẬT / TẮT BOT =====
-
+  // ===== QUẢN LÝ BOT =====
   socket.on('startBot', (data) => {
     const session = getSession();
     if (!session) return socket.emit('log', { msg: '[BẢO MẬT] Bạn cần đăng nhập để thao tác!' });
@@ -124,7 +117,7 @@ io.on('connection', (socket) => {
     botInfo[username] = { password, autoReconnect: true };
 
     if (activeBots[username]) {
-      socket.emit('log', { bot: username, msg: `Bot ${username} đang hoạt động hoặc đang kết nối!` });
+      socket.emit('log', { bot: username, msg: `Bot ${username} đang hoạt động!` });
       return;
     }
 
@@ -142,19 +135,8 @@ io.on('connection', (socket) => {
     if (activeBots[username]) {
       activeBots[username].end();
       delete activeBots[username];
-      socket.emit('log', { bot: username, msg: `[STOP] Đã chủ động ngắt kết nối bot ${username}.` });
+      socket.emit('log', { bot: username, msg: `[STOP] Đã tắt bot ${username}.` });
     }
-  });
-
-  socket.on('sendChat', (msg) => {
-    const session = getSession();
-    if (!session) return socket.emit('log', { msg: '[BẢO MẬT] Bạn cần đăng nhập để thao tác!' });
-
-    Object.keys(activeBots).forEach((botName) => {
-      if (activeBots[botName]) {
-        activeBots[botName].chat(msg);
-      }
-    });
   });
 
   socket.on('disconnect', () => {
@@ -176,24 +158,17 @@ function createBot(username, password, socket) {
   activeBots[username] = bot;
 
   bot.on('spawn', () => {
-    socket.emit('log', { bot: username, msg: `[✓ ${username}] Đã xuất hiện ở Sảnh!` });
-    
+    socket.emit('log', { bot: username, msg: `[✓ ${username}] Đã vào Sảnh!` });
     setTimeout(() => {
-      if (password) {
-        bot.chat(`/dn ${password}`);
-        socket.emit('log', { bot: username, msg: `[SYSTEM ${username}] Đã gửi lệnh đăng nhập game!` });
-      }
+      if (password) bot.chat(`/dn ${password}`);
     }, 3000);
-
     setTimeout(() => {
       bot.chat('/menu');
-      socket.emit('log', { bot: username, msg: `[SYSTEM ${username}] Đã gõ /menu!` });
     }, 12000);
   });
 
   bot.on('message', (message) => {
-    const text = message.toAnsi();
-    socket.emit('log', { bot: username, msg: `[SERVER -> ${username}]: ${text}` });
+    socket.emit('log', { bot: username, msg: `[SERVER -> ${username}]: ${message.toAnsi()}` });
   });
 
   bot.on('end', (reason) => {
