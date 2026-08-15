@@ -2,123 +2,74 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MC Panel</title>
+  <title>MC Panel - Điều khiển Bot</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-    body { background-color: #0d0714; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-    .card { background: #160d21; border: 1px solid #ff2a8d; border-radius: 12px; padding: 30px; width: 380px; box-shadow: 0 0 20px rgba(255, 42, 141, 0.2); text-align: center; }
-    .badge { background: #3b0a2a; color: #ff2a8d; font-size: 11px; font-weight: bold; padding: 4px 12px; border-radius: 20px; letter-spacing: 1px; display: inline-block; margin-bottom: 12px; }
-    h2 { margin-bottom: 20px; font-size: 22px; }
-    input { width: 100%; padding: 12px; margin-bottom: 12px; background: #231634; border: 1px solid #382252; border-radius: 6px; color: #fff; outline: none; }
-    input:focus { border-color: #ff2a8d; }
-    button { width: 100%; padding: 12px; background: linear-gradient(90deg, #d6007e, #8a00e6); border: none; border-radius: 6px; color: #fff; font-weight: bold; cursor: pointer; transition: 0.2s; }
-    button:hover { opacity: 0.9; }
-    .switch-link { margin-top: 15px; font-size: 13px; color: #aaa; }
-    .switch-link a { color: #ff2a8d; text-decoration: none; font-weight: bold; cursor: pointer; }
-    .alert { margin-bottom: 12px; padding: 10px; border-radius: 6px; font-size: 13px; display: none; }
-    .alert-error { background: #4a151b; color: #ff6b6b; border: 1px solid #8a222c; }
-    .alert-success { background: #154a21; color: #6bff8d; border: 1px solid #228a39; }
+    /* CSS giữ nguyên phong cách cũ */
+    body { background: #0c0714; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    .card { background: #160d21; border: 1px solid #ff2a8d; border-radius: 12px; padding: 25px; width: 400px; text-align: center; }
+    input { width: 100%; padding: 10px; margin-bottom: 10px; background: #231634; border: 1px solid #382252; color: #fff; border-radius: 5px; }
+    button { width: 100%; padding: 10px; background: #ff2a8d; border: none; color: #fff; font-weight: bold; cursor: pointer; border-radius: 5px; margin-top: 5px; }
+    #logArea { background: #000; height: 150px; overflow-y: scroll; font-size: 12px; text-align: left; padding: 10px; margin-top: 10px; border: 1px solid #333; color: #0f0; }
   </style>
 </head>
 <body>
 
   <!-- FORM ĐĂNG NHẬP -->
   <div class="card" id="loginCard">
-    <span class="badge">AUTHENTICATION</span>
     <h2>ĐĂNG NHẬP PANEL</h2>
-    <div id="loginMsg" class="alert alert-error"></div>
     <input type="text" id="loginUser" placeholder="Tài khoản">
     <input type="password" id="loginPass" placeholder="Mật khẩu">
-    <button onclick="handleLogin()">XÁC NHẬN ĐĂNG NHẬP</button>
-    <div class="switch-link">
-      Chưa có tài khoản? <a onclick="toggleForm('register')">Đăng ký ngay</a>
-    </div>
+    <button onclick="handleLogin()">ĐĂNG NHẬP</button>
   </div>
 
-  <!-- FORM ĐĂNG KÝ -->
-  <div class="card" id="registerCard" style="display: none;">
-    <span class="badge">AUTHENTICATION</span>
-    <h2>ĐĂNG KÝ PANEL</h2>
-    <div id="registerMsg" class="alert alert-error"></div>
-    <input type="text" id="regUser" placeholder="Tài khoản">
-    <input type="password" id="regPass" placeholder="Mật khẩu">
-    <input type="password" id="regConfirmPass" placeholder="Xác nhận mật khẩu">
-    <button onclick="handleRegister()">XÁC NHẬN ĐĂNG KÝ</button>
-    <div class="switch-link">
-      Đã có tài khoản? <a onclick="toggleForm('login')">Đăng nhập</a>
+  <!-- GIAO DIỆN PANEL (Mặc định ẩn) -->
+  <div class="card" id="panelCard" style="display: none;">
+    <h2>ĐIỀU KHIỂN BOT</h2>
+    <input type="text" id="botName" placeholder="Tên Bot (Username)">
+    <input type="password" id="botPass" placeholder="Mật khẩu Bot">
+    <div style="display: flex; gap: 5px;">
+        <button onclick="startBot()">BẬT BOT</button>
+        <button onclick="stopBot()" style="background: #666;">DỪNG BOT</button>
     </div>
+    <div id="logArea"></div>
   </div>
 
   <script>
     const socket = io();
 
-    function toggleForm(form) {
-      document.getElementById('loginMsg').style.display = 'none';
-      document.getElementById('registerMsg').style.display = 'none';
-      if (form === 'register') {
-        document.getElementById('loginCard').style.display = 'none';
-        document.getElementById('registerCard').style.display = 'block';
-      } else {
-        document.getElementById('registerCard').style.display = 'none';
-        document.getElementById('loginCard').style.display = 'block';
-      }
-    }
-
-    function showAlert(elementId, msg, isSuccess = false) {
-      const el = document.getElementById(elementId);
-      el.innerText = msg;
-      el.className = `alert ${isSuccess ? 'alert-success' : 'alert-error'}`;
-      el.style.display = 'block';
-    }
-
     function handleLogin() {
-      const user = document.getElementById('loginUser').value.trim();
-      const pass = document.getElementById('loginPass').value.trim();
-      if (!user || !pass) {
-        return showAlert('loginMsg', 'Vui lòng nhập đầy đủ tài khoản và mật khẩu!');
-      }
+      const user = document.getElementById('loginUser').value;
+      const pass = document.getElementById('loginPass').value;
       socket.emit('loginPanel', { user, pass });
     }
 
-    function handleRegister() {
-      const user = document.getElementById('regUser').value.trim();
-      const pass = document.getElementById('regPass').value.trim();
-      const confirmPass = document.getElementById('regConfirmPass').value.trim();
-
-      if (!user || !pass || !confirmPass) {
-        return showAlert('registerMsg', 'Vui lòng điền đầy đủ các trường!');
-      }
-      if (pass !== confirmPass) {
-        return showAlert('registerMsg', 'Xác nhận mật khẩu không khớp!');
-      }
-
-      socket.emit('registerPanel', { user, pass, confirmPass });
-    }
-
-    // Nhận phản hồi từ Server
     socket.on('loginResult', (data) => {
       if (data.success) {
-        showAlert('loginMsg', data.msg, true);
-        setTimeout(() => {
-          alert('Đăng nhập thành công! Tiến vào Panel...');
-          // Thêm logic chuyển sang giao diện điều khiển Bot tại đây
-        }, 500);
+        document.getElementById('loginCard').style.display = 'none';
+        document.getElementById('panelCard').style.display = 'block';
       } else {
-        showAlert('loginMsg', data.msg, false);
+        alert(data.msg);
       }
     });
 
-    socket.on('registerResult', (data) => {
-      if (data.success) {
-        showAlert('registerMsg', data.msg, true);
-        setTimeout(() => {
-          toggleForm('login');
-        }, 1500);
-      } else {
-        showAlert('registerMsg', data.msg, false);
-      }
+    // Lệnh điều khiển Bot
+    function startBot() {
+      const username = document.getElementById('botName').value;
+      const password = document.getElementById('botPass').value;
+      socket.emit('startBot', { username, password });
+    }
+
+    function stopBot() {
+      const username = document.getElementById('botName').value;
+      socket.emit('stopBot', username);
+    }
+
+    // Hiển thị Log từ server
+    socket.on('log', (data) => {
+      const logArea = document.getElementById('logArea');
+      logArea.innerHTML += `<div>${data.msg}</div>`;
+      logArea.scrollTop = logArea.scrollHeight;
     });
   </script>
 </body>
