@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KingMC Multi-Bot Control Panel</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: #fff; margin: 0; padding: 20px; }
+        .container { max-width: 950px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        h2 { margin-top: 0; text-align: center; color: #00ff88; }
+        
+        .add-box { display: flex; gap: 10px; background: #2a2a2a; padding: 12px; border-radius: 6px; margin-bottom: 20px; }
+        .add-box input { flex: 1; padding: 10px; background: #1e1e1e; border: 1px solid #444; color: #fff; border-radius: 5px; outline: none; }
+        
+        .acc-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background: #2a2a2a; border-radius: 6px; overflow: hidden; }
+        .acc-table th, .acc-table td { padding: 12px; text-align: left; border-bottom: 1px solid #3a3a3a; }
+        .acc-table th { background: #333; color: #00ff88; }
+        
+        .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 4px; font-size: 12px; transition: 0.2s; }
+        .btn-start { background: #28a745; color: white; }
+        .btn-stop { background: #dc3545; color: white; }
+        .btn-auto { background: #6c757d; color: white; }
+        .btn-add { background: #007bff; color: white; padding: 10px 20px; }
+        .btn-del { background: #ff4444; color: white; }
+        
+        #log-box { background: #000; color: #00ff88; font-family: 'Consolas', monospace; height: 300px; overflow-y: auto; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; line-height: 1.4; white-space: pre-wrap; word-break: break-all; }
+
+        .chat-container { display: flex; gap: 10px; }
+        .chat-input { flex: 1; padding: 12px; border-radius: 6px; border: 1px solid #444; background: #2b2b2b; color: #fff; outline: none; font-size: 14px; }
+        .chat-input:focus { border-color: #00ff88; }
+        .chat-btn { padding: 12px 24px; background: #007bff; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>KingMC Multi-Bot Control Panel</h2>
+
+        <!-- Khung thêm tài khoản -->
+        <div class="add-box">
+            <input type="text" id="acc-username" placeholder="Tên tài khoản Game">
+            <input type="password" id="acc-password" placeholder="Mật khẩu">
+            <button class="btn btn-add" onclick="addAccount()">Thêm Account</button>
+        </div>
+
+        <!-- Bảng danh sách tài khoản & trạng thái -->
+        <table class="acc-table">
+            <thead>
+                <tr>
+                    <th>Tài khoản</th>
+                    <th>Trạng thái</th>
+                    <th>Tự kết nối</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="acc-list">
+                <!-- Nội dung tự động render từ JS -->
+            </tbody>
+        </table>
+
+        <!-- Khung Log -->
+        <div id="log-box"></div>
+
+        <!-- Ô Chat chung cho tất cả bot -->
+        <div class="chat-container">
+            <input type="text" id="chat-input" class="chat-input" placeholder="Gửi câu chat / lệnh cho TẤT CẢ bot đang online..." onkeypress="handleKeyPress(event)">
+            <button class="chat-btn" onclick="sendChat()">Gửi Tất Cả</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const logBox = document.getElementById('log-box');
+        const accList = document.getElementById('acc-list');
+
+        socket.on('accounts_update', (accounts) => {
+            accList.innerHTML = '';
+            accounts.forEach(acc => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${acc.username}</strong></td>
+                    <td><span style="color: ${acc.color}; font-weight: bold;">${acc.status}</span></td>
+                    <td>
+                        <button class="btn btn-auto" style="background: ${acc.autoReconnect ? '#17a2b8' : '#6c757d'}" onclick="toggleAuto('${acc.id}')">
+                            ${acc.autoReconnect ? 'ON' : 'OFF'}
+                        </button>
+                    </td>
+                    <td>
+                        <button class="btn btn-start" onclick="startBot('${acc.id}')">Bật</button>
+                        <button class="btn btn-stop" onclick="stopBot('${acc.id}')">Tắt</button>
+                        <button class="btn btn-del" onclick="deleteBot('${acc.id}')">Xóa</button>
+                    </td>
+                `;
+                accList.appendChild(tr);
+            });
+        });
+
+        socket.on('log', (msg) => {
+            const div = document.createElement('div');
+            div.textContent = msg;
+
+            if (msg.includes('Bensiucapvippro')) {
+                div.style.color = '#ffda44';
+                div.style.fontWeight = 'bold';
+            }
+
+            logBox.appendChild(div);
+            logBox.scrollTop = logBox.scrollHeight;
+        });
+
+        function addAccount() {
+            const username = document.getElementById('acc-username').value.trim();
+            const password = document.getElementById('acc-password').value.trim();
+            if (username && password) {
+                socket.emit('add_account', { username, password });
+                document.getElementById('acc-username').value = '';
+                document.getElementById('acc-password').value = '';
+            }
+        }
+
+        function deleteBot(id) { socket.emit('delete_account', id); }
+        function startBot(id) { socket.emit('start_acc', id); }
+        function stopBot(id) { socket.emit('stop_acc', id); }
+        function toggleAuto(id) { socket.emit('toggle_auto_reconnect', id); }
+
+        function sendChat() {
+            const chatInput = document.getElementById('chat-input');
+            const msg = chatInput.value.trim();
+            if (msg) {
+                socket.emit('send_chat', msg);
+                chatInput.value = '';
+            }
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') sendChat();
+        }
+    </script>
+</body>
+</html>
