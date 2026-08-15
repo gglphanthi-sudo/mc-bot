@@ -1,221 +1,526 @@
 const express = require('express');
+
 const http = require('http');
+
 const { Server } = require('socket.io');
-const path = require('path');
+
 const mineflayer = require('mineflayer');
 
+
+
 const app = express();
+
 const server = http.createServer(app);
+
 const io = new Server(server);
 
-app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+
+const PORT = 3000;
+
+const SERVER_HOST = 'kingmc.vn';
+
+const SERVER_PORT = 25565;
+
+
+
+// Quản lý danh sách bot
+
+const accounts = []; // { id, username, password, status, color, botInstance, autoReconnect, hasJoinedKingSMP, hasExecutedAFK, isLoggedIn }
+
+
+
+app.use(express.static('public'));
+
+
+
+function logToUI(msg) {
+
+    console.log(msg);
+
+    io.emit('log', msg);
+
+}
+
+
+
+function emitAccountsUpdate() {
+
+    const list = accounts.map(acc => ({
+
+        id: acc.id,
+
+        username: acc.username,
+
+        status: acc.status,
+
+        color: acc.color,
+
+        autoReconnect: acc.autoReconnect
+
+    }));
+
+    io.emit('accounts_update', list);
+
+}
+
+
+
+process.on('uncaughtException', (err) => {
+
+    console.log('[SỜI, ĐÃ BẮT LỖI]:', err.message);
+
 });
 
-// Cấu trúc cơ sở dữ liệu lưu tài khoản hệ thống (Có phân quyền role & trạng thái active)
-const usersDatabase = {
-  'admin': { pass: '123456', role: 'admin', active: true }
-};
 
-const activeBots = {}; // Lưu instance của bot đang chạy
-const botInfo = {}; // Lưu thông tin mật khẩu & trạng thái tự động kết nối lại
-const userSessions = {}; // Lưu thông tin phiên kết nối socket -> user
+
+process.on('unhandledRejection', (reason) => {
+
+    console.log('[SỜI, ĐÃ BẮT REJECTION]:', reason?.message || reason);
+
+});
+
+
+
+function startBotForAccount(acc) {
+
+    if (acc.botInstance) return;
+
+
+
+    acc.hasJoinedKingSMP = false;
+
+    acc.hasExecutedAFK = false;
+
+    acc.isLoggedIn = false;
+
+    acc.status = 'CONNECTING...';
+
+    acc.color = 'yellow';
+
+    emitAccountsUpdate();
+
+
+
+    logToUI(`[BOT ${acc.username}] Đang kết nối tới ${SERVER_HOST}...`);
+
+
+
+    try {
+
+        const bot = mineflayer.createBot({
+
+            host: SERVER_HOST,
+
+            port: SERVER_PORT,
+
+            username: acc.username,
+
+            password: acc.password,
+
+            auth: 'offline',
+
+            version: '1.16.5',
+
+            checkTimeoutInterval: 120000
+
+        });
+
+
+
+        acc.botInstance = bot;
+
+
+
+        bot.on('login', () => {
+
+            logToUI(`[✔ ${acc.username}] Bắt tay thành công! Đang vào Sảnh...`);
+
+            acc.status = 'LOGGING IN...';
+
+            acc.color = 'orange';
+
+            emitAccountsUpdate();
+
+        });
+
+
+
+        bot.on('spawn', () => {
+
+            if (acc.hasJoinedKingSMP) {
+
+                logToUI(`[🎉 ${acc.username}] ĐÃ SANG KINGSMP THÀNH CÔNG!`);
+
+                acc.status = 'ONLINE / KINGSMP';
+
+                acc.color = '#00ff88';
+
+
+
+                if (!acc.hasExecutedAFK) {
+
+                    setTimeout(() => {
+
+                        if (acc.botInstance) {
+
+                            logToUI(`[SYSTEM ${acc.username}] Gửi lệnh /afk...`);
+
+                            acc.botInstance.chat('/afk');
+
+                        }
+
+                    }, 4000);
+
+                }
+
+            } else {
+
+                logToUI(`[✔ ${acc.username}] Đã xuất hiện ở Sảnh!`);
+
+                acc.status = 'ONLINE / LOBBY';
+
+                acc.color = '#00ff88';
+
+            }
+
+            emitAccountsUpdate();
+
+        });
+
+
+
+        bot.on('messagestr', (message) => {
+
+            logToUI(`[SERVER -> ${acc.username}]: ${message}`);
+
+            const msgLower = message.toLowerCase();
+
+
+
+            if (msgLower.includes('/register') || msgLower.includes('/dk')) {
+
+                setTimeout(() => { if (acc.botInstance) acc.botInstance.chat(`/dk ${acc.password} ${acc.password}`); }, 2000);
+
+            } else if (msgLower.includes('/login') || msgLower.includes('/dn')) {
+
+                setTimeout(() => { if (acc.botInstance) acc.botInstance.chat(`/dn ${acc.password}`); }, 2000);
+
+            }
+
+
+
+            if (!acc.hasJoinedKingSMP && !acc.isLoggedIn && 
+
+                (msgLower.includes('đăng nhập thành công') || msgLower.includes('bạn đã đăng nhập'))) {
+
+                
+
+                acc.isLoggedIn = true;
+
+                logToUI(`[SYSTEM ${acc.username}] Đã đăng nhập! Đợi 5s gõ /menu...`);
+
+                setTimeout(() => {
+
+                    if (acc.botInstance && !acc.hasJoinedKingSMP) {
+
+                        logToUI(`[SYSTEM ${acc.username}] Đang gõ /menu...`);
+
+                        acc.botInstance.chat('/menu');
+
+                    }
+
+                }, 5000);
+
+            }
+
+        });
+
+
+
+        bot.on('windowOpen', (window) => {
+
+            const rawTitle = JSON.stringify(window.title || '').toLowerCase();
+
+            logToUI(`[SYSTEM ${acc.username}] Menu mở: ${rawTitle}`);
+
+
+
+            if (!acc.hasJoinedKingSMP) {
+
+                setTimeout(async () => {
+
+                    if (!acc.botInstance || !acc.botInstance.currentWindow) return;
+
+                    logToUI(`[SYSTEM ${acc.username}] Đang click Slot 24 chọn KingSMP...`);
+
+
+
+                    try {
+
+                        await acc.botInstance.clickWindow(24, 0, 0);
+
+                        acc.hasJoinedKingSMP = true;
+
+                        logToUI(`[✔ ${acc.username}] Gửi lệnh chọn Slot 24 thành công!`);
+
+                    } catch (err) {
+
+                        logToUI(`[⚠️ ${acc.username}] Bỏ qua cảnh báo click: ${err.message}`);
+
+                    }
+
+                }, 3500);
+
+            } else if (acc.hasJoinedKingSMP && !acc.hasExecutedAFK) {
+
+                setTimeout(async () => {
+
+                    if (!acc.botInstance || !acc.botInstance.currentWindow) return;
+
+                    logToUI(`[SYSTEM ${acc.username}] Đang click Slot 1 chọn chế độ AFK...`);
+
+
+
+                    try {
+
+                        await acc.botInstance.clickWindow(1, 0, 0);
+
+                        acc.hasExecutedAFK = true;
+
+                        logToUI(`[🎉 ${acc.username}] ĐÃ CHỌN AFK THÀNH CÔNG!`);
+
+                    } catch (err) {
+
+                        logToUI(`[⚠️ ${acc.username}] Bỏ qua cảnh báo AFK: ${err.message}`);
+
+                    }
+
+                }, 2000);
+
+            }
+
+        });
+
+
+
+        bot.on('end', (reason) => {
+
+            logToUI(`[! ${acc.username}] Ngắt kết nối: ${reason || 'Mất kết nối từ Server'}`);
+
+            acc.botInstance = null;
+
+            acc.status = 'OFFLINE';
+
+            acc.color = '#ff4444';
+
+            acc.hasJoinedKingSMP = false;
+
+            acc.hasExecutedAFK = false;
+
+            acc.isLoggedIn = false;
+
+            emitAccountsUpdate();
+
+
+
+            if (acc.autoReconnect) {
+
+                logToUI(`[SYSTEM ${acc.username}] Tự động kết nối lại sau 5 giây...`);
+
+                setTimeout(() => {
+
+                    if (acc.autoReconnect && !acc.botInstance) startBotForAccount(acc);
+
+                }, 5000);
+
+            }
+
+        });
+
+
+
+        bot.on('error', (err) => {
+
+            logToUI(`[❌ ${acc.username}] Lỗi Bot: ${err.message}`);
+
+        });
+
+
+
+    } catch (e) {
+
+        logToUI(`[❌ ${acc.username}] Lỗi khởi tạo: ${e.message}`);
+
+        acc.status = 'OFFLINE';
+
+        acc.color = '#ff4444';
+
+        emitAccountsUpdate();
+
+    }
+
+}
+
+
+
+function stopBotForAccount(acc) {
+
+    acc.autoReconnect = false;
+
+    acc.hasJoinedKingSMP = false;
+
+    acc.hasExecutedAFK = false;
+
+    acc.isLoggedIn = false;
+
+    if (acc.botInstance) {
+
+        acc.botInstance.quit();
+
+        acc.botInstance = null;
+
+    }
+
+    acc.status = 'STOPPED';
+
+    acc.color = '#ff4444';
+
+    emitAccountsUpdate();
+
+    logToUI(`[SYSTEM ${acc.username}] Đã dừng Bot.`);
+
+}
+
+
 
 io.on('connection', (socket) => {
 
-  // Xử lý Đăng Ký Panel (Mặc định tài khoản mới có role là 'user')
-  socket.on('registerPanel', (data) => {
-    const { user, pass } = data;
-    if (!user || !pass) {
-      return socket.emit('registerResult', { success: false, msg: 'Tài khoản và mật khẩu không được trống!' });
-    }
-    if (usersDatabase[user]) {
-      return socket.emit('registerResult', { success: false, msg: 'Tài khoản này đã tồn tại!' });
-    }
+    emitAccountsUpdate();
 
-    usersDatabase[user] = { pass: pass, role: 'user', active: true };
-    socket.emit('registerResult', { success: true, msg: 'Đăng ký thành công! Hãy đăng nhập ngay.' });
-  });
 
-  // Xử lý Đăng Nhập Panel
-  socket.on('loginPanel', (data) => {
-    const { user, pass } = data;
-    const account = usersDatabase[user];
 
-    if (account && account.pass === pass) {
-      if (!account.active) {
-        return socket.emit('loginResult', { success: false, msg: 'Tài khoản của bạn đã bị khóa bởi Admin!' });
-      }
+    socket.on('add_account', ({ username, password }) => {
 
-      userSessions[socket.id] = { user, role: account.role };
-      socket.emit('loginResult', { 
-        success: true, 
-        msg: 'Đăng nhập thành công!',
-        role: account.role 
-      });
-    } else {
-      socket.emit('loginResult', { success: false, msg: 'Tài khoản hoặc mật khẩu không chính xác!' });
-    }
-  });
+        if (!username || !password) return;
 
-  // Kiểm tra xác thực socket
-  const getSession = () => userSessions[socket.id];
+        const id = Date.now().toString();
 
-  // ===== TÍNH NĂNG DÀNH CHO ADMIN =====
+        const newAcc = {
 
-  // Admin lấy danh sách tất cả tài khoản người dùng
-  socket.on('adminGetUsers', () => {
-    const session = getSession();
-    if (!session || session.role !== 'admin') {
-      return socket.emit('log', { msg: '[BẢO MẬT] Bạn không có quyền Admin!' });
-    }
+            id,
 
-    // Trả về danh sách tài khoản (không kèm mật khẩu rõ)
-    const userList = Object.keys(usersDatabase).map(u => ({
-      username: u,
-      role: usersDatabase[u].role,
-      active: usersDatabase[u].active
-    }));
+            username,
 
-    socket.emit('adminUserList', userList);
-  });
+            password,
 
-  // Admin bật / khóa trạng thái tài khoản
-  socket.on('adminToggleUserStatus', (targetUser) => {
-    const session = getSession();
-    if (!session || session.role !== 'admin') return;
+            status: 'OFFLINE',
 
-    if (usersDatabase[targetUser] && targetUser !== 'admin') {
-      usersDatabase[targetUser].active = !usersDatabase[targetUser].active;
-      
-      const statusText = usersDatabase[targetUser].active ? 'Kích hoạt' : 'Khóa';
-      socket.emit('log', { msg: `[ADMIN] Đã ${statusText} tài khoản: ${targetUser}` });
+            color: '#ff4444',
 
-      // Nếu bị khóa, ngắt các bot đang chạy của user đó nếu có
-      if (!usersDatabase[targetUser].active && activeBots[targetUser]) {
-        if (botInfo[targetUser]) botInfo[targetUser].autoReconnect = false;
-        activeBots[targetUser].end();
-        delete activeBots[targetUser];
-      }
-    }
-  });
+            botInstance: null,
 
-  // Admin đặt lại mật khẩu mới cho người dùng
-  socket.on('adminResetPassword', (data) => {
-    const session = getSession();
-    if (!session || session.role !== 'admin') return;
+            autoReconnect: false,
 
-    const { targetUser, newPass } = data;
-    if (usersDatabase[targetUser] && newPass) {
-      usersDatabase[targetUser].pass = newPass;
-      socket.emit('log', { msg: `[ADMIN] Đã đổi mật khẩu cho tài khoản ${targetUser} thành công.` });
-    }
-  });
+            hasJoinedKingSMP: false,
 
-  // ===== BẬT / TẮT BOT =====
+            hasExecutedAFK: false,
 
-  socket.on('startBot', (data) => {
-    const session = getSession();
-    if (!session) return socket.emit('log', { msg: '[BẢO MẬT] Bạn cần đăng nhập để thao tác!' });
+            isLoggedIn: false
 
-    const { username, password } = data;
-    botInfo[username] = { password, autoReconnect: true };
+        };
 
-    if (activeBots[username]) {
-      socket.emit('log', { bot: username, msg: `Bot ${username} đang hoạt động hoặc đang kết nối!` });
-      return;
-    }
+        accounts.push(newAcc);
 
-    createBot(username, password, socket);
-  });
+        emitAccountsUpdate();
 
-  socket.on('stopBot', (username) => {
-    const session = getSession();
-    if (!session) return socket.emit('log', { msg: '[BẢO MẬT] Bạn cần đăng nhập để thao tác!' });
+        logToUI(`[SYSTEM] Đã thêm tài khoản: ${username}`);
 
-    if (botInfo[username]) {
-      botInfo[username].autoReconnect = false;
-    }
-
-    if (activeBots[username]) {
-      activeBots[username].end();
-      delete activeBots[username];
-      socket.emit('log', { bot: username, msg: `[STOP] Đã chủ động ngắt kết nối bot ${username}.` });
-    }
-  });
-
-  socket.on('sendChat', (msg) => {
-    const session = getSession();
-    if (!session) return socket.emit('log', { msg: '[BẢO MẬT] Bạn cần đăng nhập để thao tác!' });
-
-    Object.keys(activeBots).forEach((botName) => {
-      if (activeBots[botName]) {
-        activeBots[botName].chat(msg);
-      }
     });
-  });
 
-  socket.on('disconnect', () => {
-    delete userSessions[socket.id];
-  });
-});
 
-function createBot(username, password, socket) {
-  socket.emit('log', { bot: username, msg: `[BOT ${username}] Đang kết nối tới kingmc.vn...` });
 
-  const bot = mineflayer.createBot({
-    host: 'kingmc.vn',
-    port: 25565,
-    username: username,
-    version: '1.20.1',
-    checkTimeoutInterval: 60 * 1000,
-  });
+    socket.on('delete_account', (id) => {
 
-  activeBots[username] = bot;
+        const index = accounts.findIndex(a => a.id === id);
 
-  bot.on('spawn', () => {
-    socket.emit('log', { bot: username, msg: `[✓ ${username}] Đã xuất hiện ở Sảnh!` });
-    
-    setTimeout(() => {
-      if (password) {
-        bot.chat(`/dn ${password}`);
-        socket.emit('log', { bot: username, msg: `[SYSTEM ${username}] Đã gửi lệnh đăng nhập game!` });
-      }
-    }, 3000);
+        if (index !== -1) {
 
-    setTimeout(() => {
-      bot.chat('/menu');
-      socket.emit('log', { bot: username, msg: `[SYSTEM ${username}] Đã gõ /menu!` });
-    }, 12000);
-  });
+            const acc = accounts[index];
 
-  bot.on('message', (message) => {
-    const text = message.toAnsi();
-    socket.emit('log', { bot: username, msg: `[SERVER -> ${username}]: ${text}` });
-  });
+            stopBotForAccount(acc);
 
-  bot.on('end', (reason) => {
-    socket.emit('log', { bot: username, msg: `[! ${username}] Ngắt kết nối: ${reason}` });
-    delete activeBots[username];
+            accounts.splice(index, 1);
 
-    if (botInfo[username] && botInfo[username].autoReconnect) {
-      socket.emit('log', { bot: username, msg: `[AUTO-RECONNECT] Sẽ thử kết nối lại sau 10 giây...` });
-      setTimeout(() => {
-        if (botInfo[username] && botInfo[username].autoReconnect && !activeBots[username]) {
-          createBot(username, botInfo[username].password, socket);
+            emitAccountsUpdate();
+
+            logToUI(`[SYSTEM] Đã xóa tài khoản ID: ${id}`);
+
         }
-      }, 10000);
-    }
-  });
 
-  bot.on('error', (err) => {
-    socket.emit('log', { bot: username, msg: `[X ${username}] Lỗi Bot: ${err.message}` });
-  });
-}
+    });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+
+
+    socket.on('start_acc', (id) => {
+
+        const acc = accounts.find(a => a.id === id);
+
+        if (acc) startBotForAccount(acc);
+
+    });
+
+
+
+    socket.on('stop_acc', (id) => {
+
+        const acc = accounts.find(a => a.id === id);
+
+        if (acc) stopBotForAccount(acc);
+
+    });
+
+
+
+    socket.on('toggle_auto_reconnect', (id) => {
+
+        const acc = accounts.find(a => a.id === id);
+
+        if (acc) {
+
+            acc.autoReconnect = !acc.autoReconnect;
+
+            emitAccountsUpdate();
+
+        }
+
+    });
+
+
+
+    socket.on('send_chat', (cmd) => {
+
+        accounts.forEach(acc => {
+
+            if (acc.botInstance) {
+
+                acc.botInstance.chat(cmd);
+
+                logToUI(`[CHAT -> ${acc.username}]: ${cmd}`);
+
+            }
+
+        });
+
+    });
+
 });
+
+
+
+server.listen(PORT, () => {
+
+    console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
+
+}); 
+
