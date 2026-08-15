@@ -1,260 +1,78 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hệ thống treo shard top 1 kingsmp</title>
-  <script src="/socket.io/socket.io.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
-    body { background-color: #0d0614; color: #fff; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; background-image: radial-gradient(circle at 50% 20%, #2e0835 0%, #0d0614 70%); }
-    
-    /* Khung Đăng Nhập */
-    .login-card { background: rgba(22, 11, 31, 0.9); padding: 40px; border-radius: 20px; width: 100%; max-width: 420px; box-shadow: 0 0 40px rgba(230, 0, 126, 0.2); border: 1px solid rgba(255, 0, 128, 0.3); backdrop-filter: blur(10px); text-align: center; }
-    .login-card h2 { font-size: 22px; font-weight: 800; background: linear-gradient(90deg, #ffffff 0%, #ff66cc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; margin-bottom: 25px; letter-spacing: 1px; }
-    .login-card input { width: 100%; padding: 14px 18px; margin-bottom: 15px; border-radius: 10px; border: 1px solid rgba(255, 0, 128, 0.2); background: #160a22; color: #fff; outline: none; font-size: 14px; transition: 0.3s; }
-    .login-card input:focus { border-color: #ff0080; box-shadow: 0 0 12px rgba(255, 0, 128, 0.3); }
-    .login-card button { width: 100%; padding: 14px; background: linear-gradient(135deg, #ff0080 0%, #7928ca 100%); color: white; font-weight: 700; border: none; border-radius: 10px; cursor: pointer; font-size: 15px; box-shadow: 0 4px 15px rgba(255, 0, 128, 0.3); transition: 0.3s; }
-    .login-card button:hover { opacity: 0.9; transform: translateY(-2px); }
-
-    /* Container Bảng điều khiển (Ẩn mặc định) */
-    .container { width: 100%; max-width: 900px; background: rgba(22, 11, 31, 0.85); padding: 30px; border-radius: 20px; box-shadow: 0 0 40px rgba(230, 0, 126, 0.15); border: 1px solid rgba(255, 0, 128, 0.2); backdrop-filter: blur(10px); display: none; position: relative; }
-    
-    .btn-logout { position: absolute; top: 25px; right: 25px; background: rgba(255, 23, 68, 0.2); border: 1px solid #ff1744; color: #ff1744; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 12px; transition: 0.3s; }
-    .btn-logout:hover { background: #ff1744; color: #fff; }
-
-    /* Tag & Tiêu đề */
-    .badge-tag { display: inline-block; padding: 6px 16px; background: rgba(255, 0, 128, 0.1); border: 1px solid rgba(255, 0, 128, 0.4); border-radius: 20px; font-size: 12px; font-weight: 600; color: #ff66cc; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
-    .header-box { text-align: center; margin-bottom: 30px; }
-    h1 { font-size: 30px; font-weight: 800; background: linear-gradient(90deg, #ffffff 0%, #ff66cc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-    .subtitle { color: #a082b8; font-size: 14px; }
-
-    /* Form thêm tài khoản */
-    .form-group { display: flex; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; }
-    input[type="text"], input[type="password"] { flex: 1; padding: 14px 18px; border-radius: 10px; border: 1px solid rgba(255, 0, 128, 0.2); background: #160a22; color: #fff; outline: none; font-size: 14px; transition: 0.3s; }
-    input[type="text"]:focus, input[type="password"]:focus { border-color: #ff0080; box-shadow: 0 0 12px rgba(255, 0, 128, 0.3); }
-    
-    /* Nút bấm */
-    button { padding: 12px 22px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; font-size: 14px; }
-    .btn-add { background: linear-gradient(135deg, #ff0080 0%, #7928ca 100%); color: white; box-shadow: 0 4px 15px rgba(255, 0, 128, 0.3); }
-    .btn-add:hover { opacity: 0.9; transform: translateY(-2px); }
-    .btn-on { background: #00e676; color: #000; }
-    .btn-off { background: #ff1744; color: white; }
-    .btn-del { background: rgba(255,255,255,0.1); color: #ccc; }
-    .btn-del:hover { background: rgba(255,255,255,0.2); color: #fff; }
-
-    /* Bảng danh sách tài khoản */
-    table { width: 100%; border-collapse: collapse; margin-bottom: 25px; border-radius: 10px; overflow: hidden; }
-    th, td { padding: 14px; text-align: center; border-bottom: 1px solid rgba(255, 0, 128, 0.1); }
-    th { background: rgba(255, 0, 128, 0.08); color: #ff66cc; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
-    td { background: rgba(0, 0, 0, 0.2); font-size: 14px; }
-    .status-off { color: #ff1744; font-weight: 700; }
-    .status-on { color: #00e676; font-weight: 700; }
-
-    /* Khung Console Log */
-    .console-box { background: #07030a; color: #ffb3ec; padding: 18px; border-radius: 12px; height: 280px; overflow-y: auto; font-family: 'Consolas', 'Fira Code', monospace; font-size: 13px; margin-bottom: 20px; border: 1px solid rgba(255, 0, 128, 0.15); box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
-    .log-item { margin-bottom: 6px; word-break: break-all; line-height: 1.5; }
-
-    /* Chat / Gửi lệnh */
-    .chat-box { display: flex; gap: 12px; margin-bottom: 25px; }
-
-    /* Footer Credit */
-    .footer-credit { text-align: center; padding-top: 20px; border-top: 1px solid rgba(255, 0, 128, 0.15); font-size: 13px; color: #8a6d9b; }
-    .footer-credit span { color: #ff66cc; font-weight: 700; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KingMC Bot Panel</title>
+    <style>
+        
+{ box-sizing: border-box; }
+      body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: #fff; margin: 0; padding: 20px; }.container { max-width: 850px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+      h2 { margin-top: 0; text-align: center; color: #00ff88; }.status-bar { display: flex; justify-content: space-between; align-items: center; background: #2a2a2a; padding: 12px 20px; border-radius: 6px; margin-bottom: 15px; }.btn { padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-left: 5px; }.btn-start { background: #28a745; color: white; }.btn-stop { background: #dc3545; color: white; }#log-box { background: #000; color: #00ff88; font-family: 'Consolas', monospace; height: 380px; overflow-y: auto; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; line-height: 1.4; white-space: pre-wrap; word-break: break-all; }
+      /* Khung Chat ở phía dưới */.chat-container { display: flex; gap: 10px; }.chat-input { flex: 1; padding: 12px; border-radius: 6px; border: 1px solid #444; background: #2b2b2b; color: #fff; outline: none; font-size: 14px; }.chat-input:focus { border-color: #00ff88; }.chat-btn { padding: 12px 24px; background: #007bff; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }.chat-btn:hover { background: #0056b3; }</style>
 </head>
 <body>
+    <div class="container">
+        <h2>KingMC Bot Control Panel</h2>
 
-<!-- Màn hình Đăng Nhập -->
-<div class="login-card" id="loginCard">
-  <div class="badge-tag">AUTHENTICATION</div>
-  <h2>Đăng Nhập Panel</h2>
-  <input type="text" id="panelUser" placeholder="Tài khoản hệ thống">
-  <input type="password" id="panelPass" placeholder="Mật khẩu hệ thống">
-  <button onclick="loginPanel()">XÁC NHẬN ĐĂNG NHẬP</button>
-</div>
+        <div class="status-bar">
+            <div>Trạng thái: <span id="status-text" style="color: #ff4444; font-weight: bold;">OFFLINE</span></div>
+            <div>
+                <button class="btn btn-start" onclick="startBot()">Bật Bot</button>
+                <button class="btn btn-stop" onclick="stopBot()">Tắt Bot</button>
+            </div>
+        </div>
 
-<!-- Bảng Điều Khiển Bot -->
-<div class="container" id="panelContainer">
-  <button class="btn-logout" onclick="logoutPanel()">Đăng xuất</button>
-  
-  <div class="header-box">
-    <div class="badge-tag">KINGMC SHARD SYSTEM</div>
-    <h1>Hệ thống treo shard top 1 kingsmp</h1>
-    <div class="subtitle">Hệ thống AFK Bot tự động nâng cao · Quản lý tập trung 2026</div>
-  </div>
+        <!-- Khung xem nhật ký / console -->
+        <div id="log-box"></div>
 
-  <!-- Form nhập tài khoản -->
-  <div class="form-group">
-    <input type="text" id="accUser" placeholder="Tên tài khoản Game">
-    <input type="password" id="accPass" placeholder="Mật khẩu Game">
-    <button class="btn-add" onclick="addAccount()">Thêm Account</button>
-  </div>
+        <!-- Ô nhập câu chat / lệnh dưới cùng -->
+        <div class="chat-container">
+            <input type="text" id="chat-input" class="chat-input" placeholder="Nhập câu chat hoặc lệnh (VD: /afk, hello, /menu...)" onkeypress="handleKeyPress(event)">
+            <button class="chat-btn" onclick="sendChat()">Gửi</button>
+        </div>
+    </div>
 
-  <!-- Danh sách tài khoản đã lưu -->
-  <table>
-    <thead>
-      <tr>
-        <th>Tài khoản</th>
-        <th>Trạng thái</th>
-        <th>Thao tác</th>
-      </tr>
-    </thead>
-    <tbody id="accountTable"></tbody>
-  </table>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const logBox = document.getElementById('log-box');
+        const statusText = document.getElementById('status-text');
+        const chatInput = document.getElementById('chat-input');
 
-  <!-- Khung Console Log -->
-  <div class="console-box" id="consoleLog"></div>
+        socket.on('log', (msg) => {
+            const div = document.createElement('div');
+            div.textContent = msg;
+            logBox.appendChild(div);
+            logBox.scrollTop = logBox.scrollHeight;
+        });
 
-  <!-- Chat / Gửi lệnh -->
-  <div class="chat-box">
-    <input type="text" id="chatMsg" placeholder="Gửi câu chat / lệnh cho TẤT CẢ bot đang online...">
-    <button class="btn-add" onclick="sendChat()">Gửi Tất Cả</button>
-  </div>
+        socket.on('status', (data) => {
+            statusText.textContent = data.status;
+            statusText.style.color = data.color;
+        });
 
-  <!-- Footer Credit -->
-  <div class="footer-credit">
-    Credit: <span>meovancat</span> với <span>giaanday</span>
-  </div>
-</div>
+        function startBot() {
+            socket.emit('start_farm');
+        }
 
-<script>
-  const socket = io();
-  let accounts = JSON.parse(localStorage.getItem('mc_bots_list')) || [];
+        function stopBot() {
+            socket.emit('stop_farm');
+        }
 
-  // Khôi phục phiên đăng nhập nếu có
-  if (sessionStorage.getItem('isLoggedIn') === 'true') {
-    const savedUser = sessionStorage.getItem('savedUser');
-    const savedPass = sessionStorage.getItem('savedPass');
-    if (savedUser && savedPass) {
-      socket.emit('loginPanel', { user: savedUser, pass: savedPass });
-    }
-  }
+        function sendChat() {
+            const msg = chatInput.value.trim();
+            if (msg) {
+                socket.emit('send_chat', msg);
+                chatInput.value = '';
+            }
+        }
 
-  function loginPanel() {
-    const user = document.getElementById('panelUser').value.trim();
-    const pass = document.getElementById('panelPass').value.trim();
-    if (!user || !pass) return alert('Vui lòng nhập đầy đủ thông tin!');
-    
-    sessionStorage.setItem('savedUser', user);
-    sessionStorage.setItem('savedPass', pass);
-    socket.emit('loginPanel', { user, pass });
-  }
-
-  socket.on('loginResult', (res) => {
-    if (res.success) {
-      sessionStorage.setItem('isLoggedIn', 'true');
-      showPanel();
-    } else {
-      alert(res.msg);
-      sessionStorage.clear();
-    }
-  });
-
-  function showPanel() {
-    document.getElementById('loginCard').style.display = 'none';
-    document.getElementById('panelContainer').style.display = 'block';
-    renderAccounts();
-  }
-
-  function logoutPanel() {
-    sessionStorage.clear();
-    location.reload();
-  }
-
-  function saveAccounts() {
-    localStorage.setItem('mc_bots_list', JSON.stringify(accounts));
-    renderAccounts();
-  }
-
-  function addAccount() {
-    const user = document.getElementById('accUser').value.trim();
-    const pass = document.getElementById('accPass').value.trim();
-
-    if (!user) return alert('Vui lòng nhập tên tài khoản!');
-    if (accounts.some(acc => acc.user === user)) return alert('Tài khoản này đã có trong danh sách!');
-
-    accounts.push({ user, pass, status: 'OFFLINE' });
-    document.getElementById('accUser').value = '';
-    document.getElementById('accPass').value = '';
-    saveAccounts();
-  }
-
-  function deleteAccount(index) {
-    stopBot(accounts[index].user);
-    accounts.splice(index, 1);
-    saveAccounts();
-  }
-
-  function renderAccounts() {
-    const tbody = document.getElementById('accountTable');
-    tbody.innerHTML = '';
-
-    if (accounts.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="3" style="color: #8a6d9b;">Chưa có tài khoản nào được thêm. Hãy thêm tài khoản game ở phía trên!</td></tr>`;
-      return;
-    }
-
-    accounts.forEach((acc, index) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><b>${acc.user}</b></td>
-        <td><span class="${acc.status === 'ONLINE' ? 'status-on' : 'status-off'}">${acc.status}</span></td>
-        <td>
-          <button class="btn-on" onclick="startBot('${acc.user}', '${acc.pass}')">Bật</button>
-          <button class="btn-off" onclick="stopBot('${acc.user}')">Tắt</button>
-          <button class="btn-del" onclick="deleteAccount(${index})">Xóa</button>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-
-  function startBot(user, pass) {
-    socket.emit('startBot', { username: user, password: pass });
-    updateStatus(user, 'ONLINE');
-  }
-
-  function stopBot(user) {
-    socket.emit('stopBot', user);
-    updateStatus(user, 'OFFLINE');
-  }
-
-  function updateStatus(user, status) {
-    const acc = accounts.find(a => a.user === user);
-    if (acc) {
-      acc.status = status;
-      renderAccounts();
-    }
-  }
-
-  function sendChat() {
-    const msg = document.getElementById('chatMsg').value.trim();
-    if (msg) {
-      socket.emit('sendChat', msg);
-      document.getElementById('chatMsg').value = '';
-    }
-  }
-
-  // Lắng nghe log từ Server gửi về và tự động nhận diện trạng thái bot
-  socket.on('log', (data) => {
-    const logBox = document.getElementById('consoleLog');
-    const item = document.createElement('div');
-    item.className = 'log-item';
-    item.innerText = data.msg;
-    logBox.appendChild(item);
-    logBox.scrollTop = logBox.scrollHeight;
-
-    // Tự động quét tên bot trong log để cập nhật trạng thái trực quan nếu bot vào game hoặc rớt mạng
-    if (data.bot) {
-      if (data.msg.includes('Đã xuất hiện ở Sảnh') || data.msg.includes('Đã vào Sảnh')) {
-        updateStatus(data.bot, 'ONLINE');
-      } else if (data.msg.includes('Ngắt kết nối') || data.msg.includes('Đã chủ động ngắt kết nối')) {
-        updateStatus(data.bot, 'OFFLINE');
-      }
-    }
-  });
-</script>
-
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') {
+                sendChat();
+            }
+        }
+    </script>
 </body>
 </html>
