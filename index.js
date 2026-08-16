@@ -163,20 +163,21 @@ io.on('connection', (socket) => {
                 const msgLower = message.toLowerCase();
 
                 if (msgLower.includes('/register') || msgLower.includes('/dk')) {
-                    setTimeout(() => { if (bot) bot.chat(`/dk ${account.password} ${account.password}`); }, 2000);
+                    setTimeout(() => { if (bot) bot.chat(`/dk ${account.password} ${account.password}`); }, 3000);
                 } else if (msgLower.includes('/login') || msgLower.includes('/dn')) {
-                    setTimeout(() => { if (bot) bot.chat(`/dn ${account.password}`); }, 2000);
+                    setTimeout(() => { if (bot) bot.chat(`/dn ${account.password}`); }, 3000);
                 }
 
                 if (!hasJoinedKingSMP && !isLoggedIn && 
                     (msgLower.includes('đăng nhập thành công') || msgLower.includes('bạn đã đăng nhập'))) {
                     isLoggedIn = true;
+                    // Tăng thời gian chờ lên 5 giây để tránh bị server đóng kết nối đột ngột (socketClosed)
                     setTimeout(() => {
                         if (bot && !hasJoinedKingSMP) {
                             bot.chat('/menu');
                             socket.emit('log', `[${account.username}] 📋 Đang mở /menu...`);
                         }
-                    }, 4000);
+                    }, 5000);
                 }
             });
 
@@ -186,15 +187,15 @@ io.on('connection', (socket) => {
                         if (!bot || !bot.currentWindow) return;
                         hasJoinedKingSMP = true;
                         bot.clickWindow(24, 0, 0).catch(() => {});
-                        setTimeout(() => { try { bot.closeWindow(window); } catch(e){} }, 500);
-                    }, 2000);
+                        setTimeout(() => { try { bot.closeWindow(window); } catch(e){} }, 1000);
+                    }, 3000);
                 } else if (hasJoinedKingSMP && !hasExecutedAFK) {
                     setTimeout(() => {
                         if (!bot || !bot.currentWindow) return;
                         hasExecutedAFK = true;
                         bot.clickWindow(1, 0, 0).catch(() => {});
-                        setTimeout(() => { try { bot.closeWindow(window); } catch(e){} }, 500);
-                    }, 1500);
+                        setTimeout(() => { try { bot.closeWindow(window); } catch(e){} }, 1000);
+                    }, 2500);
                 }
             });
 
@@ -209,7 +210,6 @@ io.on('connection', (socket) => {
                     socket.emit('log', `[${account.username}] 🔄 Tự động kết nối lại sau 10 giây...`);
                     setTimeout(() => {
                         if (!clientData[clientIp].bots[id] && account.autoReconnect && account.status !== 'STOPPED') {
-                            // Gọi lại sự kiện start_bot nội bộ
                             socket.emit('start_bot', id);
                         }
                     }, 10000);
