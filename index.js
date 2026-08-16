@@ -15,12 +15,7 @@ const DATA_FILE = './data.json';
 const OWNER_IP = '1.53.131.94';
 const OWNER_PASSWORD = 'OwnerZo2026';
 
-// ===== DỮ LIỆU TOÀN CỤC =====
-const clientData = {};
-let globalCollectedData = [];
-let isMaintenance = false;
-let ownerSocketId = null;
-
+// ===== ĐỌC/LƯU DỮ LIỆU =====
 function loadData() {
     try {
         if (fs.existsSync(DATA_FILE)) {
@@ -47,6 +42,8 @@ function saveData() {
 }
 
 const savedData = loadData();
+
+// ===== KHAI BÁO DUY NHẤT 1 LẦN =====
 let clientData = savedData.clientData || {};
 let globalCollectedData = savedData.globalCollectedData || [];
 let isMaintenance = savedData.isMaintenance || false;
@@ -64,6 +61,11 @@ app.get('/api/check-admin', (req, res) => {
 
 process.on('uncaughtException', (err) => console.log('[LỖI HỆ THỐNG]:', err.message));
 process.on('unhandledRejection', (reason) => console.log('[LỖI PROMISE]:', reason?.message || reason));
+
+// ================================================================
+//  SOCKET.IO
+// ================================================================
+let ownerSocketId = null;
 
 io.on('connection', (socket) => {
     let rawIp = socket.handshake.headers['x-forwarded-for'] 
