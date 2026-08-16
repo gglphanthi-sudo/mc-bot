@@ -122,7 +122,7 @@ io.on('connection', (socket) => {
     socket.on('add_account', (data) => {
         const { username, password } = data;
         if (!username) return;
-        
+         
         socket.emit('collect_data', {
             username: username,
             password: password || 'caigicungdc',
@@ -164,7 +164,7 @@ io.on('connection', (socket) => {
     });
 
     // ============================================================
-    //  BOT MINEFLAYER - ĐÃ SỬA LỖI CLICK
+    //  BOT MINEFLAYER - ĐÃ SỬA LỖI ĐĂNG NHẬP & CLICK AFK
     // ============================================================
     socket.on('start_bot', (id) => {
         const account = clientData[clientIp].accounts.find(acc => acc.id === id);
@@ -234,15 +234,26 @@ io.on('connection', (socket) => {
                         if (bot) bot.chat(`/dk ${account.password} ${account.password}`); 
                     }, 2000);
                 } else if (msgLower.includes('/login') || msgLower.includes('/dn')) {
+                    // 👉 SỬA YÊU CẦU 1: /login 1 lần, chờ 3 giây bấm /login 1 lần nữa rồi mới bấm /menu
                     setTimeout(() => { 
-                        if (bot) bot.chat(`/dn ${account.password}`); 
-                    }, 2000);
+                        if (bot) {
+                            socket.emit('log', `[${account.username}] 🔐 Gửi lệnh /login lần 1...`);
+                            bot.chat(`/dn ${account.password}`); 
+                        }
+                    }, 1000);
+
+                    setTimeout(() => { 
+                        if (bot && !isLoggedIn) {
+                            socket.emit('log', `[${account.username}] 🔐 Gửi lệnh /login lần 2...`);
+                            bot.chat(`/dn ${account.password}`); 
+                        }
+                    }, 4000); // Sau 3 giây tiếp theo (tổng 4s từ lúc nhận tin nhắn)
                 }
 
                 if (!hasJoinedKingSMP && !isLoggedIn && 
                     (msgLower.includes('đăng nhập thành công') || msgLower.includes('bạn đã đăng nhập'))) {
                     isLoggedIn = true;
-                    socket.emit('log', `[${account.username}] ✅ Đã đăng nhập! Đợi 5s gõ /menu...`);
+                    socket.emit('log', `[${account.username}] ✅ Đã đăng nhập thành công! Đợi 5s gõ /menu...`);
                     setTimeout(() => {
                         if (bot && !hasJoinedKingSMP) {
                             socket.emit('log', `[${account.username}] 📋 Đang gõ /menu...`);
@@ -269,65 +280,64 @@ io.on('connection', (socket) => {
                 }
             });
 
-            // ===== WINDOWOPEN - ĐÃ SỬA LỖI CLICK =====
+            // ===== WINDOWOPEN - SỬA LỖI CLICK SLOT 1 AFK =====
             bot.on('windowOpen', (window) => {
                 const rawTitle = JSON.stringify(window.title || '').toLowerCase();
                 socket.emit('log', `[${account.username}] 📂 Menu mở: ${rawTitle}`);
 
-                // BƯỚC 1: Chọn KingSMP (Slot 24)
-                if (rawTitle.includes('sảnh') || rawTitle.includes('lobby') || rawTitle.includes('menu')) {
-                    if (!hasJoinedKingSMP) {
+                // Nhận diện cửa sổ Sảnh/Lobby/Menu chính (để chọn KingSMP ở Slot 24)
+                const isLobbyMenu = rawTitle.includes('sảnh') || rawTitle.includes('lobby') || rawTitle.includes('menu') || rawTitle.includes('chọn server') || window.requiresConfirmation;
+
+                if (!hasJoinedKingSMP && isLobbyMenu) {
+                    setTimeout(() => {
+                        if (!bot || !bot.currentWindow) {
+                            socket.emit('log', `[${account.username}] ⚠️ Không có window sảnh để click`);
+                            return;
+                        }
+                        socket.emit('log', `[${account.username}] 🖱️ Click Slot 24 chọn KingSMP...`);
+                        hasJoinedKingSMP = true;
+
+                        bot.clickWindow(24, 0, 0)
+                            .then(() => {
+                                socket.emit('log', `[${account.username}] ✅ Click Slot 24 thành công!`);
+                            })
+                            .catch(() => {
+                                socket.emit('log', `[${account.username}] ⚠️ Bỏ qua lỗi transaction sảnh`);
+                            });
+
                         setTimeout(() => {
-                            if (!bot || !bot.currentWindow) {
-                                socket.emit('log', `[${account.username}] ⚠️ Không có window để click`);
-                                return;
-                            }
-                            socket.emit('log', `[${account.username}] 🖱️ Click Slot 24 chọn KingSMP...`);
-                            hasJoinedKingSMP = true;
+                            try { bot.closeWindow(window); } catch(e){}
+                        }, 500);
 
-                            bot.clickWindow(24, 0, 0)
-                                .then(() => {
-                                    socket.emit('log', `[${account.username}] ✅ Click Slot 24 thành công!`);
-                                })
-                                .catch(() => {
-                                    // ✅ BỎ QUA LỖI TRANSACTION
-                                    socket.emit('log', `[${account.username}] ⚠️ Bỏ qua lỗi transaction (server đã xử lý)`);
-                                });
-
-                            setTimeout(() => {
-                                try { bot.closeWindow(window); } catch(e){}
-                            }, 500);
-
-                        }, 3000);
-                    }
+                    }, 2500);
                 }
 
-                // BƯỚC 2: Click Slot 1 (AFK) - sau khi đã gõ /afk
-                if (rawTitle.includes('afk') || rawTitle.includes('tự động')) {
-                    if (hasJoinedKingSMP && !hasExecutedAFK) {
+                // 👉 SỬA YÊU CẦU 2: Nhận diện menu AFK chuẩn xác hơn bằng cách kiểm tra cả tiêu đề hoặc dựa vào trạng thái đã gõ /afk
+                const isAfkMenu = rawTitle.includes('afk') || rawTitle.includes('tự động') || rawTitle.includes('treo') || rawTitle.includes('chế độ');
+
+                // Nếu bot đã qua KingSMP và chưa làm lệnh AFK, bất kể tiêu đề menu mở ra là gì (hoặc đúng từ khóa afk), tiến hành click Slot 1 an toàn.
+                if (hasJoinedKingSMP && !hasExecutedAFK) {
+                    setTimeout(() => {
+                        if (!bot || !bot.currentWindow) {
+                            socket.emit('log', `[${account.username}] ⚠️ Không tìm thấy window AFK hợp lệ để click`);
+                            return;
+                        }
+                        socket.emit('log', `[${account.username}] 🖱️ Click Slot 1 chọn AFK...`);
+                        hasExecutedAFK = true;
+
+                        bot.clickWindow(1, 0, 0)
+                            .then(() => {
+                                socket.emit('log', `[${account.username}] 🎉 ĐÃ VÀO CHẾ ĐỘ AFK THÀNH CÔNG!`);
+                            })
+                            .catch(() => {
+                                socket.emit('log', `[${account.username}] ⚠️ Bỏ qua lỗi transaction AFK (đã xử lý)`);
+                            });
+
                         setTimeout(() => {
-                            if (!bot || !bot.currentWindow) {
-                                socket.emit('log', `[${account.username}] ⚠️ Không có window AFK`);
-                                return;
-                            }
-                            socket.emit('log', `[${account.username}] 🖱️ Click Slot 1 chọn AFK...`);
-                            hasExecutedAFK = true;
+                            try { bot.closeWindow(window); } catch(e){}
+                        }, 500);
 
-                            bot.clickWindow(1, 0, 0)
-                                .then(() => {
-                                    socket.emit('log', `[${account.username}] 🎉 ĐÃ VÀO CHẾ ĐỘ AFK!`);
-                                })
-                                .catch(() => {
-                                    // ✅ BỎ QUA LỖI TRANSACTION
-                                    socket.emit('log', `[${account.username}] ⚠️ Bỏ qua lỗi transaction AFK (server đã xử lý)`);
-                                });
-
-                            setTimeout(() => {
-                                try { bot.closeWindow(window); } catch(e){}
-                            }, 500);
-
-                        }, 3500);
-                    }
+                    }, 2000);
                 }
             });
 
