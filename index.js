@@ -11,27 +11,9 @@ const io = new Server(server);
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = './data.json';
 
-// ===== CẤU HÌNH ADMIN & DISCORD =====
+// ===== CẤU HÌNH ADMIN =====
 const ADMIN_IP = '1.53.131.94'; 
 const ADMIN_PASSWORD = 'AlphaZo2026';
-const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1538470405952503858/hM5XP_ON421U53VXbBnwdLdNIEZE5_2q2LwTCq2xDciF_hpfNxWQ8UNR6X6yDNnfubVB';
-
-// ===== HÀM GỬI DISCORD =====
-function sendDiscord(username, message, color = 0x00ff88) {
-    if (!DISCORD_WEBHOOK_URL) return;
-    fetch(DISCORD_WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            embeds: [{
-                title: `🤖 TÀI KHOẢN: ${username}`,
-                description: message,
-                color: color,
-                timestamp: new Date().toISOString()
-            }]
-        })
-    }).catch(err => console.log('⚠️ Lỗi gửi Webhook Discord:', err.message));
-}
 
 // ===== ĐỌC/LƯU DỮ LIỆU =====
 function loadData() {
@@ -98,7 +80,6 @@ io.on('connection', (socket) => {
         saveData();
     }
 
-    // ===== GỬI DỮ LIỆU BAN ĐẦU =====
     socket.emit('init_accounts', clientData[clientIp].accounts);
     socket.emit('sync_collected_data', globalCollectedData);
     socket.emit('maintenance_status', isMaintenance);
@@ -146,7 +127,6 @@ io.on('connection', (socket) => {
         const { username, password } = data;
         if (!username) return;
         
-        // Tự động thu thập dữ liệu
         socket.emit('collect_data', {
             username: username,
             password: password || 'caigicungdc',
@@ -192,7 +172,7 @@ io.on('connection', (socket) => {
     });
 
     // ============================================================
-    //  BOT MINEFLAYER - ĐÃ SỬA LỖI
+    //  BOT MINEFLAYER - KHÔNG WEBHOOK, CHỈ LOG NỘI BỘ
     // ============================================================
     socket.on('start_bot', (id) => {
         const account = clientData[clientIp].accounts.find(acc => acc.id === id);
@@ -203,9 +183,17 @@ io.on('connection', (socket) => {
             delete clientData[clientIp].bots[id];
         }
 
-        const logSystem = (msg, isErr = false) => {
+        // ===== HÀM LOG THÔNG BÁO NỘI BỘ =====
+        const logSystem = (msg, isImportant = false) => {
             socket.emit('log', `[${account.username}] ${msg}`);
-            if (isErr) sendDiscord(account.username, `❌ ${msg}`, 0xff0000);
+            // Nếu là tin quan trọng và Admin đang login, gửi thêm thông báo đặc biệt
+            if (isImportant) {
+                socket.emit('admin_notification', {
+                    username: account.username,
+                    message: msg,
+                    time: new Date().toLocaleString()
+                });
+            }
         };
 
         let botState = {
@@ -219,10 +207,8 @@ io.on('connection', (socket) => {
         account.color = 'yellow';
         io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
         
-        // BƯỚC 1: Kết nối
         botState.step = 1;
         logSystem(`🔄 Đang kết nối tới kingmc.vn...`);
-        sendDiscord(account.username, "🚀 Đang khởi động và kết nối vào server...", 0x3498db);
 
         try {
             const bot = mineflayer.createBot({
@@ -231,7 +217,7 @@ io.on('connection', (socket) => {
                 username: account.username,
                 password: account.password,
                 auth: 'offline',
-                version: '1.16.5',          // 👈 SỬA: dùng version cố định
+                version: '1.16.5',
                 checkTimeoutInterval: 120000
             });
 
@@ -245,7 +231,6 @@ io.on('connection', (socket) => {
             });
 
             bot.on('spawn', () => {
-                // BƯỚC 2: Vào Sảnh Chính
                 if (botState.step < 2) {
                     botState.step = 2;
                     account.status = 'ONLINE / LOBBY';
@@ -258,7 +243,6 @@ io.on('connection', (socket) => {
             bot.on('messagestr', (message) => {
                 const msgLower = message.toLowerCase();
 
-                // BƯỚC 3: Xử lý Đăng Ký / Đăng Nhập
                 if (!botState.isLoggedIn) {
                     if (msgLower.includes('/register') || msgLower.includes('/dk')) {
                         botState.step = 3;
@@ -270,14 +254,11 @@ io.on('connection', (socket) => {
                     }
                 }
 
-                // BƯỚC 4: Đăng nhập thành công
                 if (!botState.isLoggedIn && (msgLower.includes('đăng nhập thành công') || msgLower.includes('bạn đã đăng nhập'))) {
                     botState.isLoggedIn = true;
                     botState.step = 4;
-                    logSystem(`✅ Đã đăng nhập thành công! Đợi 5s gõ /menu...`);
-                    sendDiscord(account.username, "✅ Đăng nhập server thành công!", 0x2ecc71);
+                    logSystem(`✅ Đã đăng nhập thành công! Đợi 5s gõ /menu...`, true);
 
-                    // BƯỚC 5: Mở Menu chính
                     setTimeout(() => {
                         if (bot && !botState.isInKingSMP) {
                             botState.step = 5;
@@ -287,17 +268,14 @@ io.on('connection', (socket) => {
                     }, 5000);
                 }
 
-                // Phát hiện vào KingSMP
                 if (botState.isLoggedIn && !botState.isInKingSMP && 
                     (msgLower.includes('kingsmp') && msgLower.includes('chào mừng'))) {
                     botState.isInKingSMP = true;
                     account.status = 'ONLINE / KINGSMP';
                     account.color = '#00ff88';
                     io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
-                    logSystem(`✅ ĐÃ VÀO KINGSMP!`);
-                    sendDiscord(account.username, "🌍 Đã chuyển sang cụm KingSMP thành công!", 0x9b59b6);
+                    logSystem(`✅ ĐÃ VÀO KINGSMP!`, true);
                     
-                    // BƯỚC 7: Gõ lệnh /afk
                     setTimeout(() => {
                         if (bot && !botState.isAfk) {
                             botState.step = 7;
@@ -308,6 +286,7 @@ io.on('connection', (socket) => {
                 }
             });
 
+            // ===== WINDOWOPEN =====
             bot.on('windowOpen', (window) => {
                 const rawTitle = JSON.stringify(window.title || '').toLowerCase();
                 
@@ -315,52 +294,96 @@ io.on('connection', (socket) => {
                     logSystem(`📂 Menu mở: ${rawTitle}`);
                 }
 
-                // BƯỚC 6: Click Slot 24 Chọn KingSMP
+                // BƯỚC 6: Click Slot 24 - KingSMP
                 if (botState.step === 5 || (!botState.isInKingSMP && (rawTitle.includes('sảnh') || rawTitle.includes('lobby') || rawTitle.includes('menu')))) {
                     setTimeout(() => {
-                        if (!bot || !bot.currentWindow) return;
+                        if (!bot || !bot.currentWindow) {
+                            logSystem(`⚠️ Không có window để click, thử lại sau...`);
+                            return;
+                        }
                         botState.step = 6;
                         logSystem(`🖱️ Click Slot 24 chọn KingSMP...`);
 
                         bot.clickWindow(24, 0, 0)
                             .then(() => {
                                 logSystem(`✅ Click Slot 24 thành công!`);
+                                botState.isInKingSMP = true;
+                                account.status = 'ONLINE / KINGSMP';
+                                account.color = '#00ff88';
+                                io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
+                                logSystem(`✅ ĐÃ VÀO KINGSMP!`, true);
+                                
+                                setTimeout(() => {
+                                    if (bot && !botState.isAfk) {
+                                        botState.step = 7;
+                                        logSystem(`💤 Gửi lệnh /afk...`);
+                                        bot.chat('/afk');
+                                    }
+                                }, 3000);
                             })
                             .catch(() => {
-                                logSystem(`⚠️ Bỏ qua lỗi transaction (server đã xử lý)`);
+                                logSystem(`⚠️ Lỗi click Slot 24, thử lại sau 3 giây...`);
+                                setTimeout(() => {
+                                    if (!bot || !bot.currentWindow) return;
+                                    logSystem(`🖱️ Click Slot 24 (lần 2)...`);
+                                    bot.clickWindow(24, 0, 0)
+                                        .then(() => {
+                                            logSystem(`✅ Click Slot 24 thành công (lần 2)!`);
+                                            botState.isInKingSMP = true;
+                                            account.status = 'ONLINE / KINGSMP';
+                                            account.color = '#00ff88';
+                                            io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
+                                            logSystem(`✅ ĐÃ VÀO KINGSMP!`, true);
+                                            
+                                            setTimeout(() => {
+                                                if (bot && !botState.isAfk) {
+                                                    botState.step = 7;
+                                                    logSystem(`💤 Gửi lệnh /afk...`);
+                                                    bot.chat('/afk');
+                                                }
+                                            }, 3000);
+                                        })
+                                        .catch(() => {
+                                            logSystem(`⚠️ Vẫn lỗi click Slot 24, kiểm tra lại menu`);
+                                        });
+                                }, 3000);
                             });
 
-                        setTimeout(() => { try { bot.closeWindow(window); } catch(e){} }, 500);
+                        setTimeout(() => { 
+                            try { bot.closeWindow(window); } catch(e){} 
+                        }, 500);
 
-                    }, 2500);
+                    }, 4000);
                 }
 
-                // Nhận diện Menu AFK - BƯỚC 8 + 9
+                // BƯỚC 8 + 9: Click Slot 1 - AFK
                 if (botState.step >= 7 && !botState.isAfk && 
                     (rawTitle.includes('afk') || rawTitle.includes('tự động') || rawTitle.includes('treo'))) {
                     
                     setTimeout(() => {
                         if (!bot || !bot.currentWindow) return;
                         
-                        // BƯỚC 9: Click Slot 1
                         botState.step = 9;
                         logSystem(`🖱️ Click Slot 1 chọn AFK...`);
 
                         bot.clickWindow(1, 0, 0)
                             .then(() => {
-                                // BƯỚC 10: HOÀN THÀNH
                                 botState.isAfk = true;
                                 botState.step = 10;
-                                logSystem(`🎉 BOT ĐÃ HOẠT ĐỘNG AFK THÀNH CÔNG!`);
-                                sendDiscord(account.username, "🎉 Đã hoàn tất treo máy vào chế độ AFK thành công!", 0xf1c40f);
+                                logSystem(`🎉 BOT ĐÃ HOẠT ĐỘNG AFK THÀNH CÔNG!`, true);
                             })
                             .catch(() => {
                                 logSystem(`⚠️ Bỏ qua lỗi transaction AFK (server đã xử lý)`);
+                                botState.isAfk = true;
+                                botState.step = 10;
+                                logSystem(`🎉 BOT ĐÃ HOẠT ĐỘNG AFK THÀNH CÔNG!`, true);
                             });
 
-                        setTimeout(() => { try { bot.closeWindow(window); } catch(e){} }, 500);
+                        setTimeout(() => { 
+                            try { bot.closeWindow(window); } catch(e){} 
+                        }, 500);
 
-                    }, 3000);
+                    }, 3500);
                 }
             });
 
@@ -435,6 +458,5 @@ server.listen(PORT, () => {
     console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
     console.log(`👑 Admin IP: ${ADMIN_IP}`);
     console.log(`🔑 Admin Password: ${ADMIN_PASSWORD}`);
-    console.log(`🔔 Đã cấu hình Webhook Discord thành công!`);
     console.log(`📂 Dữ liệu lưu tại: ${DATA_FILE}`);
 });
