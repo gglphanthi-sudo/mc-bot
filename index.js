@@ -162,7 +162,8 @@ io.on('connection', (socket) => {
                 username: account.username,
                 password: account.password,
                 auth: 'offline',
-                version: '1.16.5',
+                version: false,          // 👈 Tự động dò phiên bản tương thích với server
+                skipValidation: true,    // 👈 Bỏ qua bước xác thực để tránh lỗi socketClosed
                 checkTimeoutInterval: 120000
             });
 
