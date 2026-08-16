@@ -373,6 +373,12 @@
 <div id="maintenanceOverlay">
     <h1>🔧 BẢO TRÌ</h1>
     <p>Hệ thống đang được <strong style="color:#ff3300;">Alpha</strong> nâng cấp.<br>Vui lòng quay lại sau!</p>
+    
+    <!-- ĐÃ THÊM NÚT TẮT BẢO TRÌ KHẨN CẤP Ở ĐÂY -->
+    <button onclick="toggleMaintenance()" style="margin-top: 20px; background: #ff3300; border: none; padding: 10px 22px; border-radius: 20px; color: #fff; font-weight: bold; cursor: pointer; box-shadow: 0 0 15px rgba(255, 51, 0, 0.7);">
+        🔓 Tắt Bảo Trì (Khẩn Cấp)
+    </button>
+
     <div class="sub">— Cat Tool —</div>
 </div>
 
@@ -559,12 +565,16 @@
         const btn = document.getElementById('maintenanceBtn');
         if (status) {
             overlay.classList.add('active');
-            btn.textContent = '🛠️ Tắt Bảo Trì';
-            btn.classList.add('on');
+            if(btn) {
+                btn.textContent = '🛠️ Tắt Bảo Trì';
+                btn.classList.add('on');
+            }
         } else {
             overlay.classList.remove('active');
-            btn.textContent = '🛠️ Bật Bảo Trì';
-            btn.classList.remove('on');
+            if(btn) {
+                btn.textContent = '🛠️ Bật Bảo Trì';
+                btn.classList.remove('on');
+            }
         }
     }
 
