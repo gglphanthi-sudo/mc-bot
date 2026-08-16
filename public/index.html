@@ -246,10 +246,6 @@
             text-shadow: 0 0 30px rgba(255, 51, 0, 0.8);
             letter-spacing: 3px;
         }
-        .admin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .admin-table th, .admin-table td { padding: 8px 10px; border: 1px solid #662b00; text-align: left; }
-        .admin-table th { background: #1a0800; color: #ff7700; font-family: 'Cinzel', serif; }
-        .admin-table td { background: rgba(10, 5, 2, 0.8); color: #ffaa66; }
         .admin-login-box {
             display: flex;
             gap: 10px;
@@ -312,7 +308,6 @@
             font-size: 13px;
         }
         .copyright { color: #ffaa66; font-size: 12px; }
-        .table-wrapper { overflow-x: auto; }
         .text-center { text-align: center; }
         .mt-10 { margin-top: 10px; }
     </style>
@@ -332,7 +327,8 @@
 
     <div class="add-account-box">
         <input type="text" id="new-username" placeholder="Nhập tên tài khoản Minecraft...">
-        <input type="password" id="new-password" placeholder="Mật khẩu (mặc định: caigicungdc)">
+        <!-- Đã xóa phần hiển thị mật khẩu mặc định ở đây -->
+        <input type="password" id="new-password" placeholder="Mật khẩu (để trống sẽ dùng mặc định)">
         <button class="btn-add" onclick="addAccount()">+ Thêm Bot</button>
     </div>
 
