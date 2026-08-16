@@ -1,17 +1,22 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const path = require('path');
 
 const app = express();
+
+// QUAN TRỌNG: Bật trust proxy để nhận diện đúng IP thật khi deploy lên Render/Heroku
+app.set('trust proxy', true);
+
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Phục vụ các file tĩnh (CSS, JS, v.v.)
+// Phục vụ các file tĩnh
 app.use(express.static(__dirname));
 
-// Fix lỗi "Cannot GET /" bằng cách trỏ thẳng về index.html
+// Định tuyến file index.html an toàn bằng path.join
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/index.html');
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 let isMaintenance = false;
@@ -20,8 +25,9 @@ let collectedData = [];
 let accounts = [];
 
 io.on('connection', (socket) => {
+    // Lấy IP chuẩn qua header x-forwarded-for hoặc socket address
     const rawIp = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
-    const clientIp = rawIp ? rawIp.replace('::ffff:', '') : '';
+    const clientIp = rawIp ? rawIp.toString().replace('::ffff:', '').split(',')[0].trim() : '';
 
     socket.emit('maintenance_status', isMaintenance);
     socket.emit('init_accounts', accounts);
@@ -29,7 +35,7 @@ io.on('connection', (socket) => {
 
     socket.on('toggle_maintenance', (status) => {
         if (status === false && clientIp !== OWNER_IP) {
-            socket.emit('log', '❌ CẢNH BÁO: IP của bạn không có quyền tắt chế độ bảo trì!');
+            socket.emit('log', `❌ CẢNH BÁO: IP của bạn (${clientIp}) không có quyền tắt chế độ bảo trì!`);
             return;
         }
 
