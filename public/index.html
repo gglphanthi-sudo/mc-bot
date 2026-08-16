@@ -3,75 +3,369 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KingMC Bot Panel</title>
+    <title>GTT Store — BY meovancat & giananday</title>
     <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #0b0b0f; 
+            color: #fff; 
+            margin: 0; 
+            padding: 20px; 
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .header-brand {
+            text-align: center;
+            font-size: 13px;
+            color: #a855f7;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        h2 { 
+            margin-top: 0; 
+            text-align: center; 
+            color: #ffffff; 
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+        .container { 
+            max-width: 950px; 
+            margin: 0 auto; 
+            background: #141419; 
+            padding: 25px; 
+            border-radius: 14px; 
+            box-shadow: 0 8px 30px rgba(0,0,0,0.7); 
+            border: 1px solid #22222e;
+            flex: 1;
+        }
         
-{ box-sizing: border-box; }
-      body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: #fff; margin: 0; padding: 20px; }.container { max-width: 850px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-      h2 { margin-top: 0; text-align: center; color: #00ff88; }.status-bar { display: flex; justify-content: space-between; align-items: center; background: #2a2a2a; padding: 12px 20px; border-radius: 6px; margin-bottom: 15px; }.btn { padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-left: 5px; }.btn-start { background: #28a745; color: white; }.btn-stop { background: #dc3545; color: white; }#log-box { background: #000; color: #00ff88; font-family: 'Consolas', monospace; height: 380px; overflow-y: auto; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; line-height: 1.4; white-space: pre-wrap; word-break: break-all; }
-      /* Khung Chat ở phía dưới */.chat-container { display: flex; gap: 10px; }.chat-input { flex: 1; padding: 12px; border-radius: 6px; border: 1px solid #444; background: #2b2b2b; color: #fff; outline: none; font-size: 14px; }.chat-input:focus { border-color: #00ff88; }.chat-btn { padding: 12px 24px; background: #007bff; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }.chat-btn:hover { background: #0056b3; }</style>
+        /* Form thêm tài khoản */
+        .add-account-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: #1a1a24;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #2a2a38;
+        }
+        .add-account-box input {
+            flex: 1;
+            padding: 10px 14px;
+            background: #121218;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: #fff;
+            outline: none;
+            font-size: 14px;
+        }
+        .add-account-box input:focus { border-color: #a855f7; }
+        .btn-add {
+            background: linear-gradient(135deg, #a855f7, #6366f1);
+            color: white;
+            border: none;
+            padding: 0 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-add:hover { opacity: 0.9; }
+
+        /* Danh sách tài khoản (Multi-Account Grid) */
+        .accounts-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .account-card {
+            background: #181822;
+            border: 1px solid #262636;
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .account-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .account-title {
+            font-weight: bold;
+            font-size: 16px;
+            color: #00ff88;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .status-badge {
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            background: #222;
+        }
+        .account-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .btn { 
+            padding: 6px 14px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 13px;
+        } 
+        .btn-start { background: #28a745; color: white; } 
+        .btn-stop { background: #dc3545; color: white; }
+        .btn-del { background: #333; color: #ff6b6b; }
+        
+        .toggle-label {
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            color: #ccc;
+        }
+
+        /* Log console từng tài khoản hoặc chung */
+        .log-box { 
+            background: #09090d; 
+            color: #00ff88; 
+            font-family: 'Consolas', monospace; 
+            height: 220px; 
+            overflow-y: auto; 
+            padding: 12px; 
+            border-radius: 6px; 
+            margin-bottom: 15px; 
+            font-size: 12px; 
+            line-height: 1.4; 
+            white-space: pre-wrap; 
+            word-break: break-all;
+            border: 1px solid #1f1f2e;
+        }
+        .chat-container { display: flex; gap: 10px; } 
+        .chat-input { flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #333; background: #121218; color: #fff; outline: none; font-size: 13px; } 
+        .chat-input:focus { border-color: #a855f7; } 
+        .chat-btn { padding: 10px 20px; background: #6366f1; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+
+        /* Footer & Quản trị hệ thống */
+        .footer-section {
+            text-align: center;
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        .admin-btn {
+            background: rgba(168, 85, 247, 0.1);
+            border: 1px solid rgba(168, 85, 247, 0.4);
+            color: #c084fc;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+        .admin-btn:hover {
+            background: rgba(168, 85, 247, 0.2);
+        }
+        .discord-float {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            background: #5865F2;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(88, 101, 242, 0.4);
+            cursor: pointer;
+            transition: 0.2s;
+            z-index: 99;
+        }
+        .discord-float:hover { transform: scale(1.1); }
+        .discord-float img { width: 28px; height: 28px; }
+        .copyright {
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
 </head>
 <body>
+
     <div class="container">
-        <h2>KingMC Bot Control Panel</h2>
+        <div class="header-brand">GTT Store — BY meovancat & giananday</div>
+        <h2>KingMC Bot Panel</h2>
+        <div class="subtitle">Hệ thống AFK Bot chuyên nghiệp • Multi-Account độc lập theo IP</div>
 
-        <div class="status-bar">
-            <div>Trạng thái: <span id="status-text" style="color: #ff4444; font-weight: bold;">OFFLINE</span></div>
-            <div>
-                <button class="btn btn-start" onclick="startBot()">Bật Bot</button>
-                <button class="btn btn-stop" onclick="stopBot()">Tắt Bot</button>
-            </div>
+        <!-- Thêm tài khoản Multi-Account -->
+        <div class="add-account-box">
+            <input type="text" id="new-username" placeholder="Nhập tên tài khoản Minecraft (Username)...">
+            <input type="password" id="new-password" placeholder="Mật khẩu đăng nhập (Mặc định: caigicungdc)">
+            <button class="btn-add" onclick="addAccount()">+ Thêm Bot</button>
         </div>
 
-        <!-- Khung xem nhật ký / console -->
-        <div id="log-box"></div>
-
-        <!-- Ô nhập câu chat / lệnh dưới cùng -->
-        <div class="chat-container">
-            <input type="text" id="chat-input" class="chat-input" placeholder="Nhập câu chat hoặc lệnh (VD: /afk, hello, /menu...)" onkeypress="handleKeyPress(event)">
-            <button class="chat-btn" onclick="sendChat()">Gửi</button>
+        <!-- Danh sách Multi-Account hiển thị ở đây -->
+        <div id="accounts-container" class="accounts-grid">
+            <div style="text-align: center; color: #666; padding: 20px;">Chưa có tài khoản nào được thêm. Hãy thêm bot ở khung trên!</div>
         </div>
+
+        <!-- Khung Log tổng hợp / Console chung -->
+        <div style="font-size: 13px; color: #aaa; margin-bottom: 5px; font-weight: bold;">Nhật ký hệ thống (Console):</div>
+        <div id="log-box" class="log-box"></div>
     </div>
+
+    <!-- Footer và nút Quản trị hệ thống -->
+    <div class="footer-section">
+        <button class="admin-btn" onclick="checkAdminAccess()">🔒 Quản Trị Hệ Thống</button>
+        <div class="copyright">© 2026 GTT Store. Bảo lưu mọi quyền.</div>
+    </div>
+
+    <!-- Nút Discord bay ở góc phải màn hình -->
+    <a href="https://discord.gg/wHHY7FDqd" target="_blank" class="discord-float" title="Tham gia Discord">
+        <svg width="28" height="28" viewBox="0 0 127.14 96.36" fill="#ffffff">
+            <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.15c2.63-27.29-4.53-51.2-19.45-72.15ZM42.45,65.69C36.18,65.69,31,60,31,53s5.18-12.72,11.45-12.72S53.9,46,53.88,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5.18-12.72,11.44-12.72S96.18,46,96.15,53,91,65.69,84.69,65.69Z"/>
+        </svg>
+    </a>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
         const logBox = document.getElementById('log-box');
-        const statusText = document.getElementById('status-text');
-        const chatInput = document.getElementById('chat-input');
+        const accountsContainer = document.getElementById('accounts-container');
 
-        socket.on('log', (msg) => {
+        function appendLog(msg) {
             const div = document.createElement('div');
             div.textContent = msg;
             logBox.appendChild(div);
             logBox.scrollTop = logBox.scrollHeight;
-        });
-
-        socket.on('status', (data) => {
-            statusText.textContent = data.status;
-            statusText.style.color = data.color;
-        });
-
-        function startBot() {
-            socket.emit('start_farm');
         }
 
-        function stopBot() {
-            socket.emit('stop_farm');
+        socket.on('log', (msg) => {
+            appendLog(msg);
+        });
+
+        // Nhận danh sách tài khoản riêng của IP này
+        socket.on('init_accounts', (accounts) => {
+            renderAccounts(accounts);
+        });
+
+        socket.on('restart_internal_bot', (id) => {
+            socket.emit('start_bot', id);
+        });
+
+        function addAccount() {
+            const username = document.getElementById('new-username').value.trim();
+            const password = document.getElementById('new-password').value.trim();
+            if (!username) {
+                alert('Vui lòng nhập tên tài khoản Minecraft!');
+                return;
+            }
+            socket.emit('add_account', { username, password });
+            document.getElementById('new-username').value = '';
+            document.getElementById('new-password').value = '';
         }
 
-        function sendChat() {
-            const msg = chatInput.value.trim();
-            if (msg) {
-                socket.emit('send_chat', msg);
-                chatInput.value = '';
+        function startBot(id) {
+            socket.emit('start_bot', id);
+        }
+
+        function stopBot(id) {
+            socket.emit('stop_bot', id);
+        }
+
+        function deleteAccount(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa tài khoản này khỏi danh sách quản lý?')) {
+                socket.emit('delete_account', id);
             }
         }
 
-        function handleKeyPress(e) {
-            if (e.key === 'Enter') {
-                sendChat();
+        function toggleAutoReconnect(id) {
+            socket.emit('toggle_auto_reconnect', id);
+        }
+
+        function sendAccountChat(id) {
+            const input = document.getElementById(`chat_${id}`);
+            const cmd = input.value.trim();
+            if (cmd) {
+                socket.emit('send_chat', { id, cmd });
+                input.value = '';
             }
+        }
+
+        function renderAccounts(accounts) {
+            if (!accounts || accounts.length === 0) {
+                accountsContainer.innerHTML = `<div style="text-align: center; color: #666; padding: 20px;">Chưa có tài khoản nào được thêm. Hãy thêm bot ở khung trên!</div>`;
+                return;
+            }
+
+            let html = '';
+            accounts.forEach(acc => {
+                html += `
+                    <div class="account-card">
+                        <div class="account-header">
+                            <div class="account-title">
+                                🤖 ${acc.username}
+                            </div>
+                            <div class="status-badge" style="color: ${acc.color}; border: 1px solid ${acc.color};">
+                                ${acc.status}
+                            </div>
+                        </div>
+                        <div class="account-actions">
+                            <button class="btn btn-start" onclick="startBot('${acc.id}')">Bật Bot</button>
+                            <button class="btn btn-stop" onclick="stopBot('${acc.id}')">Tắt Bot</button>
+                            <button class="btn btn-del" onclick="deleteAccount('${acc.id}')">Xóa</button>
+                            <label class="toggle-label" style="margin-left: auto;">
+                                <input type="checkbox" ${acc.autoReconnect ? 'checked' : ''} onchange="toggleAutoReconnect('${acc.id}')"> Auto Reconnect
+                            </label>
+                        </div>
+                        <div class="chat-container">
+                            <input type="text" id="chat_${acc.id}" class="chat-input" placeholder="Gửi lệnh nhanh tới bot này (VD: /afk, /menu)..." onkeypress="if(event.key==='Enter') sendAccountChat('${acc.id}')">
+                            <button class="chat-btn" onclick="sendAccountChat('${acc.id}')">Gửi</button>
+                        </div>
+                    </div>
+                `;
+            });
+            accountsContainer.innerHTML = html;
+        }
+
+        // Kiểm tra quyền Admin dựa trên IP backend
+        function checkAdminAccess() {
+            fetch('/api/check-admin')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.isAdmin) {
+                        alert(`🔓 Xác thực thành công!\nChào mừng Admin (IP của bạn: ${data.ip}). Bạn đã có quyền quản trị hệ thống.`);
+                        // Bạn có thể mở rộng tính năng chuyển hướng trang quản trị tại đây nếu muốn
+                    } else {
+                        alert(`❌ Truy cập bị từ chối!\nIP của bạn (${data.ip}) không có quyền truy cập vào phân vùng Quản Trị Hệ Thống.`);
+                    }
+                })
+                .catch(err => {
+                    alert('Lỗi kết nối kiểm tra quyền hạn!');
+                });
         }
     </script>
 </body>
