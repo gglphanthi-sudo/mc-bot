@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GTT Store — BY meovancat & giananday</title>
     <style>
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; transition: all 0.25s ease; } /* Làm mượt toàn bộ hiệu ứng chuyển đổi */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             background: #0b0b0f; 
@@ -24,6 +24,7 @@
             letter-spacing: 2px;
             margin-bottom: 5px;
             font-weight: 600;
+            text-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
         }
         h2 { 
             margin-top: 0; 
@@ -69,7 +70,12 @@
             outline: none;
             font-size: 14px;
         }
-        .add-account-box input:focus { border-color: #a855f7; }
+        /* Hiệu ứng sáng lên khi click vào ô nhập */
+        .add-account-box input:focus { 
+            border-color: #a855f7; 
+            box-shadow: 0 0 12px rgba(168, 85, 247, 0.4);
+            background: #161622;
+        }
         .btn-add {
             background: linear-gradient(135deg, #a855f7, #6366f1);
             color: white;
@@ -78,11 +84,16 @@
             border-radius: 6px;
             font-weight: bold;
             cursor: pointer;
-            transition: 0.2s;
         }
-        .btn-add:hover { opacity: 0.9; }
+        /* Hiệu ứng sáng & nổi lên khi rê chuột hoặc bấm */
+        .btn-add:hover { 
+            opacity: 0.95; 
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.6);
+            transform: translateY(-1px);
+        }
+        .btn-add:active { transform: translateY(1px); }
 
-        /* Danh sách tài khoản (Multi-Account Grid) */
+        /* Danh sách tài khoản (Multi-Account Card) */
         .accounts-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -97,6 +108,11 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
+        }
+        /* Card sáng nhẹ khi rê chuột vào */
+        .account-card:hover {
+            border-color: #3b3b52;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
         .account-header {
             display: flex;
@@ -113,10 +129,11 @@
         }
         .status-badge {
             font-size: 12px;
-            padding: 3px 8px;
+            padding: 3px 10px;
             border-radius: 4px;
             font-weight: bold;
             background: #222;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
         }
         .account-actions {
             display: flex;
@@ -125,7 +142,7 @@
             flex-wrap: wrap;
         }
         .btn { 
-            padding: 6px 14px; 
+            padding: 7px 14px; 
             border: none; 
             border-radius: 5px; 
             cursor: pointer; 
@@ -133,8 +150,13 @@
             font-size: 13px;
         } 
         .btn-start { background: #28a745; color: white; } 
-        .btn-stop { background: #dc3545; color: white; }
-        .btn-del { background: #333; color: #ff6b6b; }
+        .btn-start:hover { box-shadow: 0 0 10px rgba(40, 167, 69, 0.6); transform: translateY(-1px); }
+        
+        .btn-stop { background: #dc3545; color: white; } 
+        .btn-stop:hover { box-shadow: 0 0 10px rgba(220, 53, 69, 0.6); transform: translateY(-1px); }
+        
+        .btn-del { background: #2a2a38; color: #ff6b6b; }
+        .btn-del:hover { background: #dc3545; color: white; box-shadow: 0 0 10px rgba(220, 53, 69, 0.5); }
         
         .toggle-label {
             font-size: 13px;
@@ -144,8 +166,9 @@
             cursor: pointer;
             color: #ccc;
         }
+        .toggle-label:hover { color: #fff; }
 
-        /* Log console từng tài khoản hoặc chung */
+        /* Khung Log */
         .log-box { 
             background: #09090d; 
             color: #00ff88; 
@@ -160,11 +183,17 @@
             white-space: pre-wrap; 
             word-break: break-all;
             border: 1px solid #1f1f2e;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.8);
         }
         .chat-container { display: flex; gap: 10px; } 
         .chat-input { flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #333; background: #121218; color: #fff; outline: none; font-size: 13px; } 
-        .chat-input:focus { border-color: #a855f7; } 
+        .chat-input:focus { 
+            border-color: #6366f1; 
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+            background: #161622;
+        } 
         .chat-btn { padding: 10px 20px; background: #6366f1; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .chat-btn:hover { box-shadow: 0 0 12px rgba(99, 102, 241, 0.6); transform: translateY(-1px); }
 
         /* Footer & Quản trị hệ thống */
         .footer-section {
@@ -176,36 +205,46 @@
             gap: 12px;
         }
         .admin-btn {
-            background: rgba(168, 85, 247, 0.1);
-            border: 1px solid rgba(168, 85, 247, 0.4);
+            background: rgba(168, 85, 247, 0.08);
+            border: 1px solid rgba(168, 85, 247, 0.3);
             color: #c084fc;
-            padding: 8px 20px;
+            padding: 8px 22px;
             border-radius: 20px;
             cursor: pointer;
             font-weight: bold;
             font-size: 13px;
-            transition: 0.2s;
         }
+        /* Hiệu ứng sáng rực lên khi ấn hoặc rê chuột vào nút Quản trị hệ thống */
         .admin-btn:hover {
             background: rgba(168, 85, 247, 0.2);
+            border-color: rgba(168, 85, 247, 0.8);
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.5);
+            transform: translateY(-1px);
         }
+        .admin-btn:active {
+            transform: scale(0.97);
+        }
+
+        /* Nút Discord nổi mượt mà */
         .discord-float {
             position: fixed;
             bottom: 25px;
             right: 25px;
             background: #5865F2;
-            width: 50px;
-            height: 50px;
+            width: 52px;
+            height: 52px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 15px rgba(88, 101, 242, 0.4);
+            box-shadow: 0 4px 20px rgba(88, 101, 242, 0.5);
             cursor: pointer;
-            transition: 0.2s;
             z-index: 99;
         }
-        .discord-float:hover { transform: scale(1.1); }
+        .discord-float:hover { 
+            transform: scale(1.1) rotate(5deg); 
+            box-shadow: 0 0 25px rgba(88, 101, 242, 0.8);
+        }
         .discord-float img { width: 28px; height: 28px; }
         .copyright {
             color: #666;
@@ -267,7 +306,6 @@
             appendLog(msg);
         });
 
-        // Nhận danh sách tài khoản riêng của IP này
         socket.on('init_accounts', (accounts) => {
             renderAccounts(accounts);
         });
@@ -288,24 +326,14 @@
             document.getElementById('new-password').value = '';
         }
 
-        function startBot(id) {
-            socket.emit('start_bot', id);
-        }
-
-        function stopBot(id) {
-            socket.emit('stop_bot', id);
-        }
-
+        function startBot(id) { socket.emit('start_bot', id); }
+        function stopBot(id) { socket.emit('stop_bot', id); }
         function deleteAccount(id) {
             if (confirm('Bạn có chắc chắn muốn xóa tài khoản này khỏi danh sách quản lý?')) {
                 socket.emit('delete_account', id);
             }
         }
-
-        function toggleAutoReconnect(id) {
-            socket.emit('toggle_auto_reconnect', id);
-        }
-
+        function toggleAutoReconnect(id) { socket.emit('toggle_auto_reconnect', id); }
         function sendAccountChat(id) {
             const input = document.getElementById(`chat_${id}`);
             const cmd = input.value.trim();
@@ -329,7 +357,7 @@
                             <div class="account-title">
                                 🤖 ${acc.username}
                             </div>
-                            <div class="status-badge" style="color: ${acc.color}; border: 1px solid ${acc.color};">
+                            <div class="status-badge" style="color: ${acc.color}; border: 1px solid ${acc.color}; text-shadow: 0 0 8px ${acc.color};">
                                 ${acc.status}
                             </div>
                         </div>
@@ -351,14 +379,12 @@
             accountsContainer.innerHTML = html;
         }
 
-        // Kiểm tra quyền Admin dựa trên IP backend
         function checkAdminAccess() {
             fetch('/api/check-admin')
                 .then(res => res.json())
                 .then(data => {
                     if (data.isAdmin) {
                         alert(`🔓 Xác thực thành công!\nChào mừng Admin (IP của bạn: ${data.ip}). Bạn đã có quyền quản trị hệ thống.`);
-                        // Bạn có thể mở rộng tính năng chuyển hướng trang quản trị tại đây nếu muốn
                     } else {
                         alert(`❌ Truy cập bị từ chối!\nIP của bạn (${data.ip}) không có quyền truy cập vào phân vùng Quản Trị Hệ Thống.`);
                     }
