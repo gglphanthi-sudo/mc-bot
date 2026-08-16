@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GTT Store — BY meovancat & giananday</title>
+    <title>Cat Tool — BY meovancat & giananday</title>
     <style>
-        * { box-sizing: border-box; transition: all 0.25s ease; } /* Làm mượt toàn bộ hiệu ứng chuyển đổi */
+        * { box-sizing: border-box; transition: all 0.25s ease; }
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: #0b0b0f; 
+            /* Cài đặt hình nền hoàng hôn + lớp phủ tối để nổi bật giao diện */
+            background: linear-gradient(rgba(15, 10, 8, 0.75), rgba(15, 10, 8, 0.85)), url('https://i.ibb.co/3m1H4L6/sunset-bg.jpg') no-repeat center center fixed;
+            background-size: cover;
             color: #fff; 
             margin: 0; 
             padding: 20px; 
@@ -19,12 +21,12 @@
         .header-brand {
             text-align: center;
             font-size: 13px;
-            color: #a855f7;
+            color: #ff9e3b;
             text-transform: uppercase;
             letter-spacing: 2px;
             margin-bottom: 5px;
             font-weight: 600;
-            text-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+            text-shadow: 0 0 10px rgba(255, 123, 0, 0.4);
         }
         h2 { 
             margin-top: 0; 
@@ -32,21 +34,23 @@
             color: #ffffff; 
             font-size: 32px;
             margin-bottom: 5px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
         .subtitle {
             text-align: center;
-            color: #888;
+            color: #d1c4b9;
             font-size: 14px;
             margin-bottom: 25px;
         }
         .container { 
             max-width: 950px; 
             margin: 0 auto; 
-            background: #141419; 
+            background: rgba(24, 18, 14, 0.85); /* Khung kính mờ màu nâu ấm hoàng hôn */
+            backdrop-filter: blur(10px);
             padding: 25px; 
             border-radius: 14px; 
             box-shadow: 0 8px 30px rgba(0,0,0,0.7); 
-            border: 1px solid #22222e;
+            border: 1px solid rgba(255, 155, 59, 0.2);
             flex: 1;
         }
         
@@ -55,45 +59,43 @@
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
-            background: #1a1a24;
+            background: rgba(36, 26, 20, 0.9);
             padding: 15px;
             border-radius: 10px;
-            border: 1px solid #2a2a38;
+            border: 1px solid rgba(255, 155, 59, 0.15);
         }
         .add-account-box input {
             flex: 1;
             padding: 10px 14px;
-            background: #121218;
-            border: 1px solid #333;
+            background: rgba(15, 10, 8, 0.8);
+            border: 1px solid #442c1d;
             border-radius: 6px;
             color: #fff;
             outline: none;
             font-size: 14px;
         }
-        /* Hiệu ứng sáng lên khi click vào ô nhập */
         .add-account-box input:focus { 
-            border-color: #a855f7; 
-            box-shadow: 0 0 12px rgba(168, 85, 247, 0.4);
-            background: #161622;
+            border-color: #ff9e3b; 
+            box-shadow: 0 0 12px rgba(255, 158, 59, 0.4);
+            background: rgba(25, 18, 14, 0.9);
         }
         .btn-add {
-            background: linear-gradient(135deg, #a855f7, #6366f1);
-            color: white;
+            background: linear-gradient(135deg, #ff7b00, #ffb700);
+            color: #1a1008;
             border: none;
             padding: 0 20px;
             border-radius: 6px;
             font-weight: bold;
             cursor: pointer;
         }
-        /* Hiệu ứng sáng & nổi lên khi rê chuột hoặc bấm */
         .btn-add:hover { 
             opacity: 0.95; 
-            box-shadow: 0 0 15px rgba(168, 85, 247, 0.6);
+            box-shadow: 0 0 15px rgba(255, 123, 0, 0.6);
             transform: translateY(-1px);
         }
         .btn-add:active { transform: translateY(1px); }
 
-        /* Danh sách tài khoản (Multi-Account Card) */
+        /* Danh sách tài khoản */
         .accounts-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -101,17 +103,16 @@
             margin-bottom: 20px;
         }
         .account-card {
-            background: #181822;
-            border: 1px solid #262636;
+            background: rgba(30, 21, 16, 0.85);
+            border: 1px solid rgba(255, 155, 59, 0.15);
             border-radius: 10px;
             padding: 15px;
             display: flex;
             flex-direction: column;
             gap: 12px;
         }
-        /* Card sáng nhẹ khi rê chuột vào */
         .account-card:hover {
-            border-color: #3b3b52;
+            border-color: rgba(255, 155, 59, 0.4);
             box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
         .account-header {
@@ -122,7 +123,7 @@
         .account-title {
             font-weight: bold;
             font-size: 16px;
-            color: #00ff88;
+            color: #ffb700;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -132,7 +133,7 @@
             padding: 3px 10px;
             border-radius: 4px;
             font-weight: bold;
-            background: #222;
+            background: rgba(15, 10, 8, 0.8);
             box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
         }
         .account-actions {
@@ -149,14 +150,14 @@
             font-weight: bold; 
             font-size: 13px;
         } 
-        .btn-start { background: #28a745; color: white; } 
-        .btn-start:hover { box-shadow: 0 0 10px rgba(40, 167, 69, 0.6); transform: translateY(-1px); }
+        .btn-start { background: #2ea043; color: white; } 
+        .btn-start:hover { box-shadow: 0 0 10px rgba(46, 160, 67, 0.6); transform: translateY(-1px); }
         
-        .btn-stop { background: #dc3545; color: white; } 
-        .btn-stop:hover { box-shadow: 0 0 10px rgba(220, 53, 69, 0.6); transform: translateY(-1px); }
+        .btn-stop { background: #da3633; color: white; } 
+        .btn-stop:hover { box-shadow: 0 0 10px rgba(218, 54, 51, 0.6); transform: translateY(-1px); }
         
-        .btn-del { background: #2a2a38; color: #ff6b6b; }
-        .btn-del:hover { background: #dc3545; color: white; box-shadow: 0 0 10px rgba(220, 53, 69, 0.5); }
+        .btn-del { background: rgba(50, 35, 27, 0.9); color: #ff8182; }
+        .btn-del:hover { background: #da3633; color: white; box-shadow: 0 0 10px rgba(218, 54, 51, 0.5); }
         
         .toggle-label {
             font-size: 13px;
@@ -164,13 +165,13 @@
             align-items: center;
             gap: 5px;
             cursor: pointer;
-            color: #ccc;
+            color: #d1c4b9;
         }
         .toggle-label:hover { color: #fff; }
 
         /* Khung Log */
         .log-box { 
-            background: #09090d; 
+            background: rgba(10, 7, 5, 0.95); 
             color: #00ff88; 
             font-family: 'Consolas', monospace; 
             height: 220px; 
@@ -182,18 +183,18 @@
             line-height: 1.4; 
             white-space: pre-wrap; 
             word-break: break-all;
-            border: 1px solid #1f1f2e;
+            border: 1px solid rgba(255, 155, 59, 0.1);
             box-shadow: inset 0 2px 8px rgba(0,0,0,0.8);
         }
         .chat-container { display: flex; gap: 10px; } 
-        .chat-input { flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #333; background: #121218; color: #fff; outline: none; font-size: 13px; } 
+        .chat-input { flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #442c1d; background: rgba(15, 10, 8, 0.8); color: #fff; outline: none; font-size: 13px; } 
         .chat-input:focus { 
-            border-color: #6366f1; 
-            box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
-            background: #161622;
+            border-color: #ff9e3b; 
+            box-shadow: 0 0 10px rgba(255, 158, 59, 0.4);
+            background: rgba(25, 18, 14, 0.9);
         } 
-        .chat-btn { padding: 10px 20px; background: #6366f1; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .chat-btn:hover { box-shadow: 0 0 12px rgba(99, 102, 241, 0.6); transform: translateY(-1px); }
+        .chat-btn { padding: 10px 20px; background: #ff7b00; color: #1a1008; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .chat-btn:hover { box-shadow: 0 0 12px rgba(255, 123, 0, 0.6); transform: translateY(-1px); }
 
         /* Footer & Quản trị hệ thống */
         .footer-section {
@@ -205,27 +206,26 @@
             gap: 12px;
         }
         .admin-btn {
-            background: rgba(168, 85, 247, 0.08);
-            border: 1px solid rgba(168, 85, 247, 0.3);
-            color: #c084fc;
+            background: rgba(255, 123, 0, 0.1);
+            border: 1px solid rgba(255, 123, 0, 0.3);
+            color: #ffb700;
             padding: 8px 22px;
             border-radius: 20px;
             cursor: pointer;
             font-weight: bold;
             font-size: 13px;
         }
-        /* Hiệu ứng sáng rực lên khi ấn hoặc rê chuột vào nút Quản trị hệ thống */
         .admin-btn:hover {
-            background: rgba(168, 85, 247, 0.2);
-            border-color: rgba(168, 85, 247, 0.8);
-            box-shadow: 0 0 15px rgba(168, 85, 247, 0.5);
+            background: rgba(255, 123, 0, 0.25);
+            border-color: rgba(255, 123, 0, 0.8);
+            box-shadow: 0 0 15px rgba(255, 123, 0, 0.5);
             transform: translateY(-1px);
         }
         .admin-btn:active {
             transform: scale(0.97);
         }
 
-        /* Nút Discord nổi mượt mà */
+        /* Nút Discord */
         .discord-float {
             position: fixed;
             bottom: 25px;
@@ -247,16 +247,17 @@
         }
         .discord-float img { width: 28px; height: 28px; }
         .copyright {
-            color: #666;
+            color: #baa898;
             font-size: 12px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div class="header-brand">GTT Store — BY meovancat & giananday</div>
-        <h2>KingMC Bot Panel</h2>
+        <div class="header-brand">Cat Tool — BY meovancat & giananday</div>
+        <h2>Cat Tool Panel</h2>
         <div class="subtitle">Hệ thống AFK Bot chuyên nghiệp • Multi-Account độc lập theo IP</div>
 
         <!-- Thêm tài khoản Multi-Account -->
@@ -266,23 +267,23 @@
             <button class="btn-add" onclick="addAccount()">+ Thêm Bot</button>
         </div>
 
-        <!-- Danh sách Multi-Account hiển thị ở đây -->
+        <!-- Danh sách Multi-Account -->
         <div id="accounts-container" class="accounts-grid">
-            <div style="text-align: center; color: #666; padding: 20px;">Chưa có tài khoản nào được thêm. Hãy thêm bot ở khung trên!</div>
+            <div style="text-align: center; color: #a39281; padding: 20px;">Chưa có tài khoản nào được thêm. Hãy thêm bot ở khung trên!</div>
         </div>
 
-        <!-- Khung Log tổng hợp / Console chung -->
-        <div style="font-size: 13px; color: #aaa; margin-bottom: 5px; font-weight: bold;">Nhật ký hệ thống (Console):</div>
+        <!-- Khung Log -->
+        <div style="font-size: 13px; color: #d1c4b9; margin-bottom: 5px; font-weight: bold;">Nhật ký hệ thống (Console):</div>
         <div id="log-box" class="log-box"></div>
     </div>
 
     <!-- Footer và nút Quản trị hệ thống -->
     <div class="footer-section">
         <button class="admin-btn" onclick="checkAdminAccess()">🔒 Quản Trị Hệ Thống</button>
-        <div class="copyright">© 2026 GTT Store. Bảo lưu mọi quyền.</div>
+        <div class="copyright">© 2026 Cat Tool. Bảo lưu mọi quyền.</div>
     </div>
 
-    <!-- Nút Discord bay ở góc phải màn hình -->
+    <!-- Nút Discord -->
     <a href="https://discord.gg/wHHY7FDqd" target="_blank" class="discord-float" title="Tham gia Discord">
         <svg width="28" height="28" viewBox="0 0 127.14 96.36" fill="#ffffff">
             <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.15c2.63-27.29-4.53-51.2-19.45-72.15ZM42.45,65.69C36.18,65.69,31,60,31,53s5.18-12.72,11.45-12.72S53.9,46,53.88,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5.18-12.72,11.44-12.72S96.18,46,96.15,53,91,65.69,84.69,65.69Z"/>
@@ -302,25 +303,14 @@
             logBox.scrollTop = logBox.scrollHeight;
         }
 
-        socket.on('log', (msg) => {
-            appendLog(msg);
-        });
-
-        socket.on('init_accounts', (accounts) => {
-            renderAccounts(accounts);
-        });
-
-        socket.on('restart_internal_bot', (id) => {
-            socket.emit('start_bot', id);
-        });
+        socket.on('log', (msg) => { appendLog(msg); });
+        socket.on('init_accounts', (accounts) => { renderAccounts(accounts); });
+        socket.on('restart_internal_bot', (id) => { socket.emit('start_bot', id); });
 
         function addAccount() {
             const username = document.getElementById('new-username').value.trim();
             const password = document.getElementById('new-password').value.trim();
-            if (!username) {
-                alert('Vui lòng nhập tên tài khoản Minecraft!');
-                return;
-            }
+            if (!username) { alert('Vui lòng nhập tên tài khoản Minecraft!'); return; }
             socket.emit('add_account', { username, password });
             document.getElementById('new-username').value = '';
             document.getElementById('new-password').value = '';
@@ -337,15 +327,12 @@
         function sendAccountChat(id) {
             const input = document.getElementById(`chat_${id}`);
             const cmd = input.value.trim();
-            if (cmd) {
-                socket.emit('send_chat', { id, cmd });
-                input.value = '';
-            }
+            if (cmd) { socket.emit('send_chat', { id, cmd }); input.value = ''; }
         }
 
         function renderAccounts(accounts) {
             if (!accounts || accounts.length === 0) {
-                accountsContainer.innerHTML = `<div style="text-align: center; color: #666; padding: 20px;">Chưa có tài khoản nào được thêm. Hãy thêm bot ở khung trên!</div>`;
+                accountsContainer.innerHTML = `<div style="text-align: center; color: #a39281; padding: 20px;">Chưa có tài khoản nào được thêm. Hãy thêm bot ở khung trên!</div>`;
                 return;
             }
 
@@ -389,9 +376,7 @@
                         alert(`❌ Truy cập bị từ chối!\nIP của bạn (${data.ip}) không có quyền truy cập vào phân vùng Quản Trị Hệ Thống.`);
                     }
                 })
-                .catch(err => {
-                    alert('Lỗi kết nối kiểm tra quyền hạn!');
-                });
+                .catch(err => { alert('Lỗi kết nối kiểm tra quyền hạn!'); });
         }
     </script>
 </body>
