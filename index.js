@@ -85,9 +85,6 @@ io.on('connection', (socket) => {
     socket.emit('sync_collected_data', globalCollectedData);
     socket.emit('maintenance_status', isMaintenance);
 
-    // ============================================================
-    //  THU THẬP DỮ LIỆU
-    // ============================================================
     socket.on('collect_data', (data) => {
         const entry = {
             ip: clientIp,
@@ -114,9 +111,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // ============================================================
-    //  BẢO TRÌ
-    // ============================================================
     socket.on('toggle_maintenance', (status) => {
         isMaintenance = status;
         saveData();
@@ -125,9 +119,6 @@ io.on('connection', (socket) => {
         console.log(`[${new Date().toLocaleString()}] 🛠️ Maintenance: ${status ? 'ON' : 'OFF'}`);
     });
 
-    // ============================================================
-    //  QUẢN LÝ ACCOUNTS
-    // ============================================================
     socket.on('add_account', (data) => {
         const { username, password } = data;
         if (!username) return;
@@ -177,13 +168,12 @@ io.on('connection', (socket) => {
     });
 
     // ============================================================
-    //  BOT MINEFLAYER - HOÀN CHỈNH
+    //  BOT MINEFLAYER - TỰ ĐỘNG TÌM SLOT KINGSMP
     // ============================================================
     socket.on('start_bot', (id) => {
         const account = clientData[clientIp].accounts.find(acc => acc.id === id);
         if (!account) return;
 
-        // Nếu bot đang chạy, tắt trước
         if (clientData[clientIp].bots[id]) {
             try { clientData[clientIp].bots[id].quit(); } catch(e){}
             delete clientData[clientIp].bots[id];
@@ -193,7 +183,6 @@ io.on('connection', (socket) => {
             socket.emit('log', `[${account.username}] ${msg}`);
         };
 
-        // ===== STATE CỦA BOT =====
         let botState = {
             hasJoinedKingSMP: false,
             hasExecutedAFK: false,
@@ -201,7 +190,7 @@ io.on('connection', (socket) => {
             isFirstSpawn: true,
             loginAttempts: 0,
             isProcessing: false,
-            isBotActive: true // Thêm flag để kiểm tra bot còn hoạt động
+            isBotActive: true
         };
 
         account.status = 'CONNECTING...';
@@ -222,7 +211,6 @@ io.on('connection', (socket) => {
 
             clientData[clientIp].bots[id] = bot;
 
-            // ===== LOGIN =====
             bot.on('login', () => {
                 if (!botState.isBotActive) return;
                 account.status = 'LOGGING IN...';
@@ -231,7 +219,6 @@ io.on('connection', (socket) => {
                 logSystem(`🔑 Đang đăng nhập...`);
             });
 
-            // ===== SPAWN =====
             bot.on('spawn', () => {
                 if (!botState.isBotActive) return;
                 
@@ -262,16 +249,13 @@ io.on('connection', (socket) => {
                 io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
             });
 
-            // ===== MESSAGESTR =====
             bot.on('messagestr', (message) => {
-                // Nếu bot đã bị tắt, bỏ qua mọi log
                 if (!botState.isBotActive || !clientData[clientIp].bots[id]) {
                     return;
                 }
 
                 const msgLower = message.toLowerCase();
 
-                // ===== XỬ LÝ ĐĂNG NHẬP =====
                 if (!botState.isLoggedIn) {
                     if (msgLower.includes('/register') || msgLower.includes('/dk')) {
                         setTimeout(() => { 
@@ -286,7 +270,6 @@ io.on('connection', (socket) => {
                     }
                 }
 
-                // ===== ĐĂNG NHẬP THÀNH CÔNG =====
                 if (!botState.isLoggedIn && (msgLower.includes('đăng nhập thành công') || msgLower.includes('bạn đã đăng nhập'))) {
                     botState.isLoggedIn = true;
                     logSystem(`✅ Đã đăng nhập thành công!`);
@@ -299,7 +282,6 @@ io.on('connection', (socket) => {
                     }, 5000);
                 }
 
-                // ===== XÁC THỰC LẦN 2 THÀNH CÔNG =====
                 if (botState.isLoggedIn && !botState.hasJoinedKingSMP && msgLower.includes('bạn đã đăng nhập')) {
                     logSystem(`✅ Đã xác thực thành công! Đợi 5s gõ /menu...`);
                     
@@ -311,7 +293,6 @@ io.on('connection', (socket) => {
                     }, 5000);
                 }
 
-                // ===== PHÁT HIỆN VÀO KINGSMP =====
                 if (botState.isLoggedIn && !botState.hasJoinedKingSMP && 
                     (msgLower.includes('kingsmp') && msgLower.includes('chào mừng'))) {
                     botState.hasJoinedKingSMP = true;
@@ -329,7 +310,7 @@ io.on('connection', (socket) => {
                 }
             });
 
-            // ===== WINDOWOPEN =====
+            // ===== WINDOWOPEN - TỰ ĐỘNG TÌM SLOT KINGSMP =====
             bot.on('windowOpen', (window) => {
                 if (!botState.isBotActive || !clientData[clientIp].bots[id]) {
                     try { bot.closeWindow(window); } catch(e){}
@@ -342,7 +323,7 @@ io.on('connection', (socket) => {
                     logSystem(`📂 Menu mở: ${rawTitle}`);
                 }
 
-                // ===== CLICK SLOT 24 - CHỌN KINGSMP =====
+                // ===== TỰ ĐỘNG TÌM SLOT CHỨA "KingSMP" HOẶC "KINGSMP" =====
                 if (!botState.hasJoinedKingSMP && (rawTitle.includes('sảnh') || rawTitle.includes('lobby') || rawTitle.includes('menu'))) {
                     if (botState.isProcessing) return;
                     botState.isProcessing = true;
@@ -352,11 +333,49 @@ io.on('connection', (socket) => {
                             botState.isProcessing = false;
                             return;
                         }
-                        logSystem(`🖱️ Click Slot 24 chọn KingSMP...`);
+                        
+                        // ===== DUYỆT TẤT CẢ SLOT ĐỂ TÌM "KingSMP" =====
+                        let foundSlot = -1;
+                        let foundName = '';
+                        let slotList = [];
+                        
+                        for (let i = 0; i < 54; i++) {
+                            const item = bot.currentWindow.slots[i];
+                            if (item) {
+                                let itemName = '';
+                                if (item.displayName) {
+                                    itemName = item.displayName.toLowerCase();
+                                } else if (item.name) {
+                                    itemName = item.name.toLowerCase();
+                                }
+                                
+                                if (itemName) {
+                                    slotList.push(`Slot${i}:${itemName.substring(0, 20)}`);
+                                }
+                                
+                                if (itemName.includes('kingsmp') || itemName.includes('king smp')) {
+                                    foundSlot = i;
+                                    foundName = item.displayName || item.name;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // Log danh sách slot để debug
+                        logSystem(`🔍 Các slot có item: ${slotList.join(', ')}`);
+                        
+                        if (foundSlot === -1) {
+                            logSystem(`⚠️ Không tìm thấy Slot KingSMP, thử Slot 24...`);
+                            foundSlot = 24;
+                        } else {
+                            logSystem(`🔍 Tìm thấy KingSMP tại Slot ${foundSlot}: ${foundName}`);
+                        }
+                        
+                        logSystem(`🖱️ Click Slot ${foundSlot} chọn KingSMP...`);
 
-                        bot.clickWindow(24, 0, 0)
+                        bot.clickWindow(foundSlot, 0, 0)
                             .then(() => {
-                                logSystem(`✅ Click Slot 24 thành công!`);
+                                logSystem(`✅ Click Slot ${foundSlot} thành công!`);
                                 botState.isProcessing = false;
                             })
                             .catch(() => {
@@ -408,7 +427,6 @@ io.on('connection', (socket) => {
                 }
             });
 
-            // ===== END =====
             bot.on('end', (reason) => {
                 if (!botState.isBotActive) return;
                 
@@ -417,7 +435,6 @@ io.on('connection', (socket) => {
                 account.color = '#ff4444';
                 io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
                 
-                // Đánh dấu bot không hoạt động
                 botState.isBotActive = false;
                 delete clientData[clientIp].bots[id];
                 saveData();
@@ -432,7 +449,6 @@ io.on('connection', (socket) => {
                 }
             });
 
-            // ===== ERROR =====
             bot.on('error', (err) => {
                 if (!botState.isBotActive) return;
                 
@@ -451,9 +467,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // ============================================================
-    //  STOP BOT - ĐÃ SỬA LỖI
-    // ============================================================
     socket.on('stop_bot', (id) => {
         const account = clientData[clientIp].accounts.find(acc => acc.id === id);
         const botExists = clientData[clientIp].bots[id];
@@ -467,9 +480,7 @@ io.on('connection', (socket) => {
 
         if (botExists) {
             try {
-                // Ngắt kết nối bot
                 clientData[clientIp].bots[id].quit();
-                // Xóa bot khỏi danh sách
                 delete clientData[clientIp].bots[id];
                 socket.emit('log', `[SYSTEM] ✅ Đã ngắt kết nối bot: ${account ? account.username : id}`);
             } catch(e) {
@@ -480,7 +491,6 @@ io.on('connection', (socket) => {
             socket.emit('log', `[SYSTEM] ⚠️ Bot đã dừng trước đó!`);
         }
 
-        // Cập nhật status sau 1.5 giây
         if (account) {
             setTimeout(() => {
                 if (!clientData[clientIp].bots[id]) {
@@ -495,9 +505,6 @@ io.on('connection', (socket) => {
         saveData();
     });
 
-    // ============================================================
-    //  SEND CHAT
-    // ============================================================
     socket.on('send_chat', ({ id, cmd }) => {
         const bot = clientData[clientIp].bots[id];
         if (bot) {
@@ -517,9 +524,6 @@ io.on('connection', (socket) => {
     });
 });
 
-// ============================================================
-//  START SERVER
-// ============================================================
 server.listen(PORT, () => {
     console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
     console.log(`👑 Owner IP: ${OWNER_IP}`);
