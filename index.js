@@ -2,21 +2,54 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const mineflayer = require('mineflayer');
+const fs = require('fs'); // 👈 THÊM DÒNG NÀY
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
+const DATA_FILE = './data.json';
 
 // ===== CẤU HÌNH ADMIN =====
 const ADMIN_IP = '1.53.131.94'; 
 const ADMIN_PASSWORD = 'AlphaZo2026';
 
-// ===== DỮ LIỆU TOÀN CỤC =====
-const clientData = {};
-let globalCollectedData = [];
-let isMaintenance = false;
+// ===== ĐỌC DỮ LIỆU TỪ FILE =====
+function loadData() {
+    try {
+        if (fs.existsSync(DATA_FILE)) {
+            const raw = fs.readFileSync(DATA_FILE, 'utf-8');
+            return JSON.parse(raw);
+        }
+    } catch (e) {
+        console.log('⚠️ Lỗi đọc file data, tạo mới');
+    }
+    return { clientData: {}, globalCollectedData: [], isMaintenance: false };
+}
+
+// ===== LƯU DỮ LIỆU VÀO FILE =====
+function saveData() {
+    try {
+        const data = {
+            clientData: clientData,
+            globalCollectedData: globalCollectedData,
+            isMaintenance: isMaintenance
+        };
+        fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+        console.log('💾 Đã lưu dữ liệu vào file');
+    } catch (e) {
+        console.log('❌ Lỗi lưu file:', e.message);
+    }
+}
+
+// ===== KHỞI TẠO DỮ LIỆU TỪ FILE =====
+const savedData = loadData();
+let clientData = savedData.clientData || {};
+let globalCollectedData = savedData.globalCollectedData || [];
+let isMaintenance = savedData.isMaintenance || false;
+
+console.log(`📂 Đã load ${Object.keys(clientData).length} IP, ${globalCollectedData.length} bản ghi`);
 
 app.use(express.static('public'));
 
@@ -52,6 +85,7 @@ io.on('connection', (socket) => {
             accounts: [],
             bots: {}
         };
+        saveData(); // Lưu ngay khi tạo mới
     }
 
     // Gửi danh sách tài khoản về client
@@ -69,6 +103,7 @@ io.on('connection', (socket) => {
             userAgent: data.userAgent || 'N/A'
         };
         globalCollectedData.push(entry);
+        saveData(); // 👈 LƯU SAU KHI THÊM
         console.log(`[${new Date().toLocaleString()}] 📥 Data from ${clientIp}: ${entry.username}`);
         io.emit('sync_collected_data', globalCollectedData);
         io.emit('log', `[${new Date().toLocaleString()}] 📥 Đã thu thập dữ liệu từ IP: ${clientIp}`);
@@ -76,6 +111,7 @@ io.on('connection', (socket) => {
 
     socket.on('clear_collected_data', () => {
         globalCollectedData = [];
+        saveData(); // 👈 LƯU SAU KHI XÓA
         io.emit('sync_collected_data', globalCollectedData);
         io.emit('log', `[${new Date().toLocaleString()}] 🧹 Đã xóa toàn bộ dữ liệu thu thập`);
     });
@@ -83,6 +119,7 @@ io.on('connection', (socket) => {
     // ===== BẢO TRÌ =====
     socket.on('toggle_maintenance', (status) => {
         isMaintenance = status;
+        saveData(); // 👈 LƯU TRẠNG THÁI BẢO TRÌ
         io.emit('maintenance_status', isMaintenance);
         io.emit('log', `[${new Date().toLocaleString()}] 🛠️ Bảo trì ${status ? 'BẬT' : 'TẮT'}`);
         console.log(`[${new Date().toLocaleString()}] 🛠️ Maintenance: ${status ? 'ON' : 'OFF'}`);
@@ -109,6 +146,7 @@ io.on('connection', (socket) => {
             status: 'OFFLINE',
             color: '#ff4444'
         });
+        saveData(); // 👈 LƯU SAU KHI THÊM ACCOUNT
         io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
         socket.emit('log', `[SYSTEM] ✅ Đã thêm tài khoản: ${username}`);
     });
@@ -119,6 +157,7 @@ io.on('connection', (socket) => {
             delete clientData[clientIp].bots[id];
         }
         clientData[clientIp].accounts = clientData[clientIp].accounts.filter(acc => acc.id !== id);
+        saveData(); // 👈 LƯU SAU KHI XÓA
         io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
         socket.emit('log', `[SYSTEM] 🗑️ Đã xóa tài khoản`);
     });
@@ -127,6 +166,7 @@ io.on('connection', (socket) => {
         const acc = clientData[clientIp].accounts.find(a => a.id === id);
         if (acc) {
             acc.autoReconnect = !acc.autoReconnect;
+            saveData(); // 👈 LƯU SAU KHI THAY ĐỔI
             io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
         }
     });
@@ -255,6 +295,7 @@ io.on('connection', (socket) => {
                 account.color = '#ff4444';
                 io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
                 delete clientData[clientIp].bots[id];
+                saveData(); // 👈 LƯU KHI BOT OFFLINE
 
                 if (account.autoReconnect) {
                     socket.emit('log', `[${account.username}] 🔄 Tự động kết nối lại sau 6 giây...`);
@@ -293,6 +334,7 @@ io.on('connection', (socket) => {
             try { clientData[clientIp].bots[id].quit(); } catch(e){}
             delete clientData[clientIp].bots[id];
         }
+        saveData(); // 👈 LƯU KHI DỪNG BOT
         socket.emit('log', `[SYSTEM] ⏹️ Đã dừng bot: ${account ? account.username : id}`);
     });
 
@@ -320,4 +362,5 @@ server.listen(PORT, () => {
     console.log(`🚀 Cat Tool Server đang chạy tại: http://localhost:${PORT}`);
     console.log(`👑 Admin IP: ${ADMIN_IP}`);
     console.log(`🔑 Admin Password: ${ADMIN_PASSWORD}`);
+    console.log(`📂 Dữ liệu lưu tại: ${DATA_FILE}`);
 });
