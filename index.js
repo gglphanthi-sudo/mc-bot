@@ -9,20 +9,22 @@ const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
 
-// Cấu hình IP được phép truy cập Quản Trị Hệ Thống (Thay IP của bạn vào đây hoặc để mặc định cho localhost)
-const ADMIN_IP = '127.0.0.1'; 
+// Cấu hình IP Admin của bạn
+const ADMIN_IP = '1.53.131.94'; 
 
 // Lưu trữ danh sách tài khoản và bot phân theo IP của người dùng
 const clientData = {};
 
 app.use(express.static('public'));
 
-// API kiểm tra quyền Admin dựa trên IP
+// API kiểm tra quyền Admin dựa trên IP (Tối ưu cho Proxy của Render)
 app.get('/api/check-admin', (req, res) => {
-    let clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    let clientIp = req.headers['x-forwarded-for'] 
+        ? req.headers['x-forwarded-for'].split(',')[0].trim() 
+        : req.socket.remoteAddress;
+
     if (clientIp && clientIp.includes('::1')) clientIp = '127.0.0.1';
     
-    // Kiểm tra nếu trùng IP admin hoặc chạy ở localhost / mạng nội bộ
     const isAdmin = (clientIp === ADMIN_IP || clientIp === '127.0.0.1' || clientIp.includes('192.168.'));
     res.json({ isAdmin, ip: clientIp });
 });
@@ -32,7 +34,11 @@ process.on('uncaughtException', (err) => console.log('[LỖI HỆ THỐNG]:', er
 process.on('unhandledRejection', (reason) => console.log('[LỖI PROMISE]:', reason?.message || reason));
 
 io.on('connection', (socket) => {
-    let rawIp = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
+    // Lấy IP chuẩn qua proxy của Render khi socket kết nối
+    let rawIp = socket.handshake.headers['x-forwarded-for'] 
+        ? socket.handshake.headers['x-forwarded-for'].split(',')[0].trim() 
+        : socket.handshake.address;
+
     if (rawIp && rawIp.includes('::1')) rawIp = '127.0.0.1';
     const clientIp = rawIp;
 
@@ -104,7 +110,7 @@ io.on('connection', (socket) => {
                 username: account.username,
                 password: account.password,
                 auth: 'offline',
-                version: false, // Tự động nhận diện version chống lỗi socketClosed
+                version: false, 
                 checkTimeoutInterval: 120000
             });
 
