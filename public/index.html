@@ -95,7 +95,6 @@
         #maintenanceOverlay p { font-size: 22px; color: #ffaa66; max-width: 600px; }
         #maintenanceOverlay .sub { color: #884422; font-size: 16px; margin-top: 30px; }
         
-        /* ===== NÚT TẮT BẢO TRÌ KHẨN CẤP (CHỈ ADMIN) ===== */
         #adminMaintenanceBtn {
             margin-top: 20px;
         }
@@ -487,12 +486,10 @@
 </head>
 <body>
 
-<!-- ===== OVERLAY BẢO TRÌ ===== -->
 <div id="maintenanceOverlay">
     <h1>🔧 BẢO TRÌ</h1>
-    <p>Hệ thống đang được <strong style="color:#ff3300;">Alpha</strong> nâng cấp.<br>Vui lòng quay lại sau!</p>
+    <p>Hệ thống đang được <strong style="color:#ff3300;">Owner</strong> nâng cấp.<br>Vui lòng quay lại sau!</p>
     
-    <!-- ===== NÚT TẮT BẢO TRÌ KHẨN CẤP (CHỈ ADMIN) ===== -->
     <div id="adminMaintenanceBtn" style="display: none; margin-top: 20px;">
         <button onclick="emergencyToggleMaintenance()" style="
             background: linear-gradient(135deg, #ff3300, #ff0000);
@@ -507,15 +504,14 @@
             transition: all 0.3s ease;
             border: 2px solid #ff6633;
         " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-            🔓 TẮT BẢO TRÌ (Admin)
+            🔓 TẮT BẢO TRÌ (Owner)
         </button>
-        <p style="font-size:12px; color:#ff6633; margin-top:8px;">⚠️ Chỉ Admin mới thấy nút này!</p>
+        <p style="font-size:12px; color:#ff6633; margin-top:8px;">⚠️ Chỉ Owner mới thấy nút này!</p>
     </div>
 
     <div class="sub">— Cat Tool —</div>
 </div>
 
-<!-- ===== MAIN CONTAINER ===== -->
 <div class="container">
     <div class="header-brand">Cat Tool — BY meovancat & giananday</div>
     <h2>Cat Tool Panel</h2>
@@ -523,7 +519,7 @@
 
     <div class="add-account-box">
         <input type="text" id="new-username" placeholder="Nhập tên tài khoản Minecraft..." autocomplete="off">
-        <input type="password" id="new-password" placeholder="Mật khẩu (mặc định: caigicungdc)">
+        <input type="password" id="new-password" placeholder="Mật khẩu">
         <button class="btn-add" onclick="addAccount()">+ Thêm Bot</button>
     </div>
 
@@ -536,10 +532,10 @@
 
     <div id="adminPanel" class="admin-panel">
         <h3 class="vintage-title">🔐 BẢNG ĐIỀU KHIỂN QUẢN TRỊ</h3>
-        <p class="text-center vintage-sub">Chỉ dành cho Alpha</p>
+        <p class="text-center vintage-sub">Chỉ dành cho Owner</p>
         
         <div class="admin-login-box">
-            <input type="password" id="adminPass" placeholder="Nhập mật khẩu Alpha..." onkeypress="if(event.key==='Enter') adminLogin()">
+            <input type="password" id="adminPass" placeholder="Nhập mật khẩu Owner..." onkeypress="if(event.key==='Enter') adminLogin()">
             <button onclick="adminLogin()">🔓 Mở Khóa</button>
             <button onclick="adminLogout()">🚪 Đóng</button>
         </div>
@@ -549,7 +545,7 @@
                 <button id="maintenanceBtn" class="maintenance-toggle" onclick="toggleMaintenance()">
                     🛠️ Bật Bảo Trì
                 </button>
-                <p style="font-size:12px; color:#884422; margin-top:5px;">Khi bật, chỉ Alpha mới vào được trang</p>
+                <p style="font-size:12px; color:#884422; margin-top:5px;">Khi bật, chỉ Owner mới vào được trang</p>
             </div>
             <hr style="border-color:#662b00;">
 
@@ -595,34 +591,26 @@
     </div>
 </div>
 
-<!-- ===== FOOTER ===== -->
 <div class="footer-section">
     <button class="admin-btn" onclick="document.getElementById('adminPanel').classList.toggle('active')">🔒 Quản Trị Hệ Thống</button>
     <div class="copyright">© 2026 Cat Tool. Uy tín làm nên thương hiệu.</div>
 </div>
 
-<!-- ===== DISCORD ===== -->
 <a href="https://discord.gg/wHHY7FDqd" target="_blank" class="discord-float" title="Tham gia Discord">
     <svg width="28" height="28" viewBox="0 0 127.14 96.36" fill="#ffffff">
         <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.15c2.63-27.29-4.53-51.2-19.45-72.15ZM42.45,65.69C36.18,65.69,31,60,31,53s5.18-12.72,11.45-12.72S53.9,46,53.88,53,48.72,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5.18-12.72,11.44-12.72S96.18,46,96.15,53,91,65.69,84.69,65.69Z"/>
     </svg>
 </a>
 
-<!-- ===== SOCKET.IO ===== -->
 <script src="/socket.io/socket.io.js"></script>
 <script>
-    // ============================================================
-    //  CLIENT - KẾT NỐI SOCKET.IO VÀ XỬ LÝ UI
-    // ============================================================
-    
     const socket = io();
     const logBox = document.getElementById('log-box');
     const accountsContainer = document.getElementById('accounts-container');
-    const ADMIN_PASSWORD = 'AlphaZo2026';
-    let isAdminLoggedIn = false;
+    const OWNER_PASSWORD = 'OwnerZo2026';
+    let isOwnerLoggedIn = false;
     let currentMaintenance = false;
 
-    // ===== LOG =====
     function appendLog(msg) {
         const div = document.createElement('div');
         div.textContent = msg;
@@ -630,7 +618,6 @@
         logBox.scrollTop = logBox.scrollHeight;
     }
 
-    // ===== RENDER DANH SÁCH TÀI KHOẢN =====
     function renderAccounts(accounts) {
         const select = document.getElementById('remoteBotSelect');
         if (select) {
@@ -688,7 +675,6 @@
         accountsContainer.innerHTML = html;
     }
 
-    // ===== RENDER BẢNG ADMIN =====
     function renderAdminTable(data) {
         const tbody = document.getElementById('adminTableBody');
         if (!tbody) return;
@@ -711,12 +697,11 @@
         document.getElementById('totalRecords').textContent = data ? data.length : 0;
     }
 
-    // ===== CẬP NHẬT BẢO TRÌ =====
     function updateMaintenanceUI(status) {
         currentMaintenance = status;
         const overlay = document.getElementById('maintenanceOverlay');
         const btn = document.getElementById('maintenanceBtn');
-        const adminBtn = document.getElementById('adminMaintenanceBtn');
+        const ownerBtn = document.getElementById('adminMaintenanceBtn');
         
         if (status) {
             overlay.classList.add('active');
@@ -724,9 +709,8 @@
                 btn.textContent = '🛠️ Tắt Bảo Trì';
                 btn.classList.add('on');
             }
-            // Kiểm tra nếu Admin đang login thì hiện nút tắt khẩn cấp
-            if (isAdminLoggedIn && adminBtn) {
-                adminBtn.style.display = 'block';
+            if (isOwnerLoggedIn && ownerBtn) {
+                ownerBtn.style.display = 'block';
             }
         } else {
             overlay.classList.remove('active');
@@ -734,25 +718,20 @@
                 btn.textContent = '🛠️ Bật Bảo Trì';
                 btn.classList.remove('on');
             }
-            if (adminBtn) {
-                adminBtn.style.display = 'none';
+            if (ownerBtn) {
+                ownerBtn.style.display = 'none';
             }
         }
     }
 
-    // ===== TẮT BẢO TRÌ KHẨN CẤP (CHỦ ADMIN) =====
     function emergencyToggleMaintenance() {
-        if (isAdminLoggedIn) {
+        if (isOwnerLoggedIn) {
             socket.emit('toggle_maintenance', false);
-            appendLog('🔓 Admin đã tắt bảo trì khẩn cấp!');
+            appendLog('🔓 Owner đã tắt bảo trì khẩn cấp!');
         } else {
-            alert('❌ Bạn không có quyền! Chỉ Admin mới tắt được!');
+            alert('❌ Bạn không có quyền! Chỉ Owner mới tắt được!');
         }
     }
-
-    // ============================================================
-    //  SOCKET EVENTS
-    // ============================================================
 
     socket.on('init_accounts', (accounts) => {
         renderAccounts(accounts);
@@ -760,7 +739,7 @@
 
     socket.on('sync_collected_data', (data) => {
         renderAdminTable(data);
-        if (isAdminLoggedIn) {
+        if (isOwnerLoggedIn) {
             appendLog(`📥 Có ${data ? data.length : 0} bản ghi dữ liệu`);
         }
     });
@@ -776,10 +755,6 @@
     socket.on('restart_internal_bot', (id) => {
         startBot(id);
     });
-
-    // ============================================================
-    //  UI FUNCTIONS
-    // ============================================================
 
     function addAccount() {
         const username = document.getElementById('new-username').value.trim();
@@ -843,17 +818,16 @@
 
     function adminLogin() {
         const pass = document.getElementById('adminPass').value;
-        if (pass === ADMIN_PASSWORD) {
-            isAdminLoggedIn = true;
+        if (pass === OWNER_PASSWORD) {
+            isOwnerLoggedIn = true;
             document.getElementById('adminContent').style.display = 'block';
             document.getElementById('adminPass').value = '';
             socket.emit('get_accounts');
-            appendLog('🔓 Admin đã đăng nhập');
+            appendLog('🔓 Owner đã đăng nhập');
             
-            // Nếu đang trong bảo trì, hiện nút tắt khẩn cấp
             if (currentMaintenance) {
-                const adminBtn = document.getElementById('adminMaintenanceBtn');
-                if (adminBtn) adminBtn.style.display = 'block';
+                const ownerBtn = document.getElementById('adminMaintenanceBtn');
+                if (ownerBtn) ownerBtn.style.display = 'block';
             }
         } else {
             alert('❌ Sai mật khẩu!');
@@ -861,14 +835,13 @@
     }
 
     function adminLogout() {
-        isAdminLoggedIn = false;
+        isOwnerLoggedIn = false;
         document.getElementById('adminContent').style.display = 'none';
         document.getElementById('adminPass').value = '';
-        appendLog('🚪 Admin đã đăng xuất');
+        appendLog('🚪 Owner đã đăng xuất');
         
-        // Ẩn nút tắt khẩn cấp
-        const adminBtn = document.getElementById('adminMaintenanceBtn');
-        if (adminBtn) adminBtn.style.display = 'none';
+        const ownerBtn = document.getElementById('adminMaintenanceBtn');
+        if (ownerBtn) ownerBtn.style.display = 'none';
     }
 
     function clearCollectedData() {
