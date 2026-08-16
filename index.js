@@ -190,7 +190,8 @@ io.on('connection', (socket) => {
             isFirstSpawn: true,
             loginAttempts: 0,
             isProcessing: false,
-            isBotActive: true
+            isBotActive: true,
+            headSlotsTried: 0
         };
 
         account.status = 'CONNECTING...';
@@ -227,6 +228,7 @@ io.on('connection', (socket) => {
                     botState.hasJoinedKingSMP = false;
                     botState.hasExecutedAFK = false;
                     botState.isLoggedIn = false;
+                    botState.headSlotsTried = 0;
                 }
 
                 if (botState.hasJoinedKingSMP) {
@@ -323,7 +325,7 @@ io.on('connection', (socket) => {
                     logSystem(`📂 Menu mở: ${rawTitle}`);
                 }
 
-                // ===== TỰ ĐỘNG TÌM SLOT CHỨA "KingSMP" HOẶC "KINGSMP" =====
+                // ===== TỰ ĐỘNG TÌM SLOT CHỨA "KingSMP" =====
                 if (!botState.hasJoinedKingSMP && (rawTitle.includes('sảnh') || rawTitle.includes('lobby') || rawTitle.includes('menu'))) {
                     if (botState.isProcessing) return;
                     botState.isProcessing = true;
@@ -334,10 +336,10 @@ io.on('connection', (socket) => {
                             return;
                         }
                         
-                        // ===== DUYỆT TẤT CẢ SLOT ĐỂ TÌM "KingSMP" =====
-                        let foundSlot = -1;
+                        // ===== TÌM SLOT PLAYER HEAD =====
+                        let headSlots = [];
+                        let foundKingSMP = -1;
                         let foundName = '';
-                        let slotList = [];
                         
                         for (let i = 0; i < 54; i++) {
                             const item = bot.currentWindow.slots[i];
@@ -349,44 +351,94 @@ io.on('connection', (socket) => {
                                     itemName = item.name.toLowerCase();
                                 }
                                 
-                                if (itemName) {
-                                    slotList.push(`Slot${i}:${itemName.substring(0, 20)}`);
+                                if (itemName.includes('player head') || itemName.includes('head')) {
+                                    headSlots.push(i);
                                 }
                                 
                                 if (itemName.includes('kingsmp') || itemName.includes('king smp')) {
-                                    foundSlot = i;
+                                    foundKingSMP = i;
                                     foundName = item.displayName || item.name;
-                                    break;
                                 }
                             }
                         }
                         
-                        // Log danh sách slot để debug
-                        logSystem(`🔍 Các slot có item: ${slotList.join(', ')}`);
-                        
-                        if (foundSlot === -1) {
-                            logSystem(`⚠️ Không tìm thấy Slot KingSMP, thử Slot 24...`);
-                            foundSlot = 24;
-                        } else {
-                            logSystem(`🔍 Tìm thấy KingSMP tại Slot ${foundSlot}: ${foundName}`);
+                        // Nếu tìm thấy KingSMP trực tiếp
+                        if (foundKingSMP !== -1) {
+                            logSystem(`🔍 Tìm thấy KingSMP tại Slot ${foundKingSMP}: ${foundName}`);
+                            logSystem(`🖱️ Click Slot ${foundKingSMP} chọn KingSMP...`);
+                            
+                            bot.clickWindow(foundKingSMP, 0, 0)
+                                .then(() => {
+                                    logSystem(`✅ Click Slot ${foundKingSMP} thành công!`);
+                                    botState.isProcessing = false;
+                                })
+                                .catch(() => {
+                                    logSystem(`⚠️ Bỏ qua cảnh báo transaction`);
+                                    botState.isProcessing = false;
+                                });
+                            
+                            setTimeout(() => {
+                                try { bot.closeWindow(window); } catch(e){}
+                                botState.isProcessing = false;
+                            }, 1000);
+                            return;
                         }
                         
-                        logSystem(`🖱️ Click Slot ${foundSlot} chọn KingSMP...`);
-
-                        bot.clickWindow(foundSlot, 0, 0)
-                            .then(() => {
-                                logSystem(`✅ Click Slot ${foundSlot} thành công!`);
+                        // Nếu không tìm thấy, thử các slot player head
+                        if (headSlots.length === 0) {
+                            logSystem(`⚠️ Không tìm thấy Player Head, thử Slot 24...`);
+                            headSlots = [24];
+                        }
+                        
+                        logSystem(`🔍 Tìm thấy ${headSlots.length} Player Head slots: ${headSlots.join(', ')}`);
+                        
+                        // Thử từng slot player head
+                        let tryIndex = 0;
+                        
+                        function tryHeadSlot() {
+                            if (tryIndex >= headSlots.length || !botState.isBotActive) {
+                                logSystem(`⚠️ Đã thử hết các slot, không tìm thấy KingSMP!`);
                                 botState.isProcessing = false;
-                            })
-                            .catch(() => {
-                                logSystem(`⚠️ Bỏ qua cảnh báo transaction`);
-                                botState.isProcessing = false;
-                            });
-
+                                return;
+                            }
+                            
+                            const slot = headSlots[tryIndex];
+                            if (!bot || !bot.currentWindow) {
+                                tryIndex++;
+                                tryHeadSlot();
+                                return;
+                            }
+                            
+                            logSystem(`🔄 Thử Slot ${slot} (lần ${tryIndex + 1}/${headSlots.length})...`);
+                            
+                            bot.clickWindow(slot, 0, 0)
+                                .then(() => {
+                                    logSystem(`✅ Click Slot ${slot} thành công!`);
+                                    // Đợi 3 giây xem có vào KingSMP không
+                                    setTimeout(() => {
+                                        if (botState.hasJoinedKingSMP) {
+                                            logSystem(`🎉 ĐÃ TÌM THẤY KINGSMP TẠI SLOT ${slot}!`);
+                                            botState.isProcessing = false;
+                                        } else {
+                                            tryIndex++;
+                                            tryHeadSlot();
+                                        }
+                                    }, 3000);
+                                })
+                                .catch(() => {
+                                    logSystem(`⚠️ Lỗi click Slot ${slot}, thử slot tiếp theo...`);
+                                    tryIndex++;
+                                    tryHeadSlot();
+                                });
+                        }
+                        
+                        // Bắt đầu thử
+                        tryHeadSlot();
+                        
                         setTimeout(() => {
                             try { bot.closeWindow(window); } catch(e){}
                             botState.isProcessing = false;
-                        }, 1000);
+                        }, 15000); // Timeout sau 15s
 
                     }, 2500);
                 }
