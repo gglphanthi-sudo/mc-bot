@@ -168,7 +168,7 @@ io.on('connection', (socket) => {
     });
 
     // ============================================================
-    //  BOT MINEFLAYER - CHỈ CLICK SLOT 24
+    //  BOT MINEFLAYER - FIX SOCKETCLOSED
     // ============================================================
     socket.on('start_bot', (id) => {
         const account = clientData[clientIp].accounts.find(acc => acc.id === id);
@@ -199,14 +199,18 @@ io.on('connection', (socket) => {
         logSystem(`🔄 Đang kết nối tới kingmc.vn...`);
 
         try {
+            // ===== TẠO BOT VỚI CÁC THAM SỐ MỚI =====
             const bot = mineflayer.createBot({
                 host: 'kingmc.vn',
                 port: 25565,
                 username: account.username,
                 password: account.password,
                 auth: 'offline',
-                version: '1.16.5',
-                checkTimeoutInterval: 120000
+                version: false,              // ✅ Tự động dò version
+                skipValidation: true,        // ✅ Bỏ qua xác thực
+                checkTimeoutInterval: 180000,
+                connectTimeout: 60000,
+                keepAlive: true              // ✅ Giữ kết nối
             });
 
             clientData[clientIp].bots[id] = bot;
@@ -415,8 +419,12 @@ io.on('connection', (socket) => {
             bot.on('error', (err) => {
                 if (!botState.isBotActive) return;
                 
-                if (err.code === 'EPIPE' || err.code === 'ECONNRESET') {
+                if (err.code === 'ETIMEDOUT') {
+                    logSystem(`⏰ Server không phản hồi, đang thử lại...`);
+                } else if (err.code === 'EPIPE' || err.code === 'ECONNRESET') {
                     logSystem(`⚠️ Mất kết nối server, đang thử lại...`);
+                } else if (err.code === 'ECONNREFUSED') {
+                    logSystem(`❌ Server từ chối kết nối!`);
                 } else {
                     logSystem(`❌ Lỗi Bot: ${err.message}`);
                 }
