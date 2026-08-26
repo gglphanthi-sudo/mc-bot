@@ -168,7 +168,7 @@ io.on('connection', (socket) => {
     });
 
     // ============================================================
-    //  BOT MINEFLAYER - TỐI ƯU (KHÔNG LẶP LỆNH)
+    //  BOT MINEFLAYER - TỰ ĐỘNG TÌM SLOT KINGSMP + AFK
     // ============================================================
     socket.on('start_bot', (id) => {
         const account = clientData[clientIp].accounts.find(acc => acc.id === id);
@@ -183,18 +183,12 @@ io.on('connection', (socket) => {
             socket.emit('log', `[${account.username}] ${msg}`);
         };
 
-        // ===== STATE =====
-        let state = {
-            hasJoinedKingSMP: false,
-            hasExecutedAFK: false,
-            isLoggedIn: false,
-            isFirstSpawn: true,
-            hasSentDn1: false,
-            hasSentDn2: false,
-            hasSentMenu: false,
-            hasClickedSlot24: false,
-            isProcessing: false
-        };
+        let hasJoinedKingSMP = false;
+        let hasExecutedAFK = false;
+        let isLoggedIn = false;
+        let isFirstSpawn = true;
+        let loginAttempts = 0;
+        let isProcessing = false;
 
         account.status = 'CONNECTING...';
         account.color = 'yellow';
@@ -214,56 +208,57 @@ io.on('connection', (socket) => {
 
             clientData[clientIp].bots[id] = bot;
 
-            // ===== LOGIN =====
             bot.on('login', () => {
                 account.status = 'LOGGING IN...';
                 account.color = 'orange';
                 io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
                 logSystem(`🔑 Đang đăng nhập...`);
                 
-                // Lần 1: /dn (CHỈ 1 LẦN)
-                if (!state.hasSentDn1) {
-                    state.hasSentDn1 = true;
-                    setTimeout(() => {
-                        logSystem(`🔑 Gửi /dn ${account.password}`);
+                // Lần 1: /dn
+                setTimeout(() => {
+                    if (!isLoggedIn) {
+                        logSystem(`🔑 Lần 1: Gửi /dn ${account.password}`);
                         bot.chat(`/dn ${account.password}`);
-                    }, 2000);
-                }
+                    }
+                }, 2000);
                 
-                // Lần 2: /dn xác thực (CHỈ 1 LẦN)
-                if (!state.hasSentDn2) {
-                    state.hasSentDn2 = true;
-                    setTimeout(() => {
-                        logSystem(`🔑 Gửi /dn ${account.password} (xác thực)`);
+                // Lần 2: /dn xác thực
+                setTimeout(() => {
+                    if (!isLoggedIn) {
+                        logSystem(`🔑 Lần 2: Gửi /dn ${account.password} (xác thực)`);
                         bot.chat(`/dn ${account.password}`);
-                    }, 8000);
-                }
+                    }
+                }, 8000);
                 
-                // Gõ /menu (CHỈ 1 LẦN)
-                if (!state.hasSentMenu) {
-                    state.hasSentMenu = true;
-                    setTimeout(() => {
-                        if (!state.hasJoinedKingSMP) {
-                            logSystem(`📋 Đang gõ /menu...`);
-                            bot.chat('/menu');
-                        }
-                    }, 14000);
-                }
+                // Gõ /menu sau 14s
+                setTimeout(() => {
+                    if (!hasJoinedKingSMP) {
+                        logSystem(`📋 Đang gõ /menu...`);
+                        bot.chat('/menu');
+                    }
+                }, 14000);
             });
 
-            // ===== SPAWN =====
             bot.on('spawn', () => {
-                if (state.isFirstSpawn) {
-                    state.isFirstSpawn = false;
-                    state.hasJoinedKingSMP = false;
-                    state.hasExecutedAFK = false;
-                    state.isLoggedIn = false;
+                if (isFirstSpawn) {
+                    isFirstSpawn = false;
+                    hasJoinedKingSMP = false;
+                    hasExecutedAFK = false;
+                    isLoggedIn = false;
                 }
 
-                if (state.hasJoinedKingSMP) {
+                if (hasJoinedKingSMP) {
                     account.status = 'ONLINE / KINGSMP';
                     account.color = '#00ff88';
                     logSystem(`✅ ĐÃ VÀO KINGSMP!`);
+                    if (!hasExecutedAFK) {
+                        setTimeout(() => {
+                            if (bot) {
+                                logSystem(`💤 Gửi lệnh /afk...`);
+                                bot.chat('/afk');
+                            }
+                        }, 4000);
+                    }
                 } else {
                     account.status = 'ONLINE / LOBBY';
                     account.color = '#00ff88';
@@ -272,136 +267,145 @@ io.on('connection', (socket) => {
                 io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
             });
 
-            // ===== MESSAGESTR =====
             bot.on('messagestr', (message) => {
                 const msgLower = message.toLowerCase();
 
-                // ===== PHÁT HIỆN ĐĂNG NHẬP THÀNH CÔNG =====
-                if (!state.isLoggedIn && (msgLower.includes('đăng nhập thành công') || msgLower.includes('bạn đã đăng nhập'))) {
-                    state.isLoggedIn = true;
+                if (!isLoggedIn && (msgLower.includes('đăng nhập thành công') || msgLower.includes('bạn đã đăng nhập'))) {
+                    isLoggedIn = true;
                     logSystem(`✅ Đã đăng nhập thành công!`);
                     
-                    // Gõ /dn lần 2 (xác thực) sau 5s - CHỈ 1 LẦN
-                    if (!state.hasSentDn2) {
-                        state.hasSentDn2 = true;
-                        setTimeout(() => {
-                            if (bot && !state.hasJoinedKingSMP) {
-                                logSystem(`🔑 Gửi /dn lần 2 (xác thực)...`);
-                                bot.chat(`/dn ${account.password}`);
-                            }
-                        }, 5000);
-                    }
+                    // Gõ /dn lần 2 (xác thực) sau 5s nếu chưa login
+                    setTimeout(() => {
+                        if (bot && !hasJoinedKingSMP) {
+                            logSystem(`🔑 Gửi /dn lần 2 (xác thực)...`);
+                            bot.chat(`/dn ${account.password}`);
+                        }
+                    }, 5000);
                 }
 
-                // ===== PHÁT HIỆN XÁC THỰC THÀNH CÔNG =====
-                if (state.isLoggedIn && !state.hasJoinedKingSMP && msgLower.includes('bạn đã đăng nhập')) {
+                if (isLoggedIn && !hasJoinedKingSMP && msgLower.includes('bạn đã đăng nhập')) {
                     logSystem(`✅ Đã xác thực thành công! Đợi 5s gõ /menu...`);
                     
-                    // Gõ /menu - CHỈ 1 LẦN
-                    if (!state.hasSentMenu) {
-                        state.hasSentMenu = true;
-                        setTimeout(() => {
-                            if (bot && !state.hasJoinedKingSMP) {
-                                logSystem(`📋 Đang gõ /menu...`);
-                                bot.chat('/menu');
-                            }
-                        }, 5000);
-                    }
+                    setTimeout(() => {
+                        if (bot && !hasJoinedKingSMP) {
+                            logSystem(`📋 Đang gõ /menu...`);
+                            bot.chat('/menu');
+                        }
+                    }, 5000);
                 }
 
-                // ===== PHÁT HIỆN VÀO KINGSMP =====
-                if (state.isLoggedIn && !state.hasJoinedKingSMP && 
+                if (isLoggedIn && !hasJoinedKingSMP && 
                     (msgLower.includes('kingsmp') && msgLower.includes('chào mừng'))) {
-                    state.hasJoinedKingSMP = true;
+                    hasJoinedKingSMP = true;
                     account.status = 'ONLINE / KINGSMP';
                     account.color = '#00ff88';
                     io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
                     logSystem(`✅ ĐÃ VÀO KINGSMP!`);
                     
-                    // Gõ /afk sau 3s - CHỈ 1 LẦN
-                    if (!state.hasExecutedAFK) {
-                        setTimeout(() => {
-                            if (bot) {
-                                logSystem(`💤 Gửi lệnh /afk...`);
-                                bot.chat('/afk');
-                            }
-                        }, 3000);
-                    }
+                    setTimeout(() => {
+                        if (bot && !hasExecutedAFK) {
+                            logSystem(`💤 Gửi lệnh /afk...`);
+                            bot.chat('/afk');
+                        }
+                    }, 3000);
                 }
             });
 
-            // ===== WINDOWOPEN =====
+            // ===== WINDOWOPEN - TỰ ĐỘNG TÌM SLOT =====
             bot.on('windowOpen', (window) => {
                 const rawTitle = JSON.stringify(window.title || '').toLowerCase();
-                
-                if (rawTitle.includes('menu') || rawTitle.includes('sảnh') || rawTitle.includes('afk')) {
-                    logSystem(`📂 Menu mở: ${rawTitle}`);
-                }
+                logSystem(`📂 Menu mở: ${rawTitle}`);
 
-                // ===== CLICK SLOT 24 - CHỈ 1 LẦN =====
-                if (!state.hasJoinedKingSMP && !state.hasClickedSlot24 && 
-                    (rawTitle.includes('sảnh') || rawTitle.includes('lobby') || rawTitle.includes('menu'))) {
-                    
-                    if (state.isProcessing) return;
-                    state.isProcessing = true;
-                    state.hasClickedSlot24 = true;
+                // ===== BƯỚC 1: TÌM SLOT CHỨA "KingSMP" =====
+                if (!hasJoinedKingSMP && (rawTitle.includes('sảnh') || rawTitle.includes('lobby') || rawTitle.includes('menu'))) {
+                    if (isProcessing) return;
+                    isProcessing = true;
 
                     setTimeout(() => {
                         if (!bot || !bot.currentWindow) {
-                            state.isProcessing = false;
+                            isProcessing = false;
                             return;
                         }
-                        logSystem(`🖱️ Click Slot 24 chọn KingSMP...`);
 
-                        bot.clickWindow(24, 0, 0)
+                        // ===== DUYỆT TẤT CẢ SLOT TÌM "KingSMP" =====
+                        let foundSlot = -1;
+                        let foundName = '';
+
+                        for (let i = 0; i < 54; i++) {
+                            const item = bot.currentWindow.slots[i];
+                            if (item) {
+                                let itemName = '';
+                                if (item.displayName) {
+                                    itemName = item.displayName.toLowerCase();
+                                } else if (item.name) {
+                                    itemName = item.name.toLowerCase();
+                                }
+
+                                if (itemName.includes('kingsmp') || itemName.includes('king smp') || 
+                                    itemName.includes('kingsmp') || itemName.includes('king_smp') ||
+                                    itemName.includes('kingsmp')) {
+                                    foundSlot = i;
+                                    foundName = item.displayName || item.name;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (foundSlot === -1) {
+                            logSystem(`⚠️ Không tìm thấy Slot KingSMP, thử Slot 24...`);
+                            foundSlot = 24;
+                        } else {
+                            logSystem(`🔍 Tìm thấy KingSMP tại Slot ${foundSlot}: ${foundName}`);
+                        }
+
+                        logSystem(`🖱️ Click Slot ${foundSlot} chọn KingSMP...`);
+                        hasJoinedKingSMP = true;
+
+                        bot.clickWindow(foundSlot, 0, 0)
                             .then(() => {
-                                logSystem(`✅ Click Slot 24 thành công!`);
-                                state.isProcessing = false;
+                                logSystem(`✅ Click Slot ${foundSlot} thành công!`);
                             })
                             .catch(() => {
-                                logSystem(`⚠️ Bỏ qua cảnh báo transaction`);
-                                state.isProcessing = false;
+                                logSystem(`⚠️ Bỏ qua cảnh báo transaction của server`);
                             });
 
                         setTimeout(() => {
                             try { bot.closeWindow(window); } catch(e){}
-                            state.isProcessing = false;
-                        }, 1000);
+                            isProcessing = false;
+                        }, 500);
 
                     }, 2500);
                 }
 
-                // ===== CLICK SLOT 1 - AFK =====
-                if (state.hasJoinedKingSMP && !state.hasExecutedAFK && 
-                    (rawTitle.includes('afk') || rawTitle.includes('tự động') || rawTitle.includes('treo') || rawTitle.includes('chọn khu'))) {
+                // ===== BƯỚC 2: CLICK SLOT 1 - AFK =====
+                if (hasJoinedKingSMP && !hasExecutedAFK && 
+                    (rawTitle.includes('afk') || rawTitle.includes('tự động') || rawTitle.includes('treo'))) {
                     
-                    if (state.isProcessing) return;
-                    state.isProcessing = true;
+                    if (isProcessing) return;
+                    isProcessing = true;
 
                     setTimeout(() => {
                         if (!bot || !bot.currentWindow) {
                             logSystem(`⚠️ Không có window AFK để click`);
-                            state.isProcessing = false;
+                            isProcessing = false;
                             return;
                         }
                         logSystem(`🖱️ Click Slot 1 chọn AFK...`);
-                        state.hasExecutedAFK = true;
+                        hasExecutedAFK = true;
 
                         bot.clickWindow(1, 0, 0)
                             .then(() => {
                                 logSystem(`🎉 ĐÃ VÀO CHẾ ĐỘ AFK!`);
-                                state.isProcessing = false;
                             })
                             .catch(() => {
                                 logSystem(`⚠️ Bỏ qua cảnh báo transaction AFK`);
                                 logSystem(`🎉 ĐÃ VÀO CHẾ ĐỘ AFK!`);
-                                state.isProcessing = false;
                             });
 
                         setTimeout(() => {
                             try { bot.closeWindow(window); } catch(e){}
-                            state.isProcessing = false;
-                        }, 1000);
+                            isProcessing = false;
+                        }, 500);
 
                     }, 3000);
                 }
