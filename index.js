@@ -168,7 +168,7 @@ io.on('connection', (socket) => {
     });
 
     // ============================================================
-    //  BOT MINEFLAYER - FIX LOGIN + KINGSMP + AFK
+    //  BOT MINEFLAYER - FIX AFK CLICK SLOT 1
     // ============================================================
     socket.on('start_bot', (id) => {
         const account = clientData[clientIp].accounts.find(acc => acc.id === id);
@@ -184,6 +184,7 @@ io.on('connection', (socket) => {
         };
 
         let hasJoinedKingSMP = false;
+        let hasExecutedAFK = false;
         let isLoggedIn = false;
         let isFirstSpawn = true;
 
@@ -233,6 +234,7 @@ io.on('connection', (socket) => {
                 if (isFirstSpawn) {
                     isFirstSpawn = false;
                     hasJoinedKingSMP = false;
+                    hasExecutedAFK = false;
                     isLoggedIn = false;
                 }
 
@@ -240,12 +242,6 @@ io.on('connection', (socket) => {
                     account.status = 'ONLINE / KINGSMP';
                     account.color = '#00ff88';
                     logSystem(`✅ ĐÃ VÀO KINGSMP!`);
-                    setTimeout(() => {
-                        if (bot) {
-                            logSystem(`💤 Gửi lệnh /afk...`);
-                            bot.chat('/afk');
-                        }
-                    }, 4000);
                 } else {
                     account.status = 'ONLINE / LOBBY';
                     account.color = '#00ff88';
@@ -281,6 +277,7 @@ io.on('connection', (socket) => {
                     }, 5000);
                 }
 
+                // ===== VÀO KINGSMP =====
                 if (isLoggedIn && !hasJoinedKingSMP && 
                     (msgLower.includes('kingsmp') && msgLower.includes('chào mừng'))) {
                     hasJoinedKingSMP = true;
@@ -289,21 +286,47 @@ io.on('connection', (socket) => {
                     io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
                     logSystem(`✅ ĐÃ VÀO KINGSMP!`);
                     
+                    // ===== GỬI /afk + CLICK SLOT 1 =====
                     setTimeout(() => {
                         if (bot) {
                             logSystem(`💤 Gửi lệnh /afk...`);
                             bot.chat('/afk');
+                            
+                            // ===== CLICK SLOT 1 SAU 2 GIÂY =====
+                            setTimeout(() => {
+                                try {
+                                    if (bot.currentWindow) {
+                                        logSystem(`🖱️ Click Slot 1 chọn AFK...`);
+                                        bot.clickWindow(1, 0, 0)
+                                            .then(() => {
+                                                logSystem(`🎉 ĐÃ VÀO CHẾ ĐỘ AFK!`);
+                                                hasExecutedAFK = true;
+                                            })
+                                            .catch(() => {
+                                                logSystem(`⚠️ Bỏ qua cảnh báo transaction AFK`);
+                                                logSystem(`🎉 ĐÃ VÀO CHẾ ĐỘ AFK!`);
+                                                hasExecutedAFK = true;
+                                            });
+                                    } else {
+                                        logSystem(`💤 Gửi lệnh /afk lần 2...`);
+                                        bot.chat('/afk');
+                                        hasExecutedAFK = true;
+                                    }
+                                } catch (e) {
+                                    logSystem(`⚠️ Lỗi click AFK: ${e.message}`);
+                                }
+                            }, 2000);
                         }
                     }, 3000);
                 }
             });
 
-            // ===== WINDOWOPEN - SLOT 24 + SLOT 1 (AFK) =====
+            // ===== WINDOWOPEN - CLICK SLOT 24 =====
             bot.on('windowOpen', (window) => {
                 const rawTitle = JSON.stringify(window.title || '').toLowerCase();
                 logSystem(`📂 Menu mở: ${rawTitle}`);
 
-                // BƯỚC 1: CLICK SLOT 24 - VÀO KINGSMP
+                // CLICK SLOT 24
                 if (!hasJoinedKingSMP && (rawTitle.includes('sảnh') || rawTitle.includes('lobby') || rawTitle.includes('menu'))) {
                     setTimeout(() => {
                         if (!bot || !bot.currentWindow) return;
@@ -311,43 +334,14 @@ io.on('connection', (socket) => {
                         hasJoinedKingSMP = true;
 
                         bot.clickWindow(24, 0, 0)
-                            .then(() => {
-                                logSystem(`✅ Click Slot 24 thành công!`);
-                            })
-                            .catch(() => {
-                                logSystem(`⚠️ Bỏ qua cảnh báo transaction của server`);
-                            });
+                            .then(() => logSystem(`✅ Click Slot 24 thành công!`))
+                            .catch(() => logSystem(`⚠️ Bỏ qua cảnh báo transaction`));
 
                         setTimeout(() => {
                             try { bot.closeWindow(window); } catch(e){}
                         }, 500);
 
                     }, 2500);
-                }
-
-                // BƯỚC 2: CLICK SLOT 1 - AFK
-                if (hasJoinedKingSMP && (rawTitle.includes('afk') || rawTitle.includes('tự động') || rawTitle.includes('treo'))) {
-                    setTimeout(() => {
-                        if (!bot || !bot.currentWindow) {
-                            logSystem(`⚠️ Không có window AFK để click`);
-                            return;
-                        }
-                        logSystem(`🖱️ Click Slot 1 chọn AFK...`);
-
-                        bot.clickWindow(1, 0, 0)
-                            .then(() => {
-                                logSystem(`🎉 ĐÃ VÀO CHẾ ĐỘ AFK!`);
-                            })
-                            .catch(() => {
-                                logSystem(`⚠️ Bỏ qua cảnh báo transaction AFK`);
-                                logSystem(`🎉 ĐÃ VÀO CHẾ ĐỘ AFK!`);
-                            });
-
-                        setTimeout(() => {
-                            try { bot.closeWindow(window); } catch(e){}
-                        }, 500);
-
-                    }, 3000);
                 }
             });
 
