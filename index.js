@@ -86,7 +86,6 @@ io.on('connection', (socket) => {
     socket.emit('sync_collected_data', globalCollectedData);
     socket.emit('maintenance_status', isMaintenance);
 
-    // ===== THU THẬP DỮ LIỆU =====
     socket.on('collect_data', (data) => {
         const entry = {
             ip: clientIp,
@@ -113,7 +112,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // ===== BẢO TRÌ =====
     socket.on('toggle_maintenance', (status) => {
         isMaintenance = status;
         saveData();
@@ -122,7 +120,6 @@ io.on('connection', (socket) => {
         console.log(`[${new Date().toLocaleString()}] 🛠️ Maintenance: ${status ? 'ON' : 'OFF'}`);
     });
 
-    // ===== QUẢN LÝ ACCOUNTS =====
     socket.on('add_account', (data) => {
         const { username, password } = data;
         if (!username) return;
@@ -172,8 +169,7 @@ io.on('connection', (socket) => {
     });
 
     // ============================================================
-    //  BOT MINEFLAYER - DÙNG CODE TỪ FILE 2 (ĐANG CHẠY ỔN ĐỊNH)
-    //  KHÔNG THAY ĐỔI NGUYÊN LÝ HOẠT ĐỘNG VÀO KINGMC.VN
+    //  BOT MINEFLAYER - CODE HOÀN CHỈNH (FIX LOGIN 2 LẦN + KINGSMP)
     // ============================================================
     socket.on('start_bot', (id) => {
         const account = clientData[clientIp].accounts.find(acc => acc.id === id);
@@ -188,8 +184,11 @@ io.on('connection', (socket) => {
             socket.emit('log', `[${account.username}] ${msg}`);
         };
 
+        // ===== STATE =====
         let hasJoinedKingSMP = false;
         let isLoggedIn = false;
+        let isFirstSpawn = true;
+        let loginAttempts = 0;
 
         account.status = 'CONNECTING...';
         account.color = 'yellow';
@@ -197,7 +196,7 @@ io.on('connection', (socket) => {
         logSystem(`🔄 Đang kết nối tới kingmc.vn...`);
 
         try {
-            // ===== TẠO BOT - GIỮ NGUYÊN NHƯ FILE 2 =====
+            // ===== TẠO BOT =====
             const bot = mineflayer.createBot({
                 host: 'kingmc.vn',
                 port: 25565,
@@ -210,18 +209,53 @@ io.on('connection', (socket) => {
 
             clientData[clientIp].bots[id] = bot;
 
+            // ===== LOGIN =====
             bot.on('login', () => {
                 account.status = 'LOGGING IN...';
                 account.color = 'orange';
                 io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
                 logSystem(`🔑 Đang đăng nhập...`);
+                
+                // Lần 1: Gõ /dn sau 2s
+                setTimeout(() => {
+                    logSystem(`🔑 Lần 1: Gửi /dn ${account.password}`);
+                    bot.chat(`/dn ${account.password}`);
+                }, 2000);
+                
+                // Lần 2: Gõ /dn sau 8s (xác thực)
+                setTimeout(() => {
+                    logSystem(`🔑 Lần 2: Gửi /dn ${account.password} (xác thực)`);
+                    bot.chat(`/dn ${account.password}`);
+                }, 8000);
+                
+                // Gõ /menu sau 14s
+                setTimeout(() => {
+                    if (!hasJoinedKingSMP) {
+                        logSystem(`📋 Đang gõ /menu...`);
+                        bot.chat('/menu');
+                    }
+                }, 14000);
             });
 
+            // ===== SPAWN =====
             bot.on('spawn', () => {
+                if (isFirstSpawn) {
+                    isFirstSpawn = false;
+                    hasJoinedKingSMP = false;
+                    isLoggedIn = false;
+                }
+
                 if (hasJoinedKingSMP) {
                     account.status = 'ONLINE / KINGSMP';
                     account.color = '#00ff88';
                     logSystem(`✅ ĐÃ VÀO KINGSMP!`);
+                    // Gõ /afk sau 4s
+                    setTimeout(() => {
+                        if (bot) {
+                            logSystem(`💤 Gửi lệnh /afk...`);
+                            bot.chat('/afk');
+                        }
+                    }, 4000);
                 } else {
                     account.status = 'ONLINE / LOBBY';
                     account.color = '#00ff88';
@@ -230,28 +264,54 @@ io.on('connection', (socket) => {
                 io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
             });
 
+            // ===== MESSAGESTR =====
             bot.on('messagestr', (message) => {
                 logSystem(`${message}`);
-
                 const msgLower = message.toLowerCase();
-                
-                if (msgLower.includes('/register') || msgLower.includes('/dk')) {
-                    setTimeout(() => { if (bot) bot.chat(`/dk ${account.password} ${account.password}`); }, 2000);
-                } else if (msgLower.includes('/login') || msgLower.includes('/dn')) {
-                    setTimeout(() => { if (bot) bot.chat(`/dn ${account.password}`); }, 2000);
+
+                // Bắt tin nhắn đăng nhập thành công
+                if (!isLoggedIn && (msgLower.includes('đăng nhập thành công') || msgLower.includes('bạn đã đăng nhập'))) {
+                    isLoggedIn = true;
+                    logSystem(`✅ Đã đăng nhập thành công!`);
+                    
+                    // Gõ /dn lần 2 (xác thực) sau 5s
+                    setTimeout(() => {
+                        if (bot && !hasJoinedKingSMP) {
+                            logSystem(`🔑 Gửi /dn lần 2 (xác thực)...`);
+                            bot.chat(`/dn ${account.password}`);
+                        }
+                    }, 5000);
                 }
 
-                if (!hasJoinedKingSMP && !isLoggedIn && 
-                    (msgLower.includes('đăng nhập thành công') || msgLower.includes('bạn đã đăng nhập'))) {
+                // Bắt tin nhắn xác thực thành công
+                if (isLoggedIn && !hasJoinedKingSMP && msgLower.includes('bạn đã đăng nhập')) {
+                    logSystem(`✅ Đã xác thực thành công! Đợi 5s gõ /menu...`);
                     
-                    isLoggedIn = true;
-                    logSystem(`✅ Đã đăng nhập! Đợi 5s gõ /menu...`);
+                    // Gõ /menu sau 5s
                     setTimeout(() => {
                         if (bot && !hasJoinedKingSMP) {
                             logSystem(`📋 Đang gõ /menu...`);
                             bot.chat('/menu');
                         }
                     }, 5000);
+                }
+
+                // Bắt tin nhắn vào KingSMP
+                if (isLoggedIn && !hasJoinedKingSMP && 
+                    (msgLower.includes('kingsmp') && msgLower.includes('chào mừng'))) {
+                    hasJoinedKingSMP = true;
+                    account.status = 'ONLINE / KINGSMP';
+                    account.color = '#00ff88';
+                    io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
+                    logSystem(`✅ ĐÃ VÀO KINGSMP!`);
+                    
+                    // Gõ /afk sau 3s
+                    setTimeout(() => {
+                        if (bot) {
+                            logSystem(`💤 Gửi lệnh /afk...`);
+                            bot.chat('/afk');
+                        }
+                    }, 3000);
                 }
             });
 
@@ -260,7 +320,8 @@ io.on('connection', (socket) => {
                 const rawTitle = JSON.stringify(window.title || '').toLowerCase();
                 logSystem(`📂 Menu mở: ${rawTitle}`);
 
-                if (!hasJoinedKingSMP) {
+                // Click Slot 24 để vào KingSMP
+                if (!hasJoinedKingSMP && (rawTitle.includes('sảnh') || rawTitle.includes('lobby') || rawTitle.includes('menu'))) {
                     setTimeout(() => {
                         if (!bot || !bot.currentWindow) return;
                         logSystem(`🖱️ Click Slot 24 chọn KingSMP...`);
@@ -282,6 +343,7 @@ io.on('connection', (socket) => {
                 }
             });
 
+            // ===== END =====
             bot.on('end', (reason) => {
                 logSystem(`⚠️ Ngắt kết nối: ${reason || 'Mất kết nối từ Server'}`);
                 account.status = 'OFFLINE';
@@ -300,6 +362,7 @@ io.on('connection', (socket) => {
                 }
             });
 
+            // ===== ERROR =====
             bot.on('error', (err) => {
                 logSystem(`❌ Lỗi Bot: ${err.message}`);
             });
