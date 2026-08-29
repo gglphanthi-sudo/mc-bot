@@ -13,19 +13,21 @@ const io = new Server(server);
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = './data.json';
 
-// ===== CẤU HÌNH OWNER =====
+// ===== CẤU HÌNH OWNER (HỆ THỐNG ADMIN) =====
 const OWNER_IP = '1.53.131.94'; 
 const OWNER_PASSWORD = 'Tuanpro123';
 
-// ===== CẤU HÌNH BOT =====
+// ===== CẤU HÌNH SERVER =====
 const SERVER_HOST = 'kingmc.vn';
+const SERVER_PORT = 25565;
 const SERVER_VERSION = '1.16.5';
 
-// ===== DỮ LIỆU BAN ĐẦU =====
+// ===== KHAI BÁO DỮ LIỆU =====
 let proxyList = [];
 let clientData = {}; 
 let globalCollectedData = []; 
 let isMaintenance = false;
+let ownerSocketId = null;
 
 // ===== HÀM ĐỌC / LƯU DỮ LIỆU =====
 function loadData() {
@@ -49,7 +51,7 @@ function saveData() {
     } catch (e) { console.log('❌ Lỗi lưu file:', e.message); }
 }
 
-// ===== PROXY FUNCTIONS =====
+// ===== HÀM PROXY =====
 function getNextProxy() {
     if (proxyList.length === 0) return null;
     return proxyList[Math.floor(Math.random() * proxyList.length)];
@@ -59,7 +61,7 @@ function createProxyAgent(proxyUrl) {
     if (!proxyUrl) return null;
     try {
         if (proxyUrl.startsWith('socks')) return new SocksProxyAgent(proxyUrl);
-        else if (proxyUrl.startsWith('http')) return new HttpsProxyAgent(proxyUrl);
+        if (proxyUrl.startsWith('http')) return new HttpsProxyAgent(proxyUrl);
     } catch (e) { console.log('❌ Lỗi tạo proxy agent:', e.message); }
     return null;
 }
@@ -68,8 +70,6 @@ app.use(express.static('public'));
 
 process.on('uncaughtException', (err) => console.log('[LỖI HỆ THỐNG]:', err.message));
 process.on('unhandledRejection', (reason) => console.log('[LỖI PROMISE]:', reason?.message || reason));
-
-let ownerSocketId = null;
 
 io.on('connection', (socket) => {
     let rawIp = socket.handshake.headers['x-forwarded-for'] ? socket.handshake.headers['x-forwarded-for'].split(',')[0].trim() : socket.handshake.address;
@@ -85,6 +85,7 @@ io.on('connection', (socket) => {
         saveData();
     }
 
+    // Gửi trạng thái về client
     socket.emit('is_admin', isOwner);
     socket.emit('init_accounts', clientData[clientIp].accounts);
     if (isOwner) {
@@ -92,6 +93,7 @@ io.on('connection', (socket) => {
         socket.emit('maintenance_status', isMaintenance);
     }
 
+    // ===== LOGIN =====
     socket.on('login', (pass) => {
         if (pass === OWNER_PASSWORD) {
             socket.emit('login_success', true);
@@ -101,6 +103,7 @@ io.on('connection', (socket) => {
         }
     });
 
+    // ===== LOGIC THU THẬP DỮ LIỆU =====
     socket.on('collect_data', (data) => {
         const entry = {
             ip: clientIp,
@@ -120,6 +123,7 @@ io.on('connection', (socket) => {
         if (isOwner) io.to(ownerSocketId).emit('sync_collected_data', globalCollectedData);
     });
 
+    // ===== LOGIC MAINTENANCE =====
     socket.on('toggle_maintenance', (status) => {
         isMaintenance = status;
         saveData();
@@ -127,6 +131,7 @@ io.on('connection', (socket) => {
         io.emit('log', `[${new Date().toLocaleString()}] 🛠️ Bảo trì ${status ? 'BẬT' : 'TẮT'}`);
     });
 
+    // ===== QUẢN LÝ ACCOUNT =====
     socket.on('add_account', (data) => {
         const { username, password } = data;
         if (!username) return;
@@ -158,7 +163,9 @@ io.on('connection', (socket) => {
 
     socket.on('get_accounts', () => socket.emit('init_accounts', clientData[clientIp].accounts));
 
-    // ===== START BOT =====
+    // ============================================================
+    //  BOT MINEFLAYER - LOGIC VIP: TỰ ĐỘNG TÌM SLOT & SỬA LỖI
+    // ============================================================
     socket.on('start_bot', (id) => {
         const account = clientData[clientIp].accounts.find(acc => acc.id === id);
         if (!account) return;
@@ -186,7 +193,7 @@ io.on('connection', (socket) => {
             else { logSystem(`🌐 Không dùng proxy (IP thật)`); account.proxy = null; }
 
             const botOptions = {
-                host: SERVER_HOST, port: 25565, username: account.username, password: account.password,
+                host: SERVER_HOST, port: SERVER_PORT, username: account.username, password: account.password,
                 auth: 'offline', version: SERVER_VERSION, checkTimeoutInterval: 120000
             };
             if (proxyAgent) botOptions.agent = proxyAgent;
@@ -233,20 +240,21 @@ io.on('connection', (socket) => {
                 }
             });
 
+            // ===== XỬ LÝ GUI MENU: TÌM ĐÚNG NÚT VÀO SMP =====
             bot.on('windowOpen', (window) => {
                 const rawTitle = JSON.stringify(window.title || '').toLowerCase();
                 logSystem(`📂 Menu mở: ${rawTitle}`);
 
-                // TÌM KINGSMP
-                if (!hasJoinedKingSMP && (rawTitle.includes('menu') || rawTitle.includes('sảnh'))) {
+                // BƯỚC 1: TÌM CHÍNH XÁC ITEM KINGSMP TRONG MENU
+                if (!hasJoinedKingSMP && (rawTitle.includes('menu') || rawTitle.includes('sảnh') || rawTitle.includes('lobby'))) {
                     if (isProcessing) return;
                     isProcessing = true;
 
                     setTimeout(() => {
                         if (!bot || !bot.currentWindow) { isProcessing = false; return; }
-                        let foundSlot = -1;
                         
-                        // Duyệt toàn bộ inventory để tìm item chứa chữ "kingsmp"
+                        let foundSlot = -1;
+                        // Duyệt toàn bộ Inventory để tìm item tên Kingsmp
                         for (let i = 0; i < bot.inventory.slots.length; i++) {
                             const item = bot.inventory.slots[i];
                             if (item) {
@@ -259,7 +267,11 @@ io.on('connection', (socket) => {
                                 }
                             }
                         }
-                        if (foundSlot === -1) { logSystem(`⚠️ Không tìm thấy item KingSMP, thử Slot 24...`); foundSlot = 24; }
+                        
+                        if (foundSlot === -1) {
+                            logSystem(`⚠️ Không tìm thấy item KingSMP cụ thể, thử Slot 24...`);
+                            foundSlot = 24;
+                        }
 
                         hasJoinedKingSMP = true;
                         logSystem(`🖱️ Click Slot ${foundSlot + 1} chọn KingSMP...`);
@@ -269,17 +281,41 @@ io.on('connection', (socket) => {
                     }, 1500);
                 }
 
-                // CHỌN KHU AFK
+                // BƯỚC 2: TÌM ĐÚNG "CHỌN KHU AFK" VÀ TỰ ĐỘNG CLICK VÀO Ô SỐ 1
                 if (hasJoinedKingSMP && !hasExecutedAFK && (rawTitle.includes('afk') || rawTitle.includes('chọn khu') || rawTitle.includes('chon khu'))) {
                     if (isProcessing) return;
                     isProcessing = true;
 
                     setTimeout(() => {
                         if (!bot || !bot.currentWindow) { logSystem(`⚠️ Không có window AFK`); isProcessing = false; return; }
-                        logSystem(`🎯 Mở menu CHỌN KHU AFK, click Slot 1...`);
-                        hasExecutedAFK = true;
+                        
+                        logSystem(`🎯 Mở menu CHỌN KHU AFK. Đang tìm ô số 1...`);
+                        let afkSlot = -1;
+                        
+                        // Quét để tìm ô có chữ số "1" (Có thể là tiêu đề item chứa số 1)
+                        for (let i = 0; i < bot.inventory.slots.length; i++) {
+                            const item = bot.inventory.slots[i];
+                            if (item) {
+                                let displayName = (item.displayName || '').toLowerCase();
+                                // Nếu item là số 1
+                                if (displayName.includes('1') || item.name.includes('1')) {
+                                    afkSlot = i;
+                                    logSystem(`🎯 Tìm thấy ô có số 1 tại vị trí slot ${i + 1}. Đang click...`);
+                                    break;
+                                }
+                            }
+                        }
 
-                        bot.clickWindow(0, 0, 0).then(() => logSystem(`🎉 ĐÃ VÀO CHẾ ĐỘ AFK!`)).catch(() => logSystem(`🎉 ĐÃ VÀO CHẾ ĐỘ AFK!`));
+                        // Nếu không tìm thấy, dùng logic mạnh tay: click thẳng Slot 1 (index 0)
+                        if (afkSlot === -1) {
+                            logSystem(`⚠️ Không tìm thấy ô số 1, click thẳng vào Slot 1 của menu (index 0).`);
+                            afkSlot = 0;
+                        }
+
+                        hasExecutedAFK = true;
+                        bot.clickWindow(afkSlot, 0, 0)
+                            .then(() => logSystem(`🎉 ĐÃ VÀO CHẾ ĐỘ AFK!`))
+                            .catch(() => logSystem(`🎉 ĐÃ VÀO CHẾ ĐỘ AFK!`));
 
                         setTimeout(() => { try { bot.closeWindow(window); } catch(e){} isProcessing = false; }, 500);
                     }, 2000);
@@ -332,4 +368,5 @@ io.on('connection', (socket) => {
 
 server.listen(PORT, () => {
     console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
+    console.log(`👑 Owner IP: ${OWNER_IP}`);
 });
