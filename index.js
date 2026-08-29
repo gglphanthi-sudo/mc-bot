@@ -3,6 +3,8 @@ const http = require('http');
 const { Server } = require('socket.io');
 const mineflayer = require('mineflayer');
 const fs = require('fs');
+const { SocksProxyAgent } = require('socks-proxy-agent');
+const { HttpsProxyAgent } = require('https-proxy-agent');
 
 const app = express();
 const server = http.createServer(app);
@@ -15,6 +17,9 @@ const DATA_FILE = './data.json';
 const OWNER_IP = '1.53.131.94';
 const OWNER_PASSWORD = 'Tuanpro123';
 
+// ===== PROXY LIST (LƯU TẠM TRONG RAM) =====
+let proxyList = [];
+
 // ===== ĐỌC/LƯU DỮ LIỆU =====
 function loadData() {
     try {
@@ -25,7 +30,12 @@ function loadData() {
     } catch (e) {
         console.log('⚠️ Lỗi đọc file data, tạo mới');
     }
-    return { clientData: {}, globalCollectedData: [], isMaintenance: false };
+    return { 
+        clientData: {}, 
+        globalCollectedData: [], 
+        isMaintenance: false,
+        proxyList: []
+    };
 }
 
 function saveData() {
@@ -33,7 +43,8 @@ function saveData() {
         const data = {
             clientData: clientData,
             globalCollectedData: globalCollectedData,
-            isMaintenance: isMaintenance
+            isMaintenance: isMaintenance,
+            proxyList: proxyList
         };
         fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
     } catch (e) {
@@ -45,6 +56,52 @@ const savedData = loadData();
 let clientData = savedData.clientData || {};
 let globalCollectedData = savedData.globalCollectedData || [];
 let isMaintenance = savedData.isMaintenance || false;
+proxyList = savedData.proxyList || [];
+
+// ===== PROXY FUNCTIONS =====
+function getNextProxy() {
+    if (proxyList.length === 0) return null;
+    // Random proxy để tránh trùng IP
+    const randomIndex = Math.floor(Math.random() * proxyList.length);
+    return proxyList[randomIndex];
+}
+
+function createProxyAgent(proxyUrl) {
+    if (!proxyUrl) return null;
+    try {
+        if (proxyUrl.startsWith('socks')) {
+            return new SocksProxyAgent(proxyUrl);
+        } else if (proxyUrl.startsWith('http') || proxyUrl.startsWith('https')) {
+            return new HttpsProxyAgent(proxyUrl);
+        }
+    } catch (e) {
+        console.log('❌ Lỗi tạo proxy agent:', e.message);
+    }
+    return null;
+}
+
+// ===== API PROXY =====
+app.get('/api/proxies', (req, res) => {
+    res.json({ proxies: proxyList, total: proxyList.length });
+});
+
+app.post('/api/proxies/add', (req, res) => {
+    const { proxy } = req.body;
+    if (!proxy) return res.status(400).json({ error: 'Thiếu proxy!' });
+    proxyList.push(proxy);
+    saveData();
+    res.json({ success: true, total: proxyList.length });
+});
+
+app.post('/api/proxies/remove', (req, res) => {
+    const { index } = req.body;
+    if (index === undefined || index < 0 || index >= proxyList.length) {
+        return res.status(400).json({ error: 'Index không hợp lệ!' });
+    }
+    proxyList.splice(index, 1);
+    saveData();
+    res.json({ success: true, total: proxyList.length });
+});
 
 app.use(express.static('public'));
 
@@ -136,7 +193,8 @@ io.on('connection', (socket) => {
             password: password ? password.trim() : 'caigicungdc',
             autoReconnect: true,
             status: 'OFFLINE',
-            color: '#ff4444'
+            color: '#ff4444',
+            proxy: null
         });
         saveData();
         io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
@@ -168,7 +226,7 @@ io.on('connection', (socket) => {
     });
 
     // ============================================================
-    //  BOT MINEFLAYER - TỰ ĐỘNG TÌM SLOT KINGSMP + AFK
+    //  BOT MINEFLAYER - CÓ PROXY + TỰ ĐỘNG TÌM SLOT
     // ============================================================
     socket.on('start_bot', (id) => {
         const account = clientData[clientIp].accounts.find(acc => acc.id === id);
@@ -187,7 +245,6 @@ io.on('connection', (socket) => {
         let hasExecutedAFK = false;
         let isLoggedIn = false;
         let isFirstSpawn = true;
-        let loginAttempts = 0;
         let isProcessing = false;
 
         account.status = 'CONNECTING...';
@@ -196,7 +253,20 @@ io.on('connection', (socket) => {
         logSystem(`🔄 Đang kết nối tới kingmc.vn...`);
 
         try {
-            const bot = mineflayer.createBot({
+            // ===== LẤY PROXY CHO BOT =====
+            const proxyUrl = getNextProxy();
+            const proxyAgent = createProxyAgent(proxyUrl);
+            
+            if (proxyAgent && proxyUrl) {
+                logSystem(`🌐 Dùng proxy: ${proxyUrl}`);
+                account.proxy = proxyUrl;
+            } else {
+                logSystem(`🌐 Không dùng proxy (IP thật)`);
+                account.proxy = null;
+            }
+
+            // ===== TẠO BOT =====
+            const botOptions = {
                 host: 'kingmc.vn',
                 port: 25565,
                 username: account.username,
@@ -204,8 +274,13 @@ io.on('connection', (socket) => {
                 auth: 'offline',
                 version: '1.16.5',
                 checkTimeoutInterval: 120000
-            });
+            };
 
+            if (proxyAgent) {
+                botOptions.agent = proxyAgent;
+            }
+
+            const bot = mineflayer.createBot(botOptions);
             clientData[clientIp].bots[id] = bot;
 
             bot.on('login', () => {
@@ -214,7 +289,6 @@ io.on('connection', (socket) => {
                 io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
                 logSystem(`🔑 Đang đăng nhập...`);
                 
-                // Lần 1: /dn
                 setTimeout(() => {
                     if (!isLoggedIn) {
                         logSystem(`🔑 Lần 1: Gửi /dn ${account.password}`);
@@ -222,7 +296,6 @@ io.on('connection', (socket) => {
                     }
                 }, 2000);
                 
-                // Lần 2: /dn xác thực
                 setTimeout(() => {
                     if (!isLoggedIn) {
                         logSystem(`🔑 Lần 2: Gửi /dn ${account.password} (xác thực)`);
@@ -230,7 +303,6 @@ io.on('connection', (socket) => {
                     }
                 }, 8000);
                 
-                // Gõ /menu sau 14s
                 setTimeout(() => {
                     if (!hasJoinedKingSMP) {
                         logSystem(`📋 Đang gõ /menu...`);
@@ -274,7 +346,6 @@ io.on('connection', (socket) => {
                     isLoggedIn = true;
                     logSystem(`✅ Đã đăng nhập thành công!`);
                     
-                    // Gõ /dn lần 2 (xác thực) sau 5s nếu chưa login
                     setTimeout(() => {
                         if (bot && !hasJoinedKingSMP) {
                             logSystem(`🔑 Gửi /dn lần 2 (xác thực)...`);
@@ -311,12 +382,12 @@ io.on('connection', (socket) => {
                 }
             });
 
-            // ===== WINDOWOPEN - TỰ ĐỘNG TÌM SLOT =====
+            // ===== WINDOWOPEN =====
             bot.on('windowOpen', (window) => {
                 const rawTitle = JSON.stringify(window.title || '').toLowerCase();
                 logSystem(`📂 Menu mở: ${rawTitle}`);
 
-                // ===== BƯỚC 1: TÌM SLOT CHỨA "KingSMP" =====
+                // BƯỚC 1: TÌM SLOT KINGSMP
                 if (!hasJoinedKingSMP && (rawTitle.includes('sảnh') || rawTitle.includes('lobby') || rawTitle.includes('menu'))) {
                     if (isProcessing) return;
                     isProcessing = true;
@@ -327,10 +398,7 @@ io.on('connection', (socket) => {
                             return;
                         }
 
-                        // ===== DUYỆT TẤT CẢ SLOT TÌM "KingSMP" =====
                         let foundSlot = -1;
-                        let foundName = '';
-
                         for (let i = 0; i < 54; i++) {
                             const item = bot.currentWindow.slots[i];
                             if (item) {
@@ -340,34 +408,20 @@ io.on('connection', (socket) => {
                                 } else if (item.name) {
                                     itemName = item.name.toLowerCase();
                                 }
-
-                                if (itemName.includes('kingsmp') || itemName.includes('king smp') || 
-                                    itemName.includes('kingsmp') || itemName.includes('king_smp') ||
-                                    itemName.includes('kingsmp')) {
+                                if (itemName.includes('kingsmp') || itemName.includes('king smp')) {
                                     foundSlot = i;
-                                    foundName = item.displayName || item.name;
                                     break;
                                 }
                             }
                         }
 
-                        if (foundSlot === -1) {
-                            logSystem(`⚠️ Không tìm thấy Slot KingSMP, thử Slot 24...`);
-                            foundSlot = 24;
-                        } else {
-                            logSystem(`🔍 Tìm thấy KingSMP tại Slot ${foundSlot}: ${foundName}`);
-                        }
-
+                        if (foundSlot === -1) foundSlot = 24;
                         logSystem(`🖱️ Click Slot ${foundSlot} chọn KingSMP...`);
                         hasJoinedKingSMP = true;
 
                         bot.clickWindow(foundSlot, 0, 0)
-                            .then(() => {
-                                logSystem(`✅ Click Slot ${foundSlot} thành công!`);
-                            })
-                            .catch(() => {
-                                logSystem(`⚠️ Bỏ qua cảnh báo transaction của server`);
-                            });
+                            .then(() => logSystem(`✅ Click Slot ${foundSlot} thành công!`))
+                            .catch(() => logSystem(`⚠️ Bỏ qua cảnh báo transaction`));
 
                         setTimeout(() => {
                             try { bot.closeWindow(window); } catch(e){}
@@ -377,7 +431,7 @@ io.on('connection', (socket) => {
                     }, 2500);
                 }
 
-                // ===== BƯỚC 2: CLICK SLOT 1 - AFK =====
+                // BƯỚC 2: CLICK SLOT 1 - AFK
                 if (hasJoinedKingSMP && !hasExecutedAFK && 
                     (rawTitle.includes('afk') || rawTitle.includes('tự động') || rawTitle.includes('treo'))) {
                     
@@ -394,9 +448,7 @@ io.on('connection', (socket) => {
                         hasExecutedAFK = true;
 
                         bot.clickWindow(1, 0, 0)
-                            .then(() => {
-                                logSystem(`🎉 ĐÃ VÀO CHẾ ĐỘ AFK!`);
-                            })
+                            .then(() => logSystem(`🎉 ĐÃ VÀO CHẾ ĐỘ AFK!`))
                             .catch(() => {
                                 logSystem(`⚠️ Bỏ qua cảnh báo transaction AFK`);
                                 logSystem(`🎉 ĐÃ VÀO CHẾ ĐỘ AFK!`);
@@ -430,7 +482,11 @@ io.on('connection', (socket) => {
             });
 
             bot.on('error', (err) => {
-                logSystem(`❌ Lỗi Bot: ${err.message}`);
+                if (err.code === 'ETIMEDOUT') {
+                    logSystem(`⏰ Server không phản hồi, đang thử lại...`);
+                } else {
+                    logSystem(`❌ Lỗi Bot: ${err.message}`);
+                }
             });
 
         } catch (e) {
@@ -503,4 +559,5 @@ server.listen(PORT, () => {
     console.log(`👑 Owner IP: ${OWNER_IP}`);
     console.log(`🔑 Owner Password: ${OWNER_PASSWORD}`);
     console.log(`📂 Dữ liệu lưu tại: ${DATA_FILE}`);
+    console.log(`🌐 Proxy List: ${proxyList.length} proxies`);
 });
