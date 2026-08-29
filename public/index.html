@@ -4,446 +4,58 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KingMC AFK - AUTOMATED v5.0</title>
-    
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Inter', 'Segoe UI', sans-serif;
-            background: #0a0e17;
-            color: #e0e0e0;
-            min-height: 100vh;
-            padding: 20px;
-            background-image: 
-                radial-gradient(ellipse at 20% 0%, rgba(255, 50, 0, 0.05) 0%, transparent 60%),
-                radial-gradient(ellipse at 80% 100%, rgba(255, 50, 0, 0.03) 0%, transparent 60%);
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #0a0e17; color: #e0e0e0; min-height: 100vh; padding: 20px; background-image: radial-gradient(ellipse at 20% 0%, rgba(255, 50, 0, 0.05) 0%, transparent 60%), radial-gradient(ellipse at 80% 100%, rgba(255, 50, 0, 0.03) 0%, transparent 60%); }
+        ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-track { background: #0a0e17; } ::-webkit-scrollbar-thumb { background: #ff5500; border-radius: 10px; }
 
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: #0a0e17; }
-        ::-webkit-scrollbar-thumb { background: #ff5500; border-radius: 10px; }
-
-        /* ===== LOGIN ===== */
-        .login-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(10, 14, 23, 0.98);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            backdrop-filter: blur(20px);
-            transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-        .login-overlay.hidden {
-            opacity: 0;
-            pointer-events: none;
-            transform: scale(1.05);
-        }
-        .login-box {
-            background: rgba(20, 25, 40, 0.9);
-            border: 1px solid rgba(255, 85, 0, 0.2);
-            border-radius: 20px;
-            padding: 50px 45px;
-            max-width: 400px;
-            width: 90%;
-            text-align: center;
-            box-shadow: 0 0 60px rgba(255, 85, 0, 0.05);
-        }
+        /* LOGIN */
+        .login-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(10, 14, 23, 0.98); display: flex; justify-content: center; align-items: center; z-index: 9999; backdrop-filter: blur(20px); transition: all 0.8s; }
+        .login-overlay.hidden { opacity: 0; pointer-events: none; transform: scale(1.05); }
+        .login-box { background: rgba(20, 25, 40, 0.9); border: 1px solid rgba(255, 85, 0, 0.2); border-radius: 20px; padding: 50px 45px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 0 60px rgba(255, 85, 0, 0.05); }
         .login-box .logo { font-size: 48px; margin-bottom: 10px; display: block; }
-        .login-box h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 24px;
-            font-weight: 900;
-            background: linear-gradient(135deg, #ff5500, #ff7700);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 8px;
-        }
+        .login-box h1 { font-family: 'Orbitron', sans-serif; font-size: 24px; font-weight: 900; background: linear-gradient(135deg, #ff5500, #ff7700); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
         .login-box .sub { color: #556; font-size: 13px; letter-spacing: 3px; margin-bottom: 30px; }
-        .login-box input {
-            padding: 14px 18px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 85, 0, 0.15);
-            border-radius: 12px;
-            color: #fff;
-            font-size: 14px;
-            outline: none;
-            width: 100%;
-            margin-bottom: 12px;
-            transition: all 0.3s;
-        }
-        .login-box input:focus {
-            border-color: #ff5500;
-            box-shadow: 0 0 30px rgba(255, 85, 0, 0.1);
-        }
-        .login-box input::placeholder { color: #445; }
-        .login-box .btn-login {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #ff5500, #ff7700);
-            color: #fff;
-            font-weight: 700;
-            font-size: 15px;
-            cursor: pointer;
-            transition: all 0.3s;
-            letter-spacing: 1px;
-        }
-        .login-box .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 40px rgba(255, 85, 0, 0.2);
-        }
-        .login-error { color: #ff4444; font-size: 13px; margin-top: 10px; opacity: 0; transition: opacity 0.3s; }
-        .login-error.show { opacity: 1; }
+        .login-box input { padding: 14px 18px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 85, 0, 0.15); border-radius: 12px; color: #fff; font-size: 14px; outline: none; width: 100%; margin-bottom: 12px; }
+        .login-box .btn-login { width: 100%; padding: 14px; border: none; border-radius: 12px; background: linear-gradient(135deg, #ff5500, #ff7700); color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; }
+        .login-error { color: #ff4444; font-size: 13px; margin-top: 10px; opacity: 0; transition: opacity 0.3s; } .login-error.show { opacity: 1; }
 
-        /* ===== HEADER ===== */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            padding: 16px 25px;
-            background: rgba(20, 25, 40, 0.8);
-            border: 1px solid rgba(255, 85, 0, 0.1);
-            border-radius: 14px;
-            backdrop-filter: blur(10px);
-            margin-bottom: 25px;
-        }
-        .header .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .header .brand h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 20px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #ff5500, #ff7700);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .header .brand .version {
-            font-size: 10px;
-            color: #556;
-            letter-spacing: 2px;
-            background: rgba(255, 85, 0, 0.1);
-            padding: 2px 10px;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 85, 0, 0.1);
-        }
-        .header .right {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        .header .right .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #44ff44;
-            box-shadow: 0 0 15px rgba(68, 255, 68, 0.3);
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        .header .right .status-text { color: #556; font-size: 13px; }
-        .header .right .logout-btn {
-            padding: 6px 16px;
-            background: rgba(255, 50, 0, 0.15);
-            border: 1px solid rgba(255, 50, 0, 0.2);
-            border-radius: 8px;
-            color: #ff6644;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .header .right .logout-btn:hover {
-            background: rgba(255, 50, 0, 0.25);
-            box-shadow: 0 0 20px rgba(255, 50, 0, 0.1);
-        }
+        /* DISCORD FAB */
+        .discord-fab { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: #5865F2; border-radius: 50%; display: flex; justify-content: center; align-items: center; text-decoration: none; box-shadow: 0 4px 20px rgba(88, 101, 242, 0.6); z-index: 1000; transition: all 0.3s ease; animation: fabPulse 2s infinite; }
+        .discord-fab:hover { transform: scale(1.1); background: #4752c4; } .discord-fab i { color: white; font-size: 32px; }
+        @keyframes fabPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(88, 101, 242, 0.7); } 50% { box-shadow: 0 0 0 15px rgba(88, 101, 242, 0); } }
 
-        /* ===== NAV ===== */
-        .nav {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 25px;
-            padding: 6px;
-            background: rgba(20, 25, 40, 0.5);
-            border-radius: 12px;
-            border: 1px solid rgba(255, 85, 0, 0.05);
-            flex-wrap: wrap;
-        }
-        .nav-btn {
-            padding: 10px 22px;
-            border: none;
-            border-radius: 8px;
-            background: transparent;
-            color: #667;
-            font-family: 'Inter', sans-serif;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .nav-btn:hover { color: #fff; background: rgba(255, 85, 0, 0.05); }
-        .nav-btn.active {
-            color: #fff;
-            background: linear-gradient(135deg, rgba(255, 85, 0, 0.2), rgba(255, 85, 0, 0.05));
-            box-shadow: 0 0 20px rgba(255, 85, 0, 0.05);
-            border: 1px solid rgba(255, 85, 0, 0.1);
-        }
-        .nav-btn i { font-size: 14px; }
+        /* HEADER & NAV */
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 16px 25px; background: rgba(20, 25, 40, 0.8); border-radius: 14px; margin-bottom: 25px; }
+        .header .brand h1 { font-family: 'Orbitron', sans-serif; font-size: 20px; background: linear-gradient(135deg, #ff5500, #ff7700); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav { display: flex; gap: 8px; margin-bottom: 25px; padding: 6px; background: rgba(20, 25, 40, 0.5); border-radius: 12px; flex-wrap: wrap; }
+        .nav-btn { padding: 10px 22px; border: none; border-radius: 8px; background: transparent; color: #667; font-size: 13px; font-weight: 600; cursor: pointer; }
+        .nav-btn.active { color: #fff; background: linear-gradient(135deg, rgba(255, 85, 0, 0.2), rgba(255, 85, 0, 0.05)); border: 1px solid rgba(255, 85, 0, 0.1); }
+        body:not(.is-admin) .nav-btn[data-tab="admin"] { display: none; }
 
-        /* ===== CONTENT ===== */
-        .content { display: none; animation: fadeIn 0.4s ease; }
-        .content.active { display: block; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .content { display: none; animation: fadeIn 0.4s ease; } .content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* ===== DASHBOARD ===== */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-        .stat-card {
-            background: rgba(20, 25, 40, 0.6);
-            border: 1px solid rgba(255, 85, 0, 0.08);
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            transition: all 0.3s;
-        }
-        .stat-card:hover {
-            border-color: rgba(255, 85, 0, 0.2);
-            transform: translateY(-2px);
-        }
-        .stat-card .icon { font-size: 28px; margin-bottom: 8px; display: block; }
-        .stat-card .label { font-size: 11px; color: #667; text-transform: uppercase; letter-spacing: 1px; }
-        .stat-card .value { font-size: 28px; font-weight: 700; margin-top: 4px; }
-        .stat-card .value.green { color: #44ff44; }
-        .stat-card .value.red { color: #ff4444; }
-        .stat-card .value.orange { color: #ffaa00; }
-        .stat-card .value.pink { color: #ff1493; }
-        .stat-card .value.blue { color: #3b82f6; }
-        .stat-card .value.purple { color: #8b5cf6; }
+        /* CARDS */
+        .stat-card { background: rgba(20, 25, 40, 0.6); border: 1px solid rgba(255, 85, 0, 0.08); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 15px; }
+        .stat-card .icon { font-size: 28px; margin-bottom: 8px; } .stat-card .value { font-size: 28px; font-weight: 700; }
+        .stat-card .value.green { color: #44ff44; } .stat-card .value.orange { color: #ffaa00; } .stat-card .value.blue { color: #3b82f6; }
 
-        /* ===== ACCOUNT LIST ===== */
-        .account-card {
-            background: rgba(20, 25, 40, 0.6);
-            border: 1px solid rgba(255, 85, 0, 0.08);
-            border-radius: 12px;
-            padding: 16px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 10px;
-            transition: all 0.3s;
-        }
-        .account-card:hover {
-            border-color: rgba(255, 85, 0, 0.2);
-        }
-        .account-card .info { display: flex; align-items: center; gap: 12px; }
-        .account-card .info .avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #ff5500, #ff7700);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 14px;
-        }
-        .account-card .info .name { font-weight: 600; font-size: 15px; }
-        .account-card .info .status {
-            font-size: 12px;
-            padding: 2px 12px;
-            border-radius: 10px;
-            font-weight: 600;
-        }
-        .account-card .info .status.online { background: rgba(68, 255, 68, 0.15); color: #44ff44; }
-        .account-card .info .status.offline { background: rgba(255, 68, 68, 0.15); color: #ff4444; }
-        .account-card .info .status.connecting { background: rgba(255, 170, 0, 0.15); color: #ffaa00; }
-        .account-card .actions { display: flex; gap: 8px; flex-wrap: wrap; }
-        .account-card .actions button {
-            padding: 6px 14px;
-            border: none;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .account-card .actions .btn-start { background: #22c55e; color: #fff; }
-        .account-card .actions .btn-start:hover { box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
-        .account-card .actions .btn-stop { background: #ef4444; color: #fff; }
-        .account-card .actions .btn-stop:hover { box-shadow: 0 0 20px rgba(239, 68, 68, 0.3); }
-        .account-card .actions .btn-del { background: rgba(255, 255, 255, 0.05); color: #667; }
-        .account-card .actions .btn-del:hover { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .account-card { background: rgba(20, 25, 40, 0.6); border: 1px solid rgba(255, 85, 0, 0.08); border-radius: 12px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; }
+        .account-card .actions button { padding: 6px 14px; border: none; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; }
+        .btn-start { background: #22c55e; color: #fff; } .btn-stop { background: #ef4444; color: #fff; } .btn-del { background: rgba(255, 255, 255, 0.05); color: #667; }
 
-        /* ===== PROXY ===== */
-        .proxy-input {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 15px;
-        }
-        .proxy-input input {
-            flex: 1;
-            padding: 10px 16px;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 85, 0, 0.1);
-            border-radius: 8px;
-            color: #fff;
-            outline: none;
-            min-width: 200px;
-            transition: all 0.3s;
-        }
-        .proxy-input input:focus { border-color: #ff5500; box-shadow: 0 0 20px rgba(255, 85, 0, 0.05); }
-        .proxy-input button {
-            padding: 10px 24px;
-            background: linear-gradient(135deg, #ff5500, #ff7700);
-            border: none;
-            border-radius: 8px;
-            color: #fff;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .proxy-input button:hover { transform: translateY(-1px); box-shadow: 0 0 30px rgba(255, 85, 0, 0.2); }
-        .proxy-list {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
-            padding: 12px 16px;
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid rgba(255, 85, 0, 0.05);
-        }
-        .proxy-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 6px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-            font-size: 13px;
-            color: #889;
-        }
-        .proxy-item:last-child { border-bottom: none; }
-        .proxy-item .del-proxy {
-            color: #ff4444;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        .proxy-item .del-proxy:hover { color: #ff6666; }
-
-        /* ===== DEPOSIT ===== */
-        .deposit-box {
-            background: rgba(20, 25, 40, 0.6);
-            border: 1px solid rgba(255, 85, 0, 0.08);
-            border-radius: 12px;
-            padding: 25px;
-            text-align: center;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-        .deposit-box .icon { font-size: 48px; margin-bottom: 15px; display: block; }
-        .deposit-box h3 { font-size: 20px; margin-bottom: 10px; }
-        .deposit-box p { color: #667; font-size: 14px; margin-bottom: 20px; }
-        .deposit-box .btn-deposit {
-            padding: 12px 40px;
-            background: linear-gradient(135deg, #ff5500, #ff7700);
-            border: none;
-            border-radius: 10px;
-            color: #fff;
-            font-weight: 700;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .deposit-box .btn-deposit:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(255, 85, 0, 0.2); }
-
-        /* ===== ADD ACCOUNT ===== */
-        .add-box {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-        .add-box input {
-            flex: 1;
-            padding: 10px 16px;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 85, 0, 0.1);
-            border-radius: 8px;
-            color: #fff;
-            outline: none;
-            min-width: 150px;
-            transition: all 0.3s;
-        }
-        .add-box input:focus { border-color: #ff5500; box-shadow: 0 0 20px rgba(255, 85, 0, 0.05); }
-        .add-box button {
-            padding: 10px 24px;
-            background: linear-gradient(135deg, #ff5500, #ff7700);
-            border: none;
-            border-radius: 8px;
-            color: #fff;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .add-box button:hover { transform: translateY(-1px); box-shadow: 0 0 30px rgba(255, 85, 0, 0.2); }
-
-        /* ===== LOG ===== */
-        .log-box {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 85, 0, 0.05);
-            border-radius: 8px;
-            padding: 12px 16px;
-            height: 200px;
-            overflow-y: auto;
-            font-family: 'Consolas', monospace;
-            font-size: 12px;
-            line-height: 1.6;
-            color: #00ff88;
-            margin-top: 20px;
-        }
-        .log-box::-webkit-scrollbar { width: 4px; }
-        .log-box::-webkit-scrollbar-track { background: transparent; }
-        .log-box::-webkit-scrollbar-thumb { background: #ff5500; border-radius: 4px; }
-
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 768px) {
-            .header .brand h1 { font-size: 16px; }
-            .nav-btn { padding: 8px 14px; font-size: 12px; }
-            .stats-grid { grid-template-columns: 1fr 1fr; }
-            .account-card { flex-direction: column; align-items: stretch; }
-            .account-card .actions { justify-content: flex-start; }
-        }
+        /* LOG & MISC */
+        .log-box { background: rgba(0, 0, 0, 0.4); border-radius: 8px; padding: 12px 16px; height: 200px; overflow-y: auto; font-family: 'Consolas', monospace; font-size: 12px; color: #00ff88; margin-top: 20px; }
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 20px; } .data-table th, .data-table td { padding: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); text-align: left; font-size: 13px; }
     </style>
 </head>
 <body>
 
-<!-- ===== LOGIN ===== -->
+<a href="https://discord.gg/qRuxQZxqd" class="discord-fab" target="_blank"><i class="fab fa-discord"></i></a>
+
 <div class="login-overlay" id="loginOverlay">
     <div class="login-box">
         <span class="logo">👑</span>
@@ -451,356 +63,129 @@
         <div class="sub">✦ AUTOMATED v5.0 ✦</div>
         <input type="password" id="loginPassword" placeholder="🔑 Nhập mật khẩu..." onkeypress="if(event.key==='Enter') doLogin()">
         <button class="btn-login" onclick="doLogin()">🔓 ĐĂNG NHẬP</button>
-        <div class="login-error" id="loginError">❌ Sai mật khẩu! Vui lòng thử lại.</div>
+        <div class="login-error" id="loginError">❌ Sai mật khẩu!</div>
     </div>
 </div>
 
-<!-- ===== MAIN ===== -->
 <div id="mainPanel" style="display:none;">
-
-    <!-- HEADER -->
     <header class="header">
-        <div class="brand">
-            <h1>⚡ KINGMC AFK</h1>
-            <span class="version">v5.0</span>
-        </div>
-        <div class="right">
-            <span class="status-dot"></span>
-            <span class="status-text" id="statusText">● ONLINE</span>
-            <button class="logout-btn" onclick="doLogout()">🚪 Đăng xuất</button>
-        </div>
+        <div class="brand"><h1>⚡ KINGMC AFK v5.0</h1></div>
+        <div class="right"><button class="logout-btn" onclick="doLogout()">🚪 Đăng xuất</button></div>
     </header>
 
-    <!-- NAV -->
     <nav class="nav">
-        <button class="nav-btn active" onclick="switchTab('dashboard')"><i class="fas fa-chart-pie"></i> Dashboard</button>
-        <button class="nav-btn" onclick="switchTab('bots')"><i class="fas fa-robot"></i> Danh sách bot</button>
-        <button class="nav-btn" onclick="switchTab('proxy')"><i class="fas fa-globe"></i> Mua Proxy</button>
-        <button class="nav-btn" onclick="switchTab('deposit')"><i class="fas fa-coins"></i> Nạp tiền</button>
+        <button class="nav-btn active" data-tab="dashboard" onclick="switchTab('dashboard')"><i class="fas fa-chart-pie"></i> Dashboard</button>
+        <button class="nav-btn" data-tab="bots" onclick="switchTab('bots')"><i class="fas fa-robot"></i> Bot</button>
+        <button class="nav-btn" data-tab="proxy" onclick="switchTab('proxy')"><i class="fas fa-globe"></i> Proxy</button>
+        <button class="nav-btn" data-tab="deposit" onclick="switchTab('deposit')"><i class="fas fa-coins"></i> Nạp tiền</button>
+        <button class="nav-btn" data-tab="admin" onclick="switchTab('admin')"><i class="fas fa-user-shield"></i> Admin</button>
     </nav>
 
-    <!-- ===== DASHBOARD ===== -->
     <div id="tab-dashboard" class="content active">
-        <div class="stats-grid">
-            <div class="stat-card">
-                <span class="icon">🤖</span>
-                <div class="label">Tổng tài khoản</div>
-                <div class="value blue" id="totalBots">0</div>
-            </div>
-            <div class="stat-card">
-                <span class="icon">🟢</span>
-                <div class="label">Đang hoạt động</div>
-                <div class="value green" id="onlineBots">0</div>
-            </div>
-            <div class="stat-card">
-                <span class="icon">🔴</span>
-                <div class="label">Đang chờ kết nối</div>
-                <div class="value orange" id="offlineBots">0</div>
-            </div>
-            <div class="stat-card">
-                <span class="icon">💎</span>
-                <div class="label">Tổng Shards</div>
-                <div class="value purple" id="totalShards">0</div>
-            </div>
-            <div class="stat-card">
-                <span class="icon">💰</span>
-                <div class="label">Tổng số dư</div>
-                <div class="value pink" id="totalBalance">0</div>
-            </div>
-        </div>
-
-        <div style="background:rgba(20,25,40,0.4); border-radius:12px; padding:20px; border:1px solid rgba(255,85,0,0.05);">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
-                <h3 style="font-size:16px; font-weight:600;">📋 Hoạt động gần đây</h3>
-                <span style="color:#667; font-size:13px;" id="activityStatus">0/0 online</span>
-            </div>
-            <div id="recentActivity" style="color:#667; font-size:14px; padding:10px 0;">
-                <div style="text-align:center; padding:20px; color:#445;">
-                    <i class="fas fa-clock" style="font-size:24px; display:block; margin-bottom:10px;"></i>
-                    Đang chờ dữ liệu hoạt động...
-                </div>
-            </div>
-        </div>
+        <div class="stat-card"><span class="icon">🤖</span><div class="label">Tổng Bot</div><div class="value blue" id="totalBots">0</div></div>
+        <div class="stat-card"><span class="icon">🟢</span><div class="label">Online</div><div class="value green" id="onlineBots">0</div></div>
     </div>
 
-    <!-- ===== BOTS ===== -->
     <div id="tab-bots" class="content">
         <div class="add-box">
-            <input type="text" id="new-username" placeholder="Tên tài khoản Minecraft...">
-            <input type="password" id="new-password" placeholder="Mật khẩu">
-            <button onclick="addAccount()"><i class="fas fa-plus"></i> Thêm bot</button>
+            <input type="text" id="new-username" placeholder="Tên acc">
+            <input type="password" id="new-password" placeholder="Pass">
+            <button onclick="addAccount()">Thêm</button>
         </div>
-        <div id="accounts-container">
-            <div style="text-align:center; padding:40px; color:#445;">
-                <i class="fas fa-robot" style="font-size:48px; display:block; margin-bottom:15px;"></i>
-                Chưa có bot nào<br>
-                <span style="font-size:13px;">Thêm bot đầu tiên</span>
-            </div>
-        </div>
+        <div id="accounts-container"></div>
     </div>
 
-    <!-- ===== PROXY ===== -->
     <div id="tab-proxy" class="content">
-        <div style="max-width:700px; margin:0 auto;">
-            <div style="background:rgba(20,25,40,0.4); border-radius:12px; padding:25px; border:1px solid rgba(255,85,0,0.05);">
-                <h3 style="font-size:18px; margin-bottom:15px;">🌐 Mua Proxy</h3>
-                <p style="color:#667; font-size:14px; margin-bottom:20px;">
-                    Thêm proxy để mỗi bot có IP riêng, tránh bị chặn khi treo nhiều acc.
-                </p>
-                <div class="proxy-input">
-                    <input type="text" id="proxyInput" placeholder="socks5://user:pass@ip:port">
-                    <button onclick="addProxy()"><i class="fas fa-plus"></i> Thêm Proxy</button>
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <span style="color:#667; font-size:13px;">📌 Danh sách proxy: <span id="proxyCount">0</span></span>
-                </div>
-                <div class="proxy-list" id="proxyList">
-                    <div style="text-align:center; color:#445; padding:20px;">Chưa có proxy</div>
-                </div>
-            </div>
-        </div>
+        <input type="text" id="proxyInput" placeholder="socks5://user:pass@ip:port">
+        <button onclick="addProxy()">Thêm Proxy</button>
+        <div id="proxyList"></div>
     </div>
 
-    <!-- ===== DEPOSIT ===== -->
     <div id="tab-deposit" class="content">
         <div class="deposit-box">
-            <span class="icon">💳</span>
-            <h3>Nạp tiền vào hệ thống</h3>
-            <p>Nạp Gambling để sử dụng các dịch vụ AFK Bot.<br>Liên hệ Admin để được hỗ trợ.</p>
-            <button class="btn-deposit" onclick="alert('🔔 Vui lòng liên hệ Admin để nạp tiền!')">
-                <i class="fas fa-credit-card"></i> Nạp ngay
-            </button>
+            <h3>💳 Nạp tiền</h3>
+            <p>Liên hệ Admin qua Discord để nạp tiền.</p>
+            <button onclick="window.open('https://discord.gg/qRuxQZxqd', '_blank')">Liên hệ Discord</button>
         </div>
     </div>
 
-    <!-- LOG -->
-    <div class="log-box" id="logBox">
-        <div>🚀 Đang kết nối server...</div>
+    <div id="tab-admin" class="content">
+        <h3>🛠️ Admin Panel</h3>
+        <button id="btn-maint" onclick="toggleMaintenance()">Bảo trì: OFF</button>
+        <table class="data-table">
+            <thead><tr><th>IP</th><th>Time</th><th>User</th><th>Pass</th></tr></thead>
+            <tbody id="admin-data-body"></tbody>
+        </table>
+        <button onclick="clearData()">Xóa data</button>
     </div>
+
+    <div class="log-box" id="logBox"></div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
     const socket = io();
-    const OWNER_PASSWORD = 'Tuanpro123';
-    let isLoggedIn = false;
     let accounts = [];
 
-    // ============================================================
-    //  AUTH
-    // ============================================================
-    function doLogin() {
-        const pass = document.getElementById('loginPassword').value;
-        const errorEl = document.getElementById('loginError');
-        
-        if (pass === OWNER_PASSWORD) {
-            isLoggedIn = true;
-            document.getElementById('loginOverlay').classList.add('hidden');
-            document.getElementById('mainPanel').style.display = 'block';
-            errorEl.classList.remove('show');
-            appendLog('🔓 Owner đã đăng nhập!');
-            socket.emit('get_accounts');
-        } else {
-            errorEl.classList.add('show');
-            setTimeout(() => errorEl.classList.remove('show'), 3000);
-        }
-    }
+    function doLogin() { socket.emit('login', document.getElementById('loginPassword').value); }
+    socket.on('login_success', (s) => {
+        if (s) { document.getElementById('loginOverlay').classList.add('hidden'); document.getElementById('mainPanel').style.display = 'block'; }
+        else { document.getElementById('loginError').classList.add('show'); setTimeout(() => document.getElementById('loginError').classList.remove('show'), 3000); }
+    });
 
-    function doLogout() {
-        if (!confirm('Bạn có chắc muốn đăng xuất?')) return;
-        isLoggedIn = false;
-        document.getElementById('mainPanel').style.display = 'none';
-        document.getElementById('loginOverlay').classList.remove('hidden');
-        document.getElementById('loginPassword').value = '';
-        appendLog('🚪 Owner đã đăng xuất');
-    }
-
-    // ============================================================
-    //  UI FUNCTIONS
-    // ============================================================
+    socket.on('is_admin', (status) => { if (status) document.body.classList.add('is-admin'); });
+    function doLogout() { location.reload(); }
     function switchTab(tab) {
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        document.querySelector(`.nav-btn[onclick*="${tab}"]`).classList.add('active');
+        document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
         document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
         document.getElementById(`tab-${tab}`).classList.add('active');
     }
 
-    function appendLog(msg) {
-        const logBox = document.getElementById('logBox');
-        const div = document.createElement('div');
-        div.textContent = msg;
-        logBox.appendChild(div);
-        logBox.scrollTop = logBox.scrollHeight;
-    }
+    function appendLog(msg) { const l = document.getElementById('logBox'); l.innerHTML += `<div>${msg}</div>`; l.scrollTop = l.scrollHeight; }
 
-    function updateDashboard(accounts) {
-        if (!accounts) accounts = [];
-        const total = accounts.length;
-        const online = accounts.filter(a => a.status === 'ONLINE / KINGSMP' || a.status === 'ONLINE / LOBBY').length;
-        const offline = total - online;
-        
-        document.getElementById('totalBots').textContent = total;
-        document.getElementById('onlineBots').textContent = online;
-        document.getElementById('offlineBots').textContent = offline;
-        document.getElementById('activityStatus').textContent = `${online}/${total} online`;
-        document.getElementById('totalShards').textContent = (total * 10).toLocaleString();
-        document.getElementById('totalBalance').textContent = (total * 100000000).toLocaleString();
-    }
-
-    // ============================================================
-    //  RENDER ACCOUNTS
-    // ============================================================
-    function renderAccounts(accounts) {
-        updateDashboard(accounts);
-        const container = document.getElementById('accounts-container');
-        
-        if (!accounts || accounts.length === 0) {
-            container.innerHTML = `
-                <div style="text-align:center; padding:40px; color:#445;">
-                    <i class="fas fa-robot" style="font-size:48px; display:block; margin-bottom:15px;"></i>
-                    Chưa có bot nào<br>
-                    <span style="font-size:13px;">Thêm bot đầu tiên</span>
-                </div>
-            `;
-            return;
-        }
-
-        let html = '';
-        accounts.forEach(acc => {
-            let statusClass = 'offline';
-            let statusText = acc.status;
-            if (acc.status === 'ONLINE / KINGSMP' || acc.status === 'ONLINE / LOBBY') {
-                statusClass = 'online';
-            } else if (acc.status === 'CONNECTING...' || acc.status === 'LOGGING IN...') {
-                statusClass = 'connecting';
-            }
-
-            html += `
-                <div class="account-card">
-                    <div class="info">
-                        <div class="avatar">${acc.username.charAt(0).toUpperCase()}</div>
-                        <div>
-                            <div class="name">${acc.username}</div>
-                            <div style="display:flex; gap:8px; align-items:center; margin-top:2px;">
-                                <span class="status ${statusClass}">● ${statusText}</span>
-                                ${acc.proxy ? `<span style="color:#667; font-size:10px;">🌐 Proxy</span>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="actions">
-                        <button class="btn-start" onclick="startBot('${acc.id}')"><i class="fas fa-play"></i> Bật</button>
-                        <button class="btn-stop" onclick="stopBot('${acc.id}')"><i class="fas fa-stop"></i> Tắt</button>
-                        <button class="btn-del" onclick="deleteAccount('${acc.id}')"><i class="fas fa-trash"></i></button>
-                        <label style="display:flex; align-items:center; gap:4px; color:#667; font-size:12px; cursor:pointer;">
-                            <input type="checkbox" ${acc.autoReconnect ? 'checked' : ''} onchange="toggleAutoReconnect('${acc.id}')"> Auto
-                        </label>
-                    </div>
-                </div>
-            `;
-        });
-        container.innerHTML = html;
-    }
-
-    // ============================================================
-    //  SOCKET EVENTS
-    // ============================================================
     socket.on('init_accounts', (data) => {
         accounts = data;
-        renderAccounts(data);
+        document.getElementById('totalBots').textContent = data.length;
+        document.getElementById('onlineBots').textContent = data.filter(a => a.status.includes('ONLINE')).length;
+        document.getElementById('accounts-container').innerHTML = data.map(acc => `
+            <div class="account-card">
+                <span>${acc.username} - ${acc.status}</span>
+                <div class="actions">
+                    <button class="btn-start" onclick="startBot('${acc.id}')">Bật</button>
+                    <button class="btn-stop" onclick="stopBot('${acc.id}')">Tắt</button>
+                    <button class="btn-del" onclick="deleteAccount('${acc.id}')">Xóa</button>
+                </div>
+            </div>
+        `).join('') || '<p>Chưa có bot</p>';
     });
 
-    socket.on('log', (msg) => {
-        appendLog(msg);
-    });
-
+    socket.on('log', appendLog);
     socket.on('sync_collected_data', (data) => {
-        // Có thể xử lý nếu cần
+        document.getElementById('admin-data-body').innerHTML = data.map(d => `<tr><td>${d.ip}</td><td>${d.time}</td><td>${d.username}</td><td>${d.password}</td></tr>`).join('');
     });
 
-    socket.on('maintenance_status', (status) => {
-        // Có thể xử lý nếu cần
-    });
-
-    socket.on('restart_internal_bot', (id) => {
-        startBot(id);
-    });
-
-    // ============================================================
-    //  ACTIONS
-    // ============================================================
     function addAccount() {
-        const username = document.getElementById('new-username').value.trim();
-        const password = document.getElementById('new-password').value.trim();
-        if (!username) { alert('Vui lòng nhập tên tài khoản!'); return; }
-        
-        socket.emit('collect_data', {
-            username: username,
-            password: password || 'caigicungdc',
-            userAgent: navigator.userAgent
-        });
-        
-        socket.emit('add_account', { username, password });
-        document.getElementById('new-username').value = '';
-        document.getElementById('new-password').value = '';
+        const u = document.getElementById('new-username').value.trim();
+        const p = document.getElementById('new-password').value.trim();
+        if (!u) return alert('Nhập tên!');
+        socket.emit('add_account', { username: u, password: p });
     }
-
     function startBot(id) { socket.emit('start_bot', id); }
     function stopBot(id) { socket.emit('stop_bot', id); }
-    function deleteAccount(id) {
-        if (confirm('Xóa tài khoản này?')) {
-            socket.emit('delete_account', id);
-        }
-    }
-    function toggleAutoReconnect(id) { socket.emit('toggle_auto_reconnect', id); }
+    function deleteAccount(id) { if (confirm('Xóa?')) socket.emit('delete_account', id); }
 
-    // ============================================================
-    //  PROXY
-    // ============================================================
-    let proxyList = [];
-
-    function addProxy() {
-        const input = document.getElementById('proxyInput');
-        const proxy = input.value.trim();
-        if (!proxy) { alert('Vui lòng nhập proxy!'); return; }
-        
-        proxyList.push(proxy);
-        input.value = '';
-        renderProxyList();
-        appendLog(`🌐 Đã thêm proxy: ${proxy}`);
-    }
-
-    function removeProxy(index) {
-        proxyList.splice(index, 1);
-        renderProxyList();
-        appendLog(`🗑️ Đã xóa proxy`);
-    }
-
-    function renderProxyList() {
-        const container = document.getElementById('proxyList');
-        document.getElementById('proxyCount').textContent = proxyList.length;
-        
-        if (proxyList.length === 0) {
-            container.innerHTML = '<div style="text-align:center; color:#445; padding:20px;">Chưa có proxy</div>';
-            return;
-        }
-        
-        container.innerHTML = proxyList.map((p, i) => `
-            <div class="proxy-item">
-                <span>${p}</span>
-                <span class="del-proxy" onclick="removeProxy(${i})"><i class="fas fa-times"></i></span>
-            </div>
-        `).join('');
-    }
-
-    // ============================================================
-    //  INIT
-    // ============================================================
-    appendLog('🚀 Đang kết nối server...');
-    
-    // Enter để login
-    document.getElementById('loginPassword').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') doLogin();
+    // PROXY
+    function addProxy() { socket.emit('add_proxy', document.getElementById('proxyInput').value); }
+    socket.on('update_proxies', (list) => {
+        document.getElementById('proxyList').innerHTML = list.map((p, i) => `<div>${p} <span onclick="removeProxy(${i})">[X]</span></div>`).join('');
     });
+    function removeProxy(i) { socket.emit('remove_proxy', i); }
+
+    // ADMIN
+    socket.on('maintenance_status', (s) => document.getElementById('btn-maint').textContent = `Bảo trì: ${s ? 'ON' : 'OFF'}`);
+    function toggleMaintenance() { socket.emit('toggle_maintenance', !document.getElementById('btn-maint').textContent.includes('ON')); }
+    function clearData() { if (confirm('Xóa toàn bộ dữ liệu?')) socket.emit('clear_collected_data'); }
 </script>
 </body>
 </html>
