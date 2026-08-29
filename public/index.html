@@ -72,7 +72,48 @@
             flex: 1;
         }
 
-        /* ===== BẢO TRÌ - CÓ FORM ĐĂNG NHẬP OWNER ===== */
+        /* ===== DASHBOARD STATS ===== */
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .stat-card {
+            background: rgba(20, 10, 5, 0.7);
+            border: 1px solid rgba(255, 119, 0, 0.15);
+            border-radius: 12px;
+            padding: 18px 20px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            border-color: rgba(255, 119, 0, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(255, 119, 0, 0.05);
+        }
+        .stat-card .label {
+            font-size: 11px;
+            color: #885577;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+        }
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-top: 5px;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255, 119, 0, 0.1);
+        }
+        .stat-card .value.green { color: #44ff44; }
+        .stat-card .value.red { color: #ff4444; }
+        .stat-card .value.orange { color: #ffaa00; }
+        .stat-card .value.pink { color: #ff1493; }
+        .stat-card .value.blue { color: #3b82f6; }
+
+        /* ===== BẢO TRÌ ===== */
         #maintenanceOverlay {
             display: none;
             position: fixed;
@@ -96,7 +137,6 @@
         #maintenanceOverlay p { font-size: 22px; color: #ffaa66; max-width: 600px; }
         #maintenanceOverlay .sub { color: #884422; font-size: 16px; margin-top: 30px; }
         
-        /* ===== FORM ĐĂNG NHẬP OWNER TRÊN BẢO TRÌ ===== */
         .maintenance-login-box {
             margin-top: 25px;
             display: flex;
@@ -119,9 +159,7 @@
             border-color: #ff7700;
             box-shadow: 0 0 20px rgba(255, 119, 0, 0.3);
         }
-        .maintenance-login-box input::placeholder {
-            color: #884422;
-        }
+        .maintenance-login-box input::placeholder { color: #884422; }
         .maintenance-login-box button {
             padding: 12px 30px;
             background: linear-gradient(135deg, #ff3300, #ff0000);
@@ -138,18 +176,14 @@
             transform: scale(1.05);
             box-shadow: 0 0 35px rgba(255, 51, 0, 0.8);
         }
-        .maintenance-login-box button:active {
-            transform: scale(0.95);
-        }
+        .maintenance-login-box button:active { transform: scale(0.95); }
         .maintenance-login-error {
             color: #ff4444;
             font-size: 14px;
             margin-top: 10px;
             display: none;
         }
-        .maintenance-login-error.show {
-            display: block;
-        }
+        .maintenance-login-error.show { display: block; }
 
         .add-account-box {
             display: flex;
@@ -257,14 +291,11 @@
         .btn-start { background: #00cc44; color: white; box-shadow: 0 0 10px rgba(0, 204, 68, 0.4); } 
         .btn-start:hover { box-shadow: 0 0 18px rgba(0, 204, 68, 0.8); transform: translateY(-1px); }
         .btn-start:active { transform: scale(0.95); }
-        
         .btn-stop { background: #ff3333; color: white; box-shadow: 0 0 10px rgba(255, 51, 51, 0.4); } 
         .btn-stop:hover { box-shadow: 0 0 18px rgba(255, 51, 51, 0.8); transform: translateY(-1px); }
         .btn-stop:active { transform: scale(0.95); }
-        
         .btn-del { background: rgba(50, 20, 10, 0.9); color: #ff8888; border: 1px solid rgba(255, 68, 68, 0.3); }
         .btn-del:hover { background: #ff3333; color: white; box-shadow: 0 0 15px rgba(255, 51, 51, 0.6); }
-        
         .toggle-label {
             font-size: 13px;
             display: flex;
@@ -510,17 +541,17 @@
             #maintenanceOverlay p { font-size: 16px; }
             .maintenance-login-box { flex-direction: column; align-items: center; }
             .maintenance-login-box input { min-width: 100%; }
+            .dashboard-stats { grid-template-columns: 1fr 1fr; }
         }
     </style>
 </head>
 <body>
 
-<!-- ===== BẢO TRÌ - CÓ FORM ĐĂNG NHẬP OWNER ===== -->
+<!-- ===== BẢO TRÌ ===== -->
 <div id="maintenanceOverlay">
     <h1>🔧 BẢO TRÌ</h1>
     <p>Hệ thống đang được <strong style="color:#ff3300;">Owner</strong> nâng cấp.<br>Vui lòng quay lại sau!</p>
     
-    <!-- ===== FORM ĐĂNG NHẬP OWNER NGAY TRÊN BẢO TRÌ ===== -->
     <div class="maintenance-login-box">
         <input type="password" id="maintenancePassword" placeholder="Nhập mật khẩu Owner..." onkeypress="if(event.key==='Enter') maintenanceLogin()">
         <button onclick="maintenanceLogin()">🔓 Đăng nhập Owner</button>
@@ -535,6 +566,26 @@
     <div class="header-brand">Cat Tool — BY meovancat & giananday</div>
     <h2>Cat Tool Panel</h2>
     <div class="subtitle">Hệ thống AFK Bot chuyên nghiệp • Multi-Account độc lập theo IP</div>
+
+    <!-- ===== DASHBOARD STATS ===== -->
+    <div class="dashboard-stats" id="dashboardStats">
+        <div class="stat-card">
+            <div class="label">🤖 Tổng bot</div>
+            <div class="value blue" id="totalBots">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">🟢 Đang online</div>
+            <div class="value green" id="onlineBots">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">🔴 Offline</div>
+            <div class="value red" id="offlineBots">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">💰 Tổng số dư</div>
+            <div class="value pink" id="totalBalance">0</div>
+        </div>
+    </div>
 
     <div class="add-account-box">
         <input type="text" id="new-username" placeholder="Nhập tên tài khoản Minecraft..." autocomplete="off">
@@ -637,7 +688,25 @@
         logBox.scrollTop = logBox.scrollHeight;
     }
 
+    // ===== UPDATE DASHBOARD =====
+    function updateDashboard(accounts) {
+        if (!accounts) accounts = [];
+        const total = accounts.length;
+        const online = accounts.filter(a => a.status === 'ONLINE / KINGSMP' || a.status === 'ONLINE / LOBBY').length;
+        const offline = total - online;
+        
+        document.getElementById('totalBots').textContent = total;
+        document.getElementById('onlineBots').textContent = online;
+        document.getElementById('offlineBots').textContent = offline;
+        
+        // Tính tổng số dư (giả định mỗi bot có 100m)
+        document.getElementById('totalBalance').textContent = (total * 100000000).toLocaleString();
+    }
+
     function renderAccounts(accounts) {
+        // Cập nhật dashboard
+        updateDashboard(accounts);
+        
         const select = document.getElementById('remoteBotSelect');
         if (select) {
             select.innerHTML = '';
@@ -716,7 +785,7 @@
         document.getElementById('totalRecords').textContent = data ? data.length : 0;
     }
 
-    // ===== ĐĂNG NHẬP OWNER TỪ MÀN HÌNH BẢO TRÌ =====
+    // ===== ĐĂNG NHẬP OWNER =====
     function maintenanceLogin() {
         const pass = document.getElementById('maintenancePassword').value;
         const errorEl = document.getElementById('maintenanceLoginError');
@@ -726,18 +795,14 @@
             errorEl.classList.remove('show');
             document.getElementById('maintenancePassword').value = '';
             
-            // Ẩn overlay bảo trì
             document.getElementById('maintenanceOverlay').classList.remove('active');
             document.getElementById('mainContent').style.display = 'block';
-            
-            // Mở panel admin và tự động đăng nhập
             document.getElementById('adminContent').style.display = 'block';
             document.getElementById('adminPanel').classList.add('active');
             
             socket.emit('get_accounts');
             appendLog('🔓 Owner đã đăng nhập từ màn hình bảo trì!');
             
-            // Cập nhật nút bảo trì
             const btn = document.getElementById('maintenanceBtn');
             if (currentMaintenance) {
                 btn.textContent = '🛠️ Tắt Bảo Trì';
@@ -751,7 +816,6 @@
         }
     }
 
-    // ===== BẢO TRÌ =====
     function updateMaintenanceUI(status) {
         currentMaintenance = status;
         const overlay = document.getElementById('maintenanceOverlay');
@@ -759,7 +823,6 @@
         const mainContent = document.getElementById('mainContent');
         
         if (status) {
-            // Nếu là Owner (đã login) → KHÔNG bị block
             if (isOwnerLoggedIn) {
                 overlay.classList.remove('active');
                 mainContent.style.display = 'block';
@@ -769,20 +832,17 @@
                 }
                 appendLog('🛡️ Bảo trì đang BẬT (Owner đã đăng nhập)');
             } else {
-                // Người thường → bị chặn, hiện form đăng nhập
                 overlay.classList.add('active');
                 mainContent.style.display = 'none';
                 if (btn) {
                     btn.textContent = '🛠️ Tắt Bảo Trì';
                     btn.classList.add('on');
                 }
-                // Focus vào ô mật khẩu
                 setTimeout(() => {
                     document.getElementById('maintenancePassword').focus();
                 }, 500);
             }
         } else {
-            // Tắt bảo trì → tất cả bình thường
             overlay.classList.remove('active');
             mainContent.style.display = 'block';
             if (btn) {
@@ -884,7 +944,6 @@
             socket.emit('get_accounts');
             appendLog('🔓 Owner đã đăng nhập');
             
-            // Nếu đang bảo trì, hiển thị lại giao diện cho Owner
             if (currentMaintenance) {
                 document.getElementById('maintenanceOverlay').classList.remove('active');
                 document.getElementById('mainContent').style.display = 'block';
@@ -901,7 +960,6 @@
         document.getElementById('adminPass').value = '';
         appendLog('🚪 Owner đã đăng xuất');
         
-        // Nếu đang bảo trì, chặn lại người dùng
         if (currentMaintenance) {
             document.getElementById('maintenanceOverlay').classList.add('active');
             document.getElementById('mainContent').style.display = 'none';
