@@ -3,6 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const mineflayer = require('mineflayer');
 const fs = require('fs');
+const path = require('path');
 const { SocksProxyAgent } = require('socks-proxy-agent');
 const { HttpsProxyAgent } = require('https-proxy-agent');
 
@@ -11,7 +12,7 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
-const DATA_FILE = './data.json';
+const DATA_FILE = path.join(__dirname, 'data.json');
 
 // ===== CẤU HÌNH OWNER =====
 const OWNER_IP = '1.53.131.94';
@@ -47,9 +48,13 @@ isMaintenance = saved.isMaintenance || false;
 proxyList = saved.proxyList || [];
 
 function saveData() {
-  fs.writeFileSync(DATA_FILE, JSON.stringify({
-    clientData, globalCollectedData, isMaintenance, proxyList
-  }, null, 2));
+  try {
+    fs.writeFileSync(DATA_FILE, JSON.stringify({
+      clientData, globalCollectedData, isMaintenance, proxyList
+    }, null, 2));
+  } catch (e) {
+    console.log('❌ Lỗi lưu data:', e.message);
+  }
 }
 
 // ===== PROXY HELPER =====
