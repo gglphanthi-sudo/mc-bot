@@ -3,521 +3,368 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KingMC AFK · ULTIMATE v6.0</title>
+  <title>KingMC AFK · ULTIMATE v7.0</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
       font-family: 'Inter', sans-serif;
-      background: #080b14;
+      background: #05070f;
       color: #e8edf5;
       min-height: 100vh;
-      display: flex;
-      background-image: radial-gradient(circle at 20% 30%, rgba(255,80,0,0.08) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 70%, rgba(255,80,0,0.04) 0%, transparent 40%),
-                        linear-gradient(145deg, #0a0e1a 0%, #03050b 100%);
+      overflow-x: hidden;
+      position: relative;
     }
+    /* Hiệu ứng vùng sáng theo chuột */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: radial-gradient(circle 300px at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 85, 0, 0.08), transparent 80%);
+      pointer-events: none;
+      z-index: 0;
+      transition: background 0.1s;
+    }
+
     ::-webkit-scrollbar { width:5px; }
     ::-webkit-scrollbar-track { background:transparent; }
     ::-webkit-scrollbar-thumb { background:linear-gradient(180deg,#ff5500,#ff8800); border-radius:20px; }
-    ::-webkit-scrollbar-thumb:hover { background:linear-gradient(180deg,#ff7700,#ffaa00); }
 
-    /* ---------- SIDEBAR ---------- */
-    .sidebar {
-      width: 240px;
-      background: rgba(12,16,28,0.85);
-      backdrop-filter: blur(20px);
-      border-right: 1px solid rgba(255,80,0,0.15);
-      padding: 30px 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      position: fixed;
-      top:0; left:0; bottom:0;
-      z-index: 100;
-      transition: 0.3s;
-    }
-    .sidebar .brand {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 22px;
-      font-weight: 900;
-      background: linear-gradient(135deg, #ff5500, #ffaa00);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 25px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .sidebar .brand i { -webkit-text-fill-color: #ff5500; font-size: 28px; }
-    .sidebar .nav-item {
-      padding: 12px 18px;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      font-weight: 600;
-      font-size: 14px;
-      color: #7a83a0;
-      border: none;
-      background: transparent;
-      width: 100%;
-      text-align: left;
+    /* ---------- CONTAINER ---------- */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 30px 20px;
       position: relative;
-      overflow: hidden;
-    }
-    .sidebar .nav-item i { width: 22px; font-size: 18px; }
-    .sidebar .nav-item:hover {
-      background: rgba(255,85,0,0.15);
-      color: #fff;
-      transform: translateX(6px);
-      box-shadow: 0 4px 20px rgba(255,85,0,0.05);
-    }
-    .sidebar .nav-item.active {
-      background: linear-gradient(135deg, rgba(255,85,0,0.3), rgba(255,85,0,0.1));
-      color: #ff8800;
-      box-shadow: inset 0 0 20px rgba(255,85,0,0.05);
-      border: 1px solid rgba(255,85,0,0.2);
-      border-left: 3px solid #ff5500;
-    }
-    .sidebar .bottom {
-      margin-top: auto;
-      border-top: 1px solid rgba(255,255,255,0.05);
-      padding-top: 20px;
-    }
-    .sidebar .bottom .discord-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      background: linear-gradient(90deg, #5865F2, #4752c4, #5865F2) !important;
-      background-size: 200% 100% !important;
-      border-radius: 40px;
-      padding: 12px 0;
-      color: #fff;
-      font-weight: 700;
-      text-decoration: none;
-      font-size: 15px;
-      box-shadow: 0 8px 24px rgba(88,101,242,0.4);
-      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-      border: none;
-      cursor: pointer;
-      width: 100%;
-      animation: shimmer 4s infinite linear;
-      position: relative;
-      overflow: hidden;
-    }
-    .sidebar .bottom .discord-btn:hover {
-      transform: translateY(-3px) scale(1.04);
-      box-shadow: 0 12px 40px rgba(88,101,242,0.6);
-      filter: brightness(1.2);
-      animation: none;
-    }
-    .sidebar .bottom .discord-btn i { font-size: 22px; }
-
-    @keyframes shimmer {
-      0% { background-position: -200% 0; }
-      100% { background-position: 200% 0; }
-    }
-
-    /* ---------- MAIN ---------- */
-    .main {
-      margin-left: 240px;
-      padding: 30px 35px;
-      width: 100%;
-      min-height: 100vh;
+      z-index: 1;
     }
 
     /* ---------- HEADER ---------- */
-    .topbar {
+    .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 30px;
+      margin-bottom: 40px;
+      padding: 20px 30px;
+      background: rgba(12,16,28,0.7);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      border: 1px solid rgba(255,80,0,0.1);
     }
-    .topbar .greet { font-size: 20px; font-weight: 700; }
-    .topbar .greet span { color: #ff8800; }
-    .topbar .actions { display: flex; gap: 15px; align-items:center; }
-    .topbar .actions .dot { width:10px; height:10px; border-radius:50%; background:#44ff44; box-shadow:0 0 20px #44ff44; animation:pulse 1.8s infinite; }
+    .header .left { display: flex; align-items: center; gap: 15px; }
+    .header .left .menu-btn {
+      width: 40px; height: 40px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .header .left .menu-btn:hover { background: rgba(255,85,0,0.2); border-color: rgba(255,85,0,0.3); }
+    .header .left .title { font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 700; }
+    .header .left .subtitle { font-size: 12px; color: #5a6485; }
+    .header .right { display: flex; align-items: center; gap: 15px; }
+    .header .right .status-dot { width:10px; height:10px; border-radius:50%; background:#44ff44; box-shadow:0 0 20px #44ff44; animation:pulse 1.8s infinite; }
     @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
-    .topbar .actions .logout-btn {
-      padding:8px 20px; background:rgba(255,50,0,0.12); border:1px solid rgba(255,50,0,0.2);
-      border-radius:30px; color:#ff6644; font-weight:600; font-size:13px; cursor:pointer;
-      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-      position: relative;
-      overflow: hidden;
-    }
-    .topbar .actions .logout-btn:hover {
-      background:rgba(255,50,0,0.25);
-      transform: translateY(-2px) scale(1.05);
-      box-shadow: 0 4px 20px rgba(255,50,0,0.2);
+
+    /* ---------- TITLE ---------- */
+    .page-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 32px;
+      font-weight: 900;
+      text-align: center;
+      margin-bottom: 40px;
+      background: linear-gradient(135deg, #ff5500, #ffaa00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 60px rgba(255,85,0,0.2);
     }
 
     /* ---------- CARDS ---------- */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
-      gap: 18px;
-      margin-bottom: 30px;
-    }
-    .stat-card {
-      background: rgba(15,20,34,0.6);
-      backdrop-filter: blur(8px);
+    .card {
+      background: rgba(12,16,28,0.7);
+      backdrop-filter: blur(20px);
       border: 1px solid rgba(255,80,0,0.08);
       border-radius: 20px;
-      padding: 22px 20px;
-      transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      padding: 24px;
+      margin-bottom: 24px;
+      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     }
-    .stat-card:hover {
+    .card:hover {
       border-color: rgba(255,80,0,0.25);
-      transform: translateY(-6px) scale(1.02);
       box-shadow: 0 16px 60px rgba(0,0,0,0.5);
     }
-    .stat-card .label { font-size:11px; text-transform:uppercase; letter-spacing:2px; color:#5a6485; }
-    .stat-card .value { font-size:32px; font-weight:900; margin-top:6px; }
-    .stat-card .value.green { color:#44ff88; } .stat-card .value.orange { color:#ffaa00; }
-    .stat-card .value.blue { color:#3b82f6; } .stat-card .value.purple { color:#a78bfa; }
-    .stat-card .value.pink { color:#f472b6; } .stat-card .value.red { color:#ff5555; }
+    .card .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card .card-title i { color: #ff8800; }
 
-    /* ---------- TABS ---------- */
-    .tab-content { display: none; animation:fadeUp 0.35s ease; }
-    .tab-content.active { display: block; }
-    @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
-
-    /* ---- BOT LIST ---- */
-    .bot-card {
-      background: rgba(12,16,28,0.7);
-      backdrop-filter: blur(8px);
-      border:1px solid rgba(255,80,0,0.08);
-      border-radius:18px;
-      padding:18px 24px;
-      margin-bottom:12px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      flex-wrap:wrap;
-      gap:15px;
-      transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    /* ---------- INPUTS ---------- */
+    .input-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
     }
-    .bot-card:hover {
-      border-color: rgba(255,80,0,0.3);
-      transform: translateY(-4px) scale(1.005);
-      box-shadow: 0 12px 50px rgba(0,0,0,0.4);
-    }
-    .bot-card .info { display:flex; align-items:center; gap:16px; }
-    .bot-card .avatar {
-      width:44px; height:44px;
-      border-radius:50%;
-      background:linear-gradient(135deg,#ff5500,#ff8800);
-      display:flex; align-items:center; justify-content:center;
-      font-weight:900; font-size:18px; box-shadow:0 6px 20px rgba(255,80,0,0.3);
-    }
-    .bot-card .status-badge {
-      padding:4px 16px; border-radius:30px; font-size:12px; font-weight:700;
-      background:rgba(68,255,136,0.12); color:#44ff88;
-    }
-    .bot-card .status-badge.offline { background:rgba(255,68,68,0.12); color:#ff5555; }
-    .bot-card .status-badge.connecting { background:rgba(255,170,0,0.12); color:#ffaa00; }
-    .bot-card .actions { display:flex; gap:10px; flex-wrap:wrap; }
-    .bot-card .actions button {
-      padding:8px 18px; border:none; border-radius:30px; font-weight:700; font-size:12px;
-      cursor:pointer; transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-      position: relative;
-      overflow: hidden;
-    }
-    .btn-start {
-      background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+    .input-row input {
+      flex: 1;
+      min-width: 150px;
+      padding: 12px 18px;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,80,0,0.1);
+      border-radius: 12px;
       color: #fff;
-      box-shadow: 0 4px 15px rgba(34,197,94,0.2);
-      animation: glowPulse 3s infinite;
+      outline: none;
+      transition: all 0.3s;
     }
-    .btn-start:hover {
-      box-shadow: 0 8px 30px rgba(34,197,94,0.5) !important;
-      transform: translateY(-3px) scale(1.05);
-      filter: brightness(1.3);
-      animation: none;
+    .input-row input:focus {
+      border-color: #ff5500;
+      box-shadow: 0 0 30px rgba(255,85,0,0.15);
     }
-    .btn-stop {
-      background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+    .input-row button {
+      padding: 12px 28px;
+      background: linear-gradient(135deg, #ff5500, #ff8800);
+      border: none;
+      border-radius: 12px;
       color: #fff;
-      box-shadow: 0 4px 15px rgba(239,68,68,0.2);
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
     }
-    .btn-stop:hover {
-      box-shadow: 0 8px 30px rgba(239,68,68,0.5) !important;
-      transform: translateY(-3px) scale(1.05);
-      filter: brightness(1.3);
-    }
-    .btn-del {
-      background: rgba(255,255,255,0.06) !important;
-      color: #889;
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-    .btn-del:hover {
-      background: rgba(255,68,68,0.2) !important;
-      border-color: rgba(255,68,68,0.3);
-      box-shadow: 0 4px 20px rgba(255,68,68,0.2);
-      transform: translateY(-2px) scale(1.05);
+    .input-row button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(255,85,0,0.4);
+      filter: brightness(1.2);
     }
 
-    @keyframes glowPulse {
-      0%, 100% { box-shadow: 0 0 20px rgba(34,197,94,0.2); }
-      50% { box-shadow: 0 0 40px rgba(34,197,94,0.5); }
+    /* ---------- BOT LIST ---------- */
+    .bot-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 14px;
+      margin-bottom: 10px;
+      border: 1px solid rgba(255,255,255,0.04);
+      transition: all 0.3s;
     }
-
-    button::after, .nav-item::after, .discord-btn::after, .logout-btn::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
+    .bot-item:hover {
+      border-color: rgba(255,80,0,0.2);
+      background: rgba(255,85,0,0.05);
+    }
+    .bot-item .info { display: flex; align-items: center; gap: 14px; }
+    .bot-item .avatar {
+      width: 40px; height: 40px;
       border-radius: 50%;
-      background: rgba(255,255,255,0.1);
-      transform: translate(-50%, -50%);
-      transition: width 0.6s, height 0.6s;
-    }
-    button:hover::after, .nav-item:hover::after, .discord-btn:hover::after, .logout-btn:hover::after {
-      width: 300px;
-      height: 300px;
-    }
-
-    /* ---- ADD ACCOUNT ---- */
-    .add-box {
-      display:flex; flex-wrap:wrap; gap:14px;
-      background:rgba(12,16,28,0.5); border-radius:20px; padding:24px;
-      border:1px solid rgba(255,80,0,0.06);
-      margin-bottom:25px;
-    }
-    .add-box input, .add-box select {
-      flex:1; min-width:150px;
-      padding:12px 18px; background:rgba(0,0,0,0.4); border:1px solid rgba(255,80,0,0.1);
-      border-radius:14px; color:#fff; outline:none; transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    }
-    .add-box input:hover, .add-box select:hover {
-      border-color: rgba(255,85,0,0.3);
-      box-shadow: 0 0 30px rgba(255,85,0,0.05);
-    }
-    .add-box input:focus, .add-box select:focus {
-      border-color:#ff5500;
-      box-shadow: 0 0 40px rgba(255,85,0,0.15);
-      transform: scale(1.01);
-    }
-    .add-box button {
-      padding:12px 32px;
       background: linear-gradient(135deg, #ff5500, #ff8800);
-      border:none; border-radius:14px; color:#fff; font-weight:800; cursor:pointer;
-      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-      box-shadow: 0 4px 20px rgba(255,85,0,0.2);
-      position: relative;
-      overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900;
+      font-size: 16px;
     }
-    .add-box button:hover {
-      transform: translateY(-3px) scale(1.04);
-      box-shadow: 0 8px 40px rgba(255,85,0,0.4);
-      filter: brightness(1.2);
+    .bot-item .status-badge {
+      padding: 4px 14px;
+      border-radius: 30px;
+      font-size: 11px;
+      font-weight: 700;
     }
+    .bot-item .status-badge.online { background: rgba(68,255,136,0.15); color: #44ff88; }
+    .bot-item .status-badge.offline { background: rgba(255,68,68,0.15); color: #ff5555; }
+    .bot-item .status-badge.connecting { background: rgba(255,170,0,0.15); color: #ffaa00; }
+    .bot-item .actions { display: flex; gap: 8px; }
+    .bot-item .actions button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-check { background: rgba(255,170,0,0.15); color: #ffaa00; }
+    .btn-login { background: rgba(59,130,246,0.15); color: #3b82f6; }
+    .btn-disconnect { background: rgba(255,68,68,0.15); color: #ff5555; }
+    .btn-delete { background: rgba(255,255,255,0.05); color: #889; }
 
-    /* ---- PROXY ---- */
-    .proxy-row {
-      display:flex; gap:12px; margin-bottom:12px;
-    }
-    .proxy-row input {
-      flex:1; padding:12px 18px; background:rgba(0,0,0,0.4);
-      border:1px solid rgba(255,80,0,0.1); border-radius:14px;
-      color:#fff; transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    }
-    .proxy-row input:hover { border-color: rgba(255,85,0,0.3); box-shadow: 0 0 30px rgba(255,85,0,0.05); }
-    .proxy-row input:focus { border-color:#ff5500; box-shadow: 0 0 40px rgba(255,85,0,0.15); transform: scale(1.01); }
-    .proxy-row button {
-      padding:12px 28px;
-      background: linear-gradient(135deg, #ff5500, #ff8800);
-      border:none; border-radius:14px; color:#fff; font-weight:700; cursor:pointer;
-      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-      box-shadow: 0 4px 20px rgba(255,85,0,0.2);
-      position: relative;
-      overflow: hidden;
-    }
-    .proxy-row button:hover {
-      transform: translateY(-3px) scale(1.04);
-      box-shadow: 0 8px 40px rgba(255,85,0,0.4);
-      filter: brightness(1.2);
-    }
-
-    /* ---- LOG ---- */
+    /* ---------- LOG BOX ---------- */
     .log-box {
-      background:rgba(0,0,0,0.6);
-      border:1px solid rgba(255,80,0,0.08);
-      border-radius:18px;
-      padding:18px 22px;
-      height:200px;
-      overflow-y:auto;
-      font-family:'Consolas',monospace;
-      font-size:13px;
-      color:#44ff88;
-      margin-top:30px;
-      line-height:1.9;
+      background: rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,80,0,0.08);
+      border-radius: 16px;
+      padding: 16px 20px;
+      height: 250px;
+      overflow-y: auto;
+      font-family: 'Consolas', monospace;
+      font-size: 13px;
+      color: #44ff88;
+      line-height: 1.8;
     }
 
-    /* ---- ADMIN TABLE ---- */
-    .admin-table { width:100%; border-collapse:collapse; margin-top:16px; background:rgba(0,0,0,0.25); border-radius:16px; overflow:hidden; }
-    .admin-table th, .admin-table td { padding:14px 18px; border-bottom:1px solid rgba(255,255,255,0.04); text-align:left; font-size:13px; }
-    .admin-table th { background:rgba(255,80,0,0.08); color:#ff8800; }
+    /* ---------- CHAT LOG ---------- */
+    .chat-log {
+      background: rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,80,0,0.08);
+      border-radius: 16px;
+      padding: 16px 20px;
+      height: 250px;
+      overflow-y: auto;
+      font-family: 'Consolas', monospace;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+    .chat-log .msg { margin-bottom: 4px; }
+    .chat-log .msg .username { color: #ffaa00; font-weight: 700; }
+    .chat-log .msg .content { color: #e8edf5; }
 
-    /* ---- ADMIN BUTTONS ---- */
-    #btnMaint, [onclick="clearCollectedData()"] {
-      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
-      position: relative;
-      overflow: hidden;
+    /* ---------- ACCESS DENIED ---------- */
+    .access-denied {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(5,7,15,0.98);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      text-align: center;
     }
-    #btnMaint:hover, [onclick="clearCollectedData()"]:hover {
-      transform: translateY(-3px) scale(1.05);
-      filter: brightness(1.15);
-      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    .access-denied .box {
+      background: rgba(12,16,28,0.9);
+      border: 1px solid rgba(255,68,68,0.3);
+      border-radius: 28px;
+      padding: 60px 50px;
+      max-width: 500px;
     }
+    .access-denied .box i { font-size: 80px; color: #ff5555; margin-bottom: 20px; }
+    .access-denied .box h1 { font-size: 28px; margin-bottom: 12px; }
+    .access-denied .box p { color: #5a6485; margin-bottom: 20px; }
+    .access-denied .box .ip { color: #ff8800; font-family: monospace; font-size: 16px; }
 
-    /* ---- IMPORT/EXPORT BUTTONS ---- */
-    [onclick="document.getElementById('importFile').click()"], [onclick="exportAccounts()"] {
-      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
-      position: relative;
-      overflow: hidden;
+    /* ---------- TWO COLUMN ---------- */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
     }
-    [onclick="document.getElementById('importFile').click()"]:hover, [onclick="exportAccounts()"]:hover {
-      transform: translateY(-2px) scale(1.04);
-      background: rgba(255,255,255,0.1) !important;
-      border-color: rgba(255,85,0,0.3) !important;
-      box-shadow: 0 4px 20px rgba(255,85,0,0.1);
+    @media (max-width: 768px) {
+      .two-col { grid-template-columns: 1fr; }
     }
-
-    /* ---- LOGIN BUTTON ---- */
-    .login-btn {
-      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
-      position: relative;
-      overflow: hidden;
-    }
-    .login-btn:hover {
-      transform: translateY(-3px) scale(1.04);
-      box-shadow: 0 12px 40px rgba(255,85,0,0.4) !important;
-      filter: brightness(1.15);
-    }
-
-    /* responsive */
-    @media(max-width:800px){ .sidebar{width:70px; padding:20px 10px;} .sidebar .brand span{display:none;} .main{margin-left:70px; padding:20px;} .sidebar .nav-item span{display:none;} .sidebar .nav-item i{font-size:22px;} .sidebar .bottom .discord-btn span{display:none;} }
   </style>
 </head>
 <body>
 
-<!-- ===== SIDEBAR ===== -->
-<aside class="sidebar">
-  <div class="brand"><i class="fas fa-crown"></i><span>KingMC AFK</span></div>
-  <button class="nav-item active" data-tab="dashboard"><i class="fas fa-chart-pie"></i><span>Dashboard</span></button>
-  <button class="nav-item" data-tab="bots"><i class="fas fa-robot"></i><span>Bot</span></button>
-  <button class="nav-item" data-tab="proxy"><i class="fas fa-globe"></i><span>Proxy</span></button>
-  <button class="nav-item" data-tab="deposit"><i class="fas fa-coins"></i><span>Nạp tiền</span></button>
-  <button class="nav-item" data-tab="admin" id="adminTabBtn"><i class="fas fa-user-shield"></i><span>Admin</span></button>
-  <div class="bottom">
-    <a href="https://discord.gg/qRuxQZxqd" target="_blank" class="discord-btn"><i class="fab fa-discord"></i><span>Discord</span></a>
+<!-- ===== ACCESS DENIED OVERLAY ===== -->
+<div id="accessDenied" class="access-denied" style="display:none;">
+  <div class="box">
+    <i class="fas fa-ban"></i>
+    <h1>🚫 Truy cập bị từ chối</h1>
+    <p>IP của bạn không được phép truy cập hệ thống này.</p>
+    <div class="ip" id="deniedIp">IP: ...</div>
   </div>
-</aside>
+</div>
 
 <!-- ===== MAIN ===== -->
-<div class="main" id="mainPanel">
-  <!-- TOPBAR -->
-  <div class="topbar">
-    <div class="greet">⚡ <span id="greetingUser">Zo</span> · Zeta Online</div>
-    <div class="actions">
-      <span class="dot"></span>
-      <button class="logout-btn" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Thoát</button>
+<div class="container" id="mainPanel" style="display:none;">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="left">
+      <div class="menu-btn"><i class="fas fa-bars"></i></div>
+      <div>
+        <div class="title">DASHBOARD</div>
+        <div class="subtitle">Bấm ≡ để chọn: Control Bot · Điều khoản · Contact</div>
+      </div>
+    </div>
+    <div class="right">
+      <span class="status-dot"></span>
+      <span style="color:#5a6485; font-size:13px;">● ONLINE</span>
     </div>
   </div>
 
-  <!-- ===== DASHBOARD ===== -->
-  <div id="tab-dashboard" class="tab-content active">
-    <div class="stats-grid">
-      <div class="stat-card"><div class="label">Tổng Bot</div><div class="value blue" id="totalBots">0</div></div>
-      <div class="stat-card"><div class="label">Online</div><div class="value green" id="onlineBots">0</div></div>
-      <div class="stat-card"><div class="label">Offline</div><div class="value red" id="offlineBots">0</div></div>
-      <div class="stat-card"><div class="label">Proxy</div><div class="value orange" id="proxyCount">0</div></div>
-      <div class="stat-card"><div class="label">Uptime</div><div class="value purple" id="uptimeDisplay">00:00:00</div></div>
-      <div class="stat-card"><div class="label">Shards</div><div class="value pink" id="totalShards">0</div></div>
-    </div>
-    <div style="background:rgba(12,16,28,0.4); border-radius:20px; padding:24px; border:1px solid rgba(255,80,0,0.06);">
-      <h3 style="font-weight:700; margin-bottom:16px;">📋 Hoạt động gần đây</h3>
-      <div id="recentActivity" style="color:#5a6485; font-size:14px;">Đang tải...</div>
+  <!-- TITLE -->
+  <div class="page-title">BOT AFK MINECRAFT</div>
+
+  <!-- WEBHOOK DISCORD -->
+  <div class="card">
+    <div class="card-title"><i class="fas fa-bell"></i> Webhook Discord</div>
+    <div class="input-row">
+      <input type="text" id="webhookInput" placeholder="https://discord.com/api/webhooks/...">
+      <button onclick="saveWebhook()"><i class="fas fa-save"></i> Lưu</button>
+      <button onclick="testWebhook()" style="background: rgba(255,255,255,0.08);"><i class="fas fa-vial"></i> Test</button>
     </div>
   </div>
 
-  <!-- ===== BOT ===== -->
-  <div id="tab-bots" class="tab-content">
-    <div class="add-box">
-      <input type="text" id="newUsername" placeholder="Tên tài khoản...">
-      <input type="password" id="newPassword" placeholder="Mật khẩu (nếu có)">
-      <select id="accountType"><option value="crack">Crack (Offline)</option><option value="premium">Premium</option></select>
-      <button onclick="addAccount()"><i class="fas fa-plus"></i> Thêm</button>
+  <!-- THÊM ACC MỚI -->
+  <div class="card">
+    <div class="card-title"><i class="fas fa-plus"></i> Thêm acc mới (tự login)</div>
+    <div class="input-row">
+      <input type="text" id="newUsername" placeholder="Username Minecraft (VD: HEXTEKO22)">
+      <input type="password" id="newPassword" placeholder="Mật khẩu /dn">
+      <button onclick="addAccount()"><i class="fas fa-plus"></i> Thêm & Login</button>
     </div>
-    <div id="accountsContainer"></div>
-    <!-- Import/Export -->
-    <div style="display:flex; gap:14px; margin:20px 0; flex-wrap:wrap;">
-      <button onclick="document.getElementById('importFile').click()" style="padding:12px 28px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,80,0,0.15); border-radius:14px; color:#ccc; font-weight:600; cursor:pointer; transition: all 0.3s cubic-bezier(0.25,0.46,0.45,0.94); position:relative; overflow:hidden;"><i class="fas fa-file-import"></i> Nhập File</button>
-      <input type="file" id="importFile" accept=".json,.txt" style="display:none" onchange="importAccounts(event)">
-      <button onclick="exportAccounts()" style="padding:12px 28px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,80,0,0.15); border-radius:14px; color:#ccc; font-weight:600; cursor:pointer; transition: all 0.3s cubic-bezier(0.25,0.46,0.45,0.94); position:relative; overflow:hidden;"><i class="fas fa-file-export"></i> Xuất File</button>
+  </div>
+
+  <!-- DANH SÁCH BOT -->
+  <div class="card">
+    <div class="card-title"><i class="fas fa-robot"></i> Danh sách Bot (kingmc.vn:25565) <span style="margin-left:auto; font-size:12px; color:#5a6485;">👁️ Ẩn</span></div>
+    <div id="accountsContainer">
+      <div style="text-align:center; padding:30px; color:#5a6485;">Chưa có bot nào</div>
     </div>
-    <!-- Spammer config -->
-    <div style="background:rgba(12,16,28,0.5); border-radius:20px; padding:20px; border:1px solid rgba(255,80,0,0.06); margin-top:10px;">
-      <div style="display:flex; flex-wrap:wrap; gap:18px; align-items:center;">
-        <input type="text" id="spamMessage" placeholder="Tin nhắn spam..." style="flex:1; padding:10px 16px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,80,0,0.08); border-radius:12px; color:#fff; transition: all 0.3s cubic-bezier(0.25,0.46,0.45,0.94);">
-        <input type="number" id="spamDelay" value="1000" style="width:100px; padding:10px 16px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,80,0,0.08); border-radius:12px; color:#fff; transition: all 0.3s cubic-bezier(0.25,0.46,0.45,0.94);">
-        <label style="display:flex; align-items:center; gap:8px; color:#889;"><input type="checkbox" id="spamEnabled"> Bật Spammer</label>
-        <label style="display:flex; align-items:center; gap:8px; color:#889;"><input type="checkbox" id="spamBypass"> Bypass</label>
-        <label style="display:flex; align-items:center; gap:8px; color:#889;"><input type="checkbox" id="hideChatLog"> Tắt Log Chat</label>
+  </div>
+
+  <!-- GỬI LỆNH / CHAT + CHUYỂN TIỀN -->
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title"><i class="fas fa-bolt"></i> Gửi lệnh / chat</div>
+      <div class="input-row">
+        <select id="chatBotSelect" style="flex:1; padding:12px 18px; background:rgba(0,0,0,0.4); border:1px solid rgba(255,80,0,0.1); border-radius:12px; color:#fff;">
+          <option value="">-- Chọn bot --</option>
+        </select>
+      </div>
+      <div class="input-row" style="margin-top:12px;">
+        <input type="text" id="chatInput" placeholder="VD: /spawn hoặc hello">
+        <button onclick="sendChat()"><i class="fas fa-paper-plane"></i> Gửi</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="fas fa-money-bill-wave"></i> Chuyển tiền (/pay)</div>
+      <div class="input-row">
+        <select id="payBotSelect" style="flex:1; padding:12px 18px; background:rgba(0,0,0,0.4); border:1px solid rgba(255,80,0,0.1); border-radius:12px; color:#fff;">
+          <option value="">-- Chọn bot --</option>
+        </select>
+      </div>
+      <div class="input-row" style="margin-top:12px;">
+        <input type="text" id="payTarget" placeholder="IGN người nhận">
+        <input type="text" id="payAmount" placeholder="Số tiền (VD: 1M)" style="max-width:150px;">
+        <button onclick="sendPay()"><i class="fas fa-paper-plane"></i> Gửi</button>
       </div>
     </div>
   </div>
 
-  <!-- ===== PROXY ===== -->
-  <div id="tab-proxy" class="tab-content">
-    <div style="max-width:700px;">
-      <div style="background:rgba(12,16,28,0.5); border-radius:20px; padding:28px; border:1px solid rgba(255,80,0,0.06);">
-        <h3 style="font-size:20px; margin-bottom:12px;">🌐 Quản lý Proxy</h3>
-        <div class="proxy-row">
-          <input type="text" id="proxyInput" placeholder="socks5://user:pass@ip:port">
-          <button onclick="addProxy()"><i class="fas fa-plus"></i> Thêm</button>
-        </div>
-        <div id="proxyList" style="background:rgba(0,0,0,0.2); border-radius:14px; padding:14px; max-height:220px; overflow-y:auto;"></div>
+  <!-- LOG CHAT + LOG HỆ THỐNG -->
+  <div class="two-col" style="margin-top:24px;">
+    <div class="card">
+      <div class="card-title"><i class="fas fa-comments"></i> Log Chat / Pay / Msg</div>
+      <div class="chat-log" id="chatLogBox">
+        <div style="color:#5a6485;">Chưa có tin nhắn...</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="fas fa-terminal"></i> Log Hệ thống</div>
+      <div class="log-box" id="logBox">
+        <div>🚀 Hệ thống sẵn sàng...</div>
       </div>
     </div>
   </div>
 
-  <!-- ===== DEPOSIT ===== -->
-  <div id="tab-deposit" class="tab-content">
-    <div style="background:rgba(12,16,28,0.5); border-radius:20px; padding:50px; text-align:center; max-width:500px; margin:0 auto; border:1px solid rgba(255,80,0,0.06);">
-      <i class="fas fa-coins" style="font-size:60px; color:#ff8800; margin-bottom:20px;"></i>
-      <h3 style="font-size:24px; font-weight:800;">Nạp Gambling</h3>
-      <p style="color:#5a6485; margin:20px 0;">Liên hệ Admin qua Discord để nạp.</p>
-      <a href="https://discord.gg/qRuxQZxqd" target="_blank" style="display:inline-block; padding:14px 50px; background:#5865F2; border-radius:40px; color:#fff; font-weight:800; text-decoration:none; box-shadow:0 10px 30px rgba(88,101,242,0.3); transition: all 0.3s cubic-bezier(0.25,0.46,0.45,0.94);"><i class="fab fa-discord"></i> Discord</a>
-    </div>
-  </div>
-
-  <!-- ===== ADMIN ===== -->
-  <div id="tab-admin" class="tab-content">
-    <div style="background:rgba(12,16,28,0.5); border-radius:20px; padding:30px; border:1px solid rgba(255,80,0,0.06);">
-      <h3 style="font-size:20px; margin-bottom:18px;">🛠️ Admin Panel</h3>
-      <div style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:20px;">
-        <button id="btnMaint" onclick="toggleMaintenance()" style="padding:12px 28px; border:none; border-radius:14px; background:#22c55e; color:#fff; font-weight:800; cursor:pointer; transition: all 0.3s cubic-bezier(0.25,0.46,0.45,0.94); position:relative; overflow:hidden;">Bảo trì: TẮT</button>
-        <button onclick="clearCollectedData()" style="padding:12px 28px; border:none; border-radius:14px; background:#ef4444; color:#fff; font-weight:800; cursor:pointer; transition: all 0.3s cubic-bezier(0.25,0.46,0.45,0.94); position:relative; overflow:hidden;">Xóa dữ liệu thu thập</button>
-      </div>
-      <h4 style="margin:20px 0 12px;">📥 Dữ liệu thu thập</h4>
-      <table class="admin-table">
-        <thead><tr><th>IP</th><th>Thời gian</th><th>Username</th><th>Password</th></tr></thead>
-        <tbody id="adminDataBody"><tr><td colspan="4" style="text-align:center;color:#5a6485;">Chưa có dữ liệu</td></tr></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- LOG -->
-  <div class="log-box" id="logBox"><div>🚀 Hệ thống sẵn sàng...</div></div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -526,98 +373,87 @@
   let accounts = [];
   let isAdmin = false;
   let proxyList = [];
-  let uptimeSeconds = 0;
-  let uptimeInterval;
 
-  // ---- LOGIN ----
-  const PASSWORD = 'Tuanpro123';
-
-  function doLogin(pass) {
-    socket.emit('login', pass);
-  }
-
-  socket.on('login_success', (ok) => {
-    if (!ok) { alert('❌ Sai mật khẩu!'); return; }
-    document.getElementById('loginOverlay')?.remove();
-    document.getElementById('mainPanel').style.display = 'block';
-    appendLog('🔓 Đăng nhập thành công!');
-    socket.emit('get_accounts');
-    socket.emit('get_proxy_list');
-    startUptime();
+  // ===== HIỆU ỨNG VÙNG SÁNG THEO CHUỘT =====
+  document.addEventListener('mousemove', (e) => {
+    document.body.style.setProperty('--mouse-x', e.clientX + 'px');
+    document.body.style.setProperty('--mouse-y', e.clientY + 'px');
   });
 
-  // ---- INIT ----
+  // ===== ACCESS DENIED =====
+  socket.on('access_denied', (data) => {
+    document.getElementById('accessDenied').style.display = 'flex';
+    document.getElementById('deniedIp').textContent = 'IP: ' + data.ip;
+    document.getElementById('mainPanel').style.display = 'none';
+  });
+
+  // ===== INIT =====
   socket.on('is_admin', (status) => {
     isAdmin = status;
-    if (isAdmin) document.getElementById('adminTabBtn').style.display = 'flex';
-    else document.getElementById('adminTabBtn').style.display = 'none';
   });
 
   socket.on('init_accounts', (data) => {
     accounts = data || [];
     renderAccounts();
-    updateStats();
+    updateBotSelects();
   });
 
-  socket.on('proxy_list', (data) => {
-    proxyList = data || [];
-    renderProxyList();
-    document.getElementById('proxyCount').textContent = proxyList.length;
+  socket.on('webhook_url', (url) => {
+    document.getElementById('webhookInput').value = url;
   });
 
-  socket.on('sync_collected_data', (data) => {
-    const tbody = document.getElementById('adminDataBody');
-    if (!data || data.length===0) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#5a6485;">Trống</td></tr>'; return; }
-    tbody.innerHTML = data.map(d => `<tr><td>${d.ip}</td><td>${d.time}</td><td>${d.username}</td><td>${d.password}</td></tr>`).join('');
-  });
-
-  socket.on('maintenance_status', (status) => {
-    const btn = document.getElementById('btnMaint');
-    btn.textContent = status ? 'Bảo trì: BẬT' : 'Bảo trì: TẮT';
-    btn.style.background = status ? '#ef4444' : '#22c55e';
+  socket.on('chat_log', (data) => {
+    const box = document.getElementById('chatLogBox');
+    const div = document.createElement('div');
+    div.className = 'msg';
+    div.innerHTML = `<span class="username">${data.username}</span>: <span class="content">${data.message}</span>`;
+    if (box.children.length === 1 && box.children[0].textContent.includes('Chưa có')) {
+      box.innerHTML = '';
+    }
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
   });
 
   socket.on('log', appendLog);
 
-  // ---- RENDER ACCOUNTS ----
+  // ===== RENDER ACCOUNTS =====
   function renderAccounts() {
     const container = document.getElementById('accountsContainer');
-    if (!accounts || accounts.length===0) {
-      container.innerHTML = `<div style="text-align:center;padding:50px;color:#5a6485;"><i class="fas fa-robot" style="font-size:50px;display:block;margin-bottom:16px;"></i>Chưa có bot</div>`;
+    if (!accounts || accounts.length === 0) {
+      container.innerHTML = '<div style="text-align:center; padding:30px; color:#5a6485;">Chưa có bot nào</div>';
       return;
     }
     container.innerHTML = accounts.map(acc => {
       const statusClass = acc.status.includes('ONLINE') ? 'online' : acc.status.includes('CONNECT') ? 'connecting' : 'offline';
       return `
-        <div class="bot-card">
+        <div class="bot-item">
           <div class="info">
             <div class="avatar">${acc.username.charAt(0).toUpperCase()}</div>
-            <div><strong>${acc.username}</strong> <span class="status-badge ${statusClass}">● ${acc.status}</span></div>
+            <div>
+              <div style="font-weight:700;">${acc.username}</div>
+              <span class="status-badge ${statusClass}">● ${acc.status}</span>
+            </div>
           </div>
           <div class="actions">
-            <button class="btn-start" onclick="startBot('${acc.id}')"><i class="fas fa-play"></i> Bật</button>
-            <button class="btn-stop" onclick="stopBot('${acc.id}')"><i class="fas fa-stop"></i> Tắt</button>
-            <button class="btn-del" onclick="deleteAccount('${acc.id}')"><i class="fas fa-trash"></i></button>
-            <label style="display:flex;align-items:center;gap:5px;color:#5a6485;font-size:12px;cursor:pointer;">
-              <input type="checkbox" ${acc.autoReconnect?'checked':''} onchange="toggleAutoReconnect('${acc.id}')"> Auto
-            </label>
+            <button class="btn-check" onclick="checkBalance('${acc.id}')"><i class="fas fa-coins"></i> Check số dư</button>
+            <button class="btn-login" onclick="startBot('${acc.id}')"><i class="fas fa-sign-in-alt"></i> Login lại</button>
+            <button class="btn-disconnect" onclick="stopBot('${acc.id}')"><i class="fas fa-power-off"></i> Ngắt KN</button>
+            <button class="btn-delete" onclick="deleteAccount('${acc.id}')"><i class="fas fa-trash"></i> Xóa</button>
           </div>
         </div>
       `;
     }).join('');
   }
 
-  function updateStats() {
-    const total = accounts.length;
-    const online = accounts.filter(a => a.status.includes('ONLINE')).length;
-    const offline = total - online;
-    document.getElementById('totalBots').textContent = total;
-    document.getElementById('onlineBots').textContent = online;
-    document.getElementById('offlineBots').textContent = offline;
-    document.getElementById('totalShards').textContent = (total * 12).toLocaleString();
+  function updateBotSelects() {
+    const chatSelect = document.getElementById('chatBotSelect');
+    const paySelect = document.getElementById('payBotSelect');
+    const options = accounts.map(acc => `<option value="${acc.id}">${acc.username}</option>`).join('');
+    chatSelect.innerHTML = '<option value="">-- Chọn bot --</option>' + options;
+    paySelect.innerHTML = '<option value="">-- Chọn bot --</option>' + options;
   }
 
-  // ---- ACTIONS ----
+  // ===== ACTIONS =====
   function addAccount() {
     const username = document.getElementById('newUsername').value.trim();
     const password = document.getElementById('newPassword').value.trim();
@@ -630,33 +466,37 @@
   function startBot(id) { socket.emit('start_bot', id); }
   function stopBot(id) { socket.emit('stop_bot', id); }
   function deleteAccount(id) { if(confirm('Xóa?')) socket.emit('delete_account', id); }
-  function toggleAutoReconnect(id) { socket.emit('toggle_auto_reconnect', id); }
 
-  function addProxy() {
-    const input = document.getElementById('proxyInput');
-    if (!input.value.trim()) return alert('Nhập proxy!');
-    socket.emit('add_proxy', input.value.trim());
-    input.value = '';
-  }
-  function removeProxy(idx) { socket.emit('remove_proxy', idx); }
-
-  function renderProxyList() {
-    const container = document.getElementById('proxyList');
-    if (!proxyList.length) { container.innerHTML = '<div style="text-align:center;color:#5a6485;padding:20px;">Chưa có proxy</div>'; return; }
-    container.innerHTML = proxyList.map((p,i) => `
-      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px;">
-        <span>🌐 ${p}</span>
-        <span style="color:#ff5555;cursor:pointer;" onclick="removeProxy(${i})"><i class="fas fa-times"></i></span>
-      </div>
-    `).join('');
+  function checkBalance(id) {
+    socket.emit('send_chat', { id, cmd: '/bal' });
   }
 
-  function toggleMaintenance() {
-    const btn = document.getElementById('btnMaint');
-    const isOn = btn.textContent.includes('BẬT');
-    socket.emit('toggle_maintenance', !isOn);
+  function sendChat() {
+    const id = document.getElementById('chatBotSelect').value;
+    const cmd = document.getElementById('chatInput').value.trim();
+    if (!id || !cmd) { alert('Chọn bot và nhập lệnh!'); return; }
+    socket.emit('send_chat', { id, cmd });
+    document.getElementById('chatInput').value = '';
   }
-  function clearCollectedData() { if(confirm('Xóa dữ liệu?')) socket.emit('clear_collected_data'); }
+
+  function sendPay() {
+    const id = document.getElementById('payBotSelect').value;
+    const target = document.getElementById('payTarget').value.trim();
+    const amount = document.getElementById('payAmount').value.trim();
+    if (!id || !target || !amount) { alert('Điền đầy đủ thông tin!'); return; }
+    socket.emit('send_pay', { id, target, amount });
+    document.getElementById('payTarget').value = '';
+    document.getElementById('payAmount').value = '';
+  }
+
+  function saveWebhook() {
+    const url = document.getElementById('webhookInput').value.trim();
+    socket.emit('set_webhook', url);
+  }
+
+  function testWebhook() {
+    socket.emit('test_webhook');
+  }
 
   function appendLog(msg) {
     const box = document.getElementById('logBox');
@@ -666,71 +506,15 @@
     box.scrollTop = box.scrollHeight;
   }
 
-  // ---- IMPORT/EXPORT ----
-  function importAccounts(e) {
-    const file = e.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const data = JSON.parse(ev.target.result);
-        if(Array.isArray(data)) { data.forEach(acc => socket.emit('add_account', acc)); }
-        else alert('File không đúng định dạng!');
-      } catch(err) { alert('Lỗi đọc file'); }
-    };
-    reader.readAsText(file);
-  }
-  function exportAccounts() {
-    const blob = new Blob([JSON.stringify(accounts, null, 2)], {type:'application/json'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'accounts_backup.json';
-    a.click();
-  }
+  // ===== SHOW MAIN PANEL SAU KHI XÁC THỰC =====
+  setTimeout(() => {
+    // Nếu không bị access denied sau 2s, hiện panel
+    if (document.getElementById('accessDenied').style.display !== 'flex') {
+      document.getElementById('mainPanel').style.display = 'block';
+    }
+  }, 1500);
 
-  // ---- UPTIME ----
-  function startUptime() {
-    uptimeInterval = setInterval(() => {
-      uptimeSeconds++;
-      const h = String(Math.floor(uptimeSeconds/3600)).padStart(2,'0');
-      const m = String(Math.floor((uptimeSeconds%3600)/60)).padStart(2,'0');
-      const s = String(uptimeSeconds%60).padStart(2,'0');
-      document.getElementById('uptimeDisplay').textContent = `${h}:${m}:${s}`;
-    }, 1000);
-  }
-
-  // ---- TAB SWITCH ----
-  document.querySelectorAll('.nav-item').forEach(btn => {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-      this.classList.add('active');
-      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-      document.getElementById('tab-' + this.dataset.tab).classList.add('active');
-    });
-  });
-
-  // ---- LOGIN OVERLAY ----
-  const overlay = document.createElement('div');
-  overlay.id = 'loginOverlay';
-  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(5,7,15,0.96);display:flex;justify-content:center;align-items:center;z-index:9999;backdrop-filter:blur(16px);';
-  overlay.innerHTML = `
-    <div style="background:rgba(12,16,28,0.9);border:1px solid rgba(255,80,0,0.25);border-radius:28px;padding:50px 40px;max-width:380px;width:90%;text-align:center;box-shadow:0 0 80px rgba(255,80,0,0.08);">
-      <i class="fas fa-crown" style="font-size:54px;color:#ff5500;margin-bottom:12px;"></i>
-      <h1 style="font-family:'Orbitron',sans-serif;font-size:26px;background:linear-gradient(135deg,#ff5500,#ffaa00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">KingMC AFK</h1>
-      <p style="color:#5a6485;font-size:13px;letter-spacing:3px;margin-bottom:28px;">ULTIMATE v6.0</p>
-      <input type="password" id="loginPass" placeholder="🔑 Mật khẩu..." style="width:100%;padding:14px 20px;background:rgba(0,0,0,0.5);border:1px solid rgba(255,80,0,0.15);border-radius:14px;color:#fff;font-size:15px;outline:none;margin-bottom:16px;transition:all 0.3s cubic-bezier(0.25,0.46,0.45,0.94);" onkeypress="if(event.key==='Enter') doLogin(document.getElementById('loginPass').value)">
-      <button class="login-btn" onclick="doLogin(document.getElementById('loginPass').value)" style="width:100%;padding:16px;border:none;border-radius:14px;background:linear-gradient(135deg,#ff5500,#ff8800);color:#fff;font-weight:800;font-size:16px;cursor:pointer;transition:all 0.3s cubic-bezier(0.25,0.46,0.45,0.94);position:relative;overflow:hidden;">🔓 Đăng nhập</button>
-    </div>
-  `;
-  document.body.prepend(overlay);
-
-  // ---- HIDE ADMIN TAB BY DEFAULT ----
-  document.getElementById('adminTabBtn').style.display = 'none';
-
-  // ---- REQUEST PROXY LIST ----
-  socket.emit('get_proxy_list');
-
-  console.log('🔥 Zo đã sẵn sàng, thưa Alpha!');
+  console.log('🔥 Zo đã sẵn sàng, thưa Catnosaur!');
 </script>
 </body>
 </html>
