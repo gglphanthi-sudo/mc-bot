@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KingMC AFK · ULTIMATE v9.0</title>
+  <title>KingMC AFK Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
@@ -30,213 +30,48 @@
     ::-webkit-scrollbar-track { background:transparent; }
     ::-webkit-scrollbar-thumb { background:linear-gradient(180deg,#ff5500,#ff8800); border-radius:20px; }
 
-    /* ===== INTRO SCREEN ===== */
-    #introScreen {
-      position: fixed; top:0; left:0; right:0; bottom:0;
-      background: radial-gradient(circle at 50% 50%, #0a0e1a 0%, #03050b 100%);
-      z-index: 99999;
-      display: flex; flex-direction: column;
-      justify-content: center; align-items: center;
-      transition: opacity 1s ease, visibility 1s ease;
-      overflow: hidden;
-    }
-    #introScreen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-    #introScreen .intro-content { text-align: center; max-width: 900px; padding: 20px; z-index: 2; }
-    #introScreen .intro-title {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 42px; font-weight: 900;
-      background: linear-gradient(135deg, #ff5500, #ffaa00, #ff5500);
-      background-size: 200% 200%;
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      margin-bottom: 20px; line-height: 1.4;
-      min-height: 60px;
-      animation: gradientMove 4s ease infinite;
-      text-shadow: 0 0 60px rgba(255,85,0,0.3);
-    }
-    @keyframes gradientMove {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-    }
-    #introScreen .intro-cursor {
-      display: inline-block; width: 3px; height: 1em;
-      background: #ff8800; margin-left: 4px;
-      animation: blink 0.8s infinite; vertical-align: middle;
-    }
-    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0;} }
-    #introScreen .intro-author {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 22px; font-weight: 700;
-      color: #ffaa00; margin-bottom: 40px;
-      opacity: 0; transition: opacity 1s ease;
-      letter-spacing: 4px;
-    }
-    #introScreen .intro-author.show { opacity: 1; }
-    #introScreen .intro-author span {
-      color: #ff5500; font-weight: 900; font-size: 26px;
-      text-shadow: 0 0 30px rgba(255,85,0,0.6);
-    }
-    #introScreen .music-controls {
-      display: flex; flex-direction: column;
-      gap: 15px; align-items: center;
-      opacity: 0; transition: opacity 1s ease; margin-top: 20px;
-    }
-    #introScreen .music-controls.show { opacity: 1; }
-    #introScreen .music-row {
-      display: flex; align-items: center; gap: 12px;
-      background: rgba(12,16,28,0.7);
-      border: 1px solid rgba(255,80,0,0.15);
-      border-radius: 16px; padding: 12px 20px;
-      backdrop-filter: blur(20px);
-    }
-    #introScreen .music-row input[type="text"] {
-      padding: 10px 16px; background: rgba(0,0,0,0.4);
-      border: 1px solid rgba(255,80,0,0.15);
-      border-radius: 10px; color: #fff;
-      font-size: 13px; outline: none; width: 320px;
-      transition: all 0.3s;
-    }
-    #introScreen .music-row input[type="text"]:focus {
-      border-color: #ff5500;
-      box-shadow: 0 0 30px rgba(255,85,0,0.2);
-    }
-    #introScreen .music-row button {
-      padding: 10px 22px;
-      background: linear-gradient(135deg, #ff5500, #ff8800);
-      border: none; border-radius: 10px;
-      color: #fff; font-weight: 700; cursor: pointer;
-      font-size: 13px; transition: all 0.3s;
-    }
-    #introScreen .music-row button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 30px rgba(255,85,0,0.4);
-      filter: brightness(1.2);
-    }
-    #introScreen .volume-row {
-      display: flex; align-items: center; gap: 12px;
-      background: rgba(12,16,28,0.7);
-      border: 1px solid rgba(255,80,0,0.15);
-      border-radius: 16px; padding: 12px 20px;
-      backdrop-filter: blur(20px);
-    }
-    #introScreen .volume-row i { color: #ff8800; font-size: 18px; width: 24px; text-align: center; }
-    #introScreen .volume-row input[type="range"] {
-      -webkit-appearance: none; width: 200px; height: 6px;
-      border-radius: 3px;
-      background: linear-gradient(90deg, #ff5500 0%, #ff5500 var(--vol, 50%), rgba(255,255,255,0.1) var(--vol, 50%), rgba(255,255,255,0.1) 100%);
-      outline: none; cursor: pointer;
-    }
-    #introScreen .volume-row input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 18px; height: 18px;
-      border-radius: 50%; background: #ff8800;
-      box-shadow: 0 0 20px rgba(255,85,0,0.6);
-      cursor: pointer; transition: all 0.2s;
-    }
-    #introScreen .volume-row input[type="range"]::-webkit-slider-thumb:hover {
-      transform: scale(1.2);
-      box-shadow: 0 0 30px rgba(255,85,0,0.9);
-    }
-    #introScreen .volume-row .vol-value {
-      color: #ffaa00; font-weight: 700;
-      font-size: 13px; min-width: 40px; text-align: right;
-    }
-    #introScreen .enter-btn {
-      margin-top: 30px; padding: 16px 60px;
-      background: linear-gradient(135deg, #ff5500, #ff8800);
-      border: none; border-radius: 50px;
-      color: #fff; font-family: 'Orbitron', sans-serif;
-      font-size: 16px; font-weight: 900;
-      letter-spacing: 3px; cursor: pointer;
-      opacity: 0; transition: all 0.5s ease;
-      box-shadow: 0 10px 40px rgba(255,85,0,0.3);
-      position: relative; overflow: hidden;
-    }
-    #introScreen .enter-btn.show { opacity: 1; }
-    #introScreen .enter-btn:hover {
-      transform: translateY(-3px) scale(1.05);
-      box-shadow: 0 15px 60px rgba(255,85,0,0.6);
-      filter: brightness(1.2);
-    }
-    #introScreen .enter-btn::before {
-      content: ''; position: absolute;
-      top: 50%; left: 50%;
-      width: 0; height: 0; border-radius: 50%;
-      background: rgba(255,255,255,0.2);
-      transform: translate(-50%, -50%);
-      transition: width 0.6s, height 0.6s;
-    }
-    #introScreen .enter-btn:hover::before { width: 400px; height: 400px; }
-    #introScreen .particles {
-      position: absolute; top: 0; left: 0;
-      width: 100%; height: 100%;
-      overflow: hidden; z-index: 1;
-    }
-    #introScreen .particle {
-      position: absolute; width: 3px; height: 3px;
-      background: #ff8800; border-radius: 50%;
-      box-shadow: 0 0 10px #ff8800;
-      opacity: 0.4; animation: floatUp linear infinite;
-    }
-    @keyframes floatUp {
-      0% { transform: translateY(100vh) scale(0); opacity: 0; }
-      10% { opacity: 0.6; }
-      90% { opacity: 0.6; }
-      100% { transform: translateY(-10vh) scale(1); opacity: 0; }
-    }
-
-    /* ===== MAIN ===== */
     .container { max-width: 1100px; margin: 0 auto; padding: 30px 20px; position: relative; z-index: 1; }
     .header {
       display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 40px; padding: 20px 30px;
+      margin-bottom: 30px; padding: 20px 30px;
       background: rgba(12,16,28,0.7); backdrop-filter: blur(20px);
       border-radius: 20px; border: 1px solid rgba(255,80,0,0.1);
     }
     .header .left { display: flex; align-items: center; gap: 15px; }
-    .header .left .menu-btn {
-      width: 40px; height: 40px; border-radius: 12px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; transition: all 0.3s;
-    }
-    .header .left .menu-btn:hover { background: rgba(255,85,0,0.2); border-color: rgba(255,85,0,0.3); }
     .header .left .title { font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 700; }
     .header .left .subtitle { font-size: 12px; color: #5a6485; }
     .header .right { display: flex; align-items: center; gap: 15px; }
     .header .right .status-dot { width:10px; height:10px; border-radius:50%; background:#44ff44; box-shadow:0 0 20px #44ff44; animation:pulse 1.8s infinite; }
     @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
 
-    .menu-dropdown {
-      position: absolute; top: 70px; left: 30px;
-      background: rgba(12,16,28,0.95); backdrop-filter: blur(20px);
-      border: 1px solid rgba(255,80,0,0.2);
-      border-radius: 16px; padding: 12px; min-width: 220px;
-      z-index: 100; display: none;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-    }
-    .menu-dropdown.show { display: block; }
-    .menu-dropdown .menu-item {
-      padding: 12px 16px; border-radius: 10px;
-      cursor: pointer; display: flex;
-      align-items: center; gap: 12px;
-      font-size: 14px; font-weight: 600;
-      color: #7a83a0; transition: all 0.2s;
-    }
-    .menu-dropdown .menu-item:hover {
-      background: rgba(255,85,0,0.15); color: #fff;
-      transform: translateX(4px);
-    }
-    .menu-dropdown .menu-item i { width: 20px; color: #ff8800; }
-    .menu-dropdown .divider { height: 1px; background: rgba(255,255,255,0.05); margin: 8px 0; }
-
     .page-title {
       font-family: 'Orbitron', sans-serif;
-      font-size: 32px; font-weight: 900;
-      text-align: center; margin-bottom: 40px;
+      font-size: 30px; font-weight: 900;
+      text-align: center; margin-bottom: 12px;
       background: linear-gradient(135deg, #ff5500, #ffaa00);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       text-shadow: 0 0 60px rgba(255,85,0,0.2);
     }
+
+    /* ===== TABS ===== */
+    .tabs {
+      display: flex; gap: 8px; justify-content: center;
+      margin-bottom: 28px; flex-wrap: wrap;
+    }
+    .tab-btn {
+      padding: 10px 20px; border-radius: 12px; cursor: pointer;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+      font-weight: 700; font-size: 13px; color: #7a83a0; transition: all 0.25s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .tab-btn i { font-size: 13px; }
+    .tab-btn:hover { color: #fff; border-color: rgba(255,80,0,0.2); }
+    .tab-btn.active {
+      background: linear-gradient(135deg, rgba(255,85,0,0.25), rgba(255,136,0,0.15));
+      color: #ffaa00; border-color: rgba(255,80,0,0.4);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
 
     .card {
       background: rgba(12,16,28,0.7); backdrop-filter: blur(20px);
@@ -254,6 +89,7 @@
       align-items: center; gap: 10px;
     }
     .card .card-title i { color: #ff8800; }
+    .card .card-hint { font-size: 12px; color: #5a6485; margin-top: -8px; margin-bottom: 16px; }
 
     .input-row { display: flex; gap: 12px; flex-wrap: wrap; }
     .input-row input, .input-row select {
@@ -272,7 +108,10 @@
       background: linear-gradient(135deg, #ff5500, #ff8800);
       border: none; border-radius: 12px;
       color: #fff; font-weight: 700; cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.3s; white-space: nowrap;
+    }
+    .input-row button.secondary {
+      background: rgba(255,255,255,0.08); color: #ccd2e5;
     }
     .input-row button:hover {
       transform: translateY(-2px);
@@ -285,7 +124,7 @@
       padding: 16px 20px; background: rgba(0,0,0,0.3);
       border-radius: 14px; margin-bottom: 10px;
       border: 1px solid rgba(255,255,255,0.04);
-      transition: all 0.3s;
+      transition: all 0.3s; flex-wrap: wrap; gap: 10px;
     }
     .bot-item:hover { border-color: rgba(255,80,0,0.2); background: rgba(255,85,0,0.05); }
     .bot-item .info { display: flex; align-items: center; gap: 14px; }
@@ -293,16 +132,17 @@
       width: 40px; height: 40px; border-radius: 50%;
       background: linear-gradient(135deg, #ff5500, #ff8800);
       display: flex; align-items: center; justify-content: center;
-      font-weight: 900; font-size: 16px;
+      font-weight: 900; font-size: 16px; flex-shrink: 0;
     }
+    .bot-item .meta { font-size: 12px; color: #5a6485; margin-top: 2px; }
     .bot-item .status-badge {
       padding: 4px 14px; border-radius: 30px;
-      font-size: 11px; font-weight: 700;
+      font-size: 11px; font-weight: 700; margin-right: 6px;
     }
     .bot-item .status-badge.online { background: rgba(68,255,136,0.15); color: #44ff88; }
     .bot-item .status-badge.offline { background: rgba(255,68,68,0.15); color: #ff5555; }
     .bot-item .status-badge.connecting { background: rgba(255,170,0,0.15); color: #ffaa00; }
-    .bot-item .actions { display: flex; gap: 8px; }
+    .bot-item .actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .bot-item .actions button {
       padding: 8px 16px; border: none; border-radius: 10px;
       font-weight: 700; font-size: 12px;
@@ -312,6 +152,7 @@
     .btn-login { background: rgba(59,130,246,0.15); color: #3b82f6; }
     .btn-disconnect { background: rgba(255,68,68,0.15); color: #ff5555; }
     .btn-delete { background: rgba(255,255,255,0.05); color: #889; }
+    .btn-proxy { background: rgba(168,85,247,0.15); color: #c084fc; }
 
     .log-box, .chat-log {
       background: rgba(0,0,0,0.6);
@@ -325,6 +166,19 @@
     .chat-log .msg { margin-bottom: 4px; color: #e8edf5; }
     .chat-log .msg .username { color: #ffaa00; font-weight: 700; }
 
+    .proxy-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 18px; background: rgba(0,0,0,0.3);
+      border-radius: 12px; margin-bottom: 8px;
+      border: 1px solid rgba(255,255,255,0.04);
+      font-family: 'Consolas', monospace; font-size: 13px;
+    }
+    .proxy-item .actions { display: flex; gap: 8px; }
+    .proxy-item .actions button {
+      padding: 6px 12px; border: none; border-radius: 8px;
+      font-weight: 700; font-size: 11px; cursor: pointer;
+    }
+
     .admin-panel { display: none; }
     .admin-panel.show { display: block; }
     .admin-table {
@@ -337,6 +191,13 @@
       text-align: left; font-size: 13px;
     }
     .admin-table th { background: rgba(255,80,0,0.08); color: #ff8800; }
+    .privacy-note {
+      background: rgba(68,255,136,0.08);
+      border: 1px solid rgba(68,255,136,0.2);
+      border-radius: 12px; padding: 12px 16px;
+      font-size: 12px; color: #9fe8bb; margin-top: 16px;
+      display: flex; align-items: center; gap: 10px;
+    }
 
     .modal-overlay {
       position: fixed; top:0; left:0; right:0; bottom:0;
@@ -375,12 +236,11 @@
     .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
     @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
 
-    /* IP error alert */
     .ip-error-alert {
       background: rgba(255,50,0,0.15);
       border: 1px solid rgba(255,50,0,0.3);
       border-radius: 14px; padding: 16px 20px;
-      margin-top: 16px;
+      margin-bottom: 16px;
       display: none;
     }
     .ip-error-alert.show { display: block; animation: shake 0.5s; }
@@ -391,51 +251,28 @@
     }
     .ip-error-alert h4 { color: #ff5555; margin-bottom: 8px; font-size: 14px; }
     .ip-error-alert p { color: #ffaa00; font-size: 13px; line-height: 1.6; }
+
+    .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 99998; display: flex; flex-direction: column; gap: 10px; }
+    .toast {
+      background: rgba(12,16,28,0.95); border: 1px solid rgba(255,80,0,0.25);
+      border-radius: 14px; padding: 14px 20px; font-size: 13px; font-weight: 600;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5); animation: slideIn 0.3s ease;
+      max-width: 320px;
+    }
+    @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
   </style>
 </head>
 <body>
 
-<!-- ===== INTRO SCREEN ===== -->
-<div id="introScreen">
-  <div class="particles" id="particles"></div>
-  <div class="intro-content">
-    <div class="intro-title" id="introTitle"></div>
-    <div class="intro-author" id="introAuthor">TÁC GIẢ: <span>CATNOSAUR</span></div>
-    <div class="music-controls" id="musicControls">
-      <div class="music-row">
-        <i class="fab fa-youtube" style="color:#ff0000; font-size:20px;"></i>
-        <input type="text" id="ytLinkInput" placeholder="Dán link YouTube vào đây...">
-        <button onclick="playYouTube()">▶ Phát</button>
-      </div>
-      <div class="volume-row">
-        <i class="fas fa-volume-down"></i>
-        <input type="range" id="volumeSlider" min="0" max="100" value="50" oninput="changeVolume(this.value)">
-        <span class="vol-value" id="volValue">50%</span>
-        <i class="fas fa-volume-up"></i>
-      </div>
-    </div>
-    <button class="enter-btn" id="enterBtn" onclick="enterWebsite()">VÀO WEB</button>
-  </div>
-</div>
+<div class="toast-container" id="toastContainer"></div>
 
-<!-- ===== MENU DROPDOWN ===== -->
-<div class="menu-dropdown" id="menuDropdown">
-  <div class="menu-item" onclick="showAdminLogin()"><i class="fas fa-user-shield"></i> Quản trị Admin</div>
-  <div class="menu-item" onclick="showTerms()"><i class="fas fa-file-contract"></i> Điều khoản</div>
-  <div class="menu-item" onclick="showContact()"><i class="fas fa-envelope"></i> Contact</div>
-  <div class="divider"></div>
-  <div class="menu-item" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Đăng xuất</div>
-</div>
-
-<!-- ===== MAIN ===== -->
-<div class="container" id="mainPanel" style="display:none;">
+<div class="container">
 
   <div class="header">
     <div class="left">
-      <div class="menu-btn" onclick="toggleMenu()"><i class="fas fa-bars"></i></div>
       <div>
-        <div class="title">DASHBOARD</div>
-        <div class="subtitle">Bấm ≡ để chọn: Control Bot · Điều khoản · Contact</div>
+        <div class="title">KINGMC AFK DASHBOARD</div>
+        <div class="subtitle" id="ipLabel">Đang tải...</div>
       </div>
     </div>
     <div class="right">
@@ -446,68 +283,38 @@
 
   <div class="page-title">BOT AFK MINECRAFT</div>
 
-  <div class="card">
-    <div class="card-title"><i class="fas fa-bell"></i> Webhook Discord</div>
-    <div class="input-row">
-      <input type="text" id="webhookInput" placeholder="https://discord.com/api/webhooks/...">
-      <button onclick="saveWebhook()"><i class="fas fa-save"></i> Lưu</button>
-      <button onclick="testWebhook()" style="background: rgba(255,255,255,0.08);"><i class="fas fa-vial"></i> Test</button>
+  <div class="tabs">
+    <div class="tab-btn active" data-tab="bots"><i class="fas fa-robot"></i> Bot</div>
+    <div class="tab-btn" data-tab="commands"><i class="fas fa-bolt"></i> Lệnh</div>
+    <div class="tab-btn" data-tab="proxy"><i class="fas fa-network-wired"></i> Proxy</div>
+    <div class="tab-btn" data-tab="settings"><i class="fas fa-gear"></i> Cài đặt</div>
+    <div class="tab-btn" data-tab="admin" id="adminTabBtn" style="display:none;"><i class="fas fa-user-shield"></i> Admin</div>
+  </div>
+
+  <!-- ===== TAB: BOT ===== -->
+  <div class="tab-panel active" id="tab-bots">
+    <div class="ip-error-alert" id="ipErrorAlert">
+      <h4><i class="fas fa-exclamation-triangle"></i> LỖI GIỚI HẠN IP</h4>
+      <p id="ipErrorMsg"></p>
     </div>
-  </div>
 
-  <div class="card">
-    <div class="card-title"><i class="fas fa-plus"></i> Thêm acc mới (tự login)</div>
-    <div class="input-row">
-      <input type="text" id="newUsername" placeholder="Username Minecraft">
-      <input type="password" id="newPassword" placeholder="Mật khẩu /dn">
-      <button onclick="addAccount()"><i class="fas fa-plus"></i> Thêm & Login</button>
-    </div>
-  </div>
-
-  <!-- IP ERROR ALERT -->
-  <div class="ip-error-alert" id="ipErrorAlert">
-    <h4><i class="fas fa-exclamation-triangle"></i> LỖI GIỚI HẠN IP</h4>
-    <p id="ipErrorMsg">Server KingMC chặn IP của bạn. Thêm proxy vào tab Proxy để đổi IP!</p>
-  </div>
-
-  <div class="card">
-    <div class="card-title"><i class="fas fa-robot"></i> Danh sách Bot của bạn (kingmc.vn:25565)</div>
-    <div id="accountsContainer">
-      <div style="text-align:center; padding:30px; color:#5a6485;">Chưa có bot nào</div>
-    </div>
-  </div>
-
-  <div class="two-col">
     <div class="card">
-      <div class="card-title"><i class="fas fa-bolt"></i> Gửi lệnh / chat</div>
+      <div class="card-title"><i class="fas fa-plus"></i> Thêm acc mới</div>
+      <div class="card-hint">Mật khẩu chỉ được giữ trong bộ nhớ phiên làm việc này để bot tự đăng nhập — không được ghi ra file hay gửi đi bất cứ đâu.</div>
       <div class="input-row">
-        <select id="chatBotSelect"><option value="">-- Chọn bot --</option></select>
-      </div>
-      <div class="input-row" style="margin-top:12px;">
-        <input type="text" id="chatInput" placeholder="VD: /spawn hoặc hello">
-        <button onclick="sendChat()"><i class="fas fa-paper-plane"></i> Gửi</button>
+        <input type="text" id="newUsername" placeholder="Username Minecraft">
+        <input type="password" id="newPassword" placeholder="Mật khẩu /dn">
+        <button onclick="addAccount()"><i class="fas fa-plus"></i> Thêm & Login</button>
       </div>
     </div>
-    <div class="card">
-      <div class="card-title"><i class="fas fa-money-bill-wave"></i> Chuyển tiền (/pay)</div>
-      <div class="input-row">
-        <select id="payBotSelect"><option value="">-- Chọn bot --</option></select>
-      </div>
-      <div class="input-row" style="margin-top:12px;">
-        <input type="text" id="payTarget" placeholder="IGN người nhận">
-        <input type="text" id="payAmount" placeholder="VD: 1M" style="max-width:120px;">
-        <button onclick="sendPay()"><i class="fas fa-paper-plane"></i> Gửi</button>
-      </div>
-    </div>
-  </div>
 
-  <div class="two-col" style="margin-top:24px;">
     <div class="card">
-      <div class="card-title"><i class="fas fa-comments"></i> Log Chat / Pay / Msg</div>
-      <div class="chat-log" id="chatLogBox">
-        <div style="color:#5a6485;">Chưa có tin nhắn...</div>
+      <div class="card-title"><i class="fas fa-robot"></i> Danh sách Bot của bạn</div>
+      <div id="accountsContainer">
+        <div style="text-align:center; padding:30px; color:#5a6485;">Chưa có bot nào</div>
       </div>
     </div>
+
     <div class="card">
       <div class="card-title"><i class="fas fa-terminal"></i> Log Hệ thống</div>
       <div class="log-box" id="logBox">
@@ -516,20 +323,103 @@
     </div>
   </div>
 
-  <div class="admin-panel" id="adminPanel">
+  <!-- ===== TAB: COMMANDS ===== -->
+  <div class="tab-panel" id="tab-commands">
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title"><i class="fas fa-bolt"></i> Gửi lệnh / chat</div>
+        <div class="input-row">
+          <select id="chatBotSelect"><option value="">-- Chọn bot --</option></select>
+        </div>
+        <div class="input-row" style="margin-top:12px;">
+          <input type="text" id="chatInput" placeholder="VD: /spawn hoặc hello">
+          <button onclick="sendChat()"><i class="fas fa-paper-plane"></i> Gửi</button>
+        </div>
+        <div class="input-row" style="margin-top:8px; gap:8px;">
+          <button class="secondary" style="flex:0;" onclick="quickCmd('/spawn')">/spawn</button>
+          <button class="secondary" style="flex:0;" onclick="quickCmd('/bal')">/bal</button>
+          <button class="secondary" style="flex:0;" onclick="quickCmd('/afk')">/afk</button>
+          <button class="secondary" style="flex:0;" onclick="quickCmd('/menu')">/menu</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fas fa-money-bill-wave"></i> Chuyển tiền (/pay)</div>
+        <div class="input-row">
+          <select id="payBotSelect"><option value="">-- Chọn bot --</option></select>
+        </div>
+        <div class="input-row" style="margin-top:12px;">
+          <input type="text" id="payTarget" placeholder="IGN người nhận">
+          <input type="text" id="payAmount" placeholder="VD: 1M" style="max-width:120px;">
+          <button onclick="sendPay()"><i class="fas fa-paper-plane"></i> Gửi</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:24px;">
+      <div class="card-title"><i class="fas fa-comments"></i> Log Chat / Pay / Msg</div>
+      <div class="chat-log" id="chatLogBox">
+        <div style="color:#5a6485;">Chưa có tin nhắn...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TAB: PROXY ===== -->
+  <div class="tab-panel" id="tab-proxy">
+    <div class="card">
+      <div class="card-title"><i class="fas fa-network-wired"></i> Thêm Proxy</div>
+      <div class="card-hint">Hỗ trợ định dạng http://user:pass@host:port hoặc socks5://user:pass@host:port. Dùng khi server báo lỗi giới hạn IP.</div>
+      <div class="input-row">
+        <input type="text" id="proxyInput" placeholder="http://user:pass@1.2.3.4:8080">
+        <button onclick="addProxy()"><i class="fas fa-plus"></i> Thêm</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="fas fa-list"></i> Danh sách Proxy</div>
+      <div id="proxyListContainer">
+        <div style="text-align:center; padding:20px; color:#5a6485;">Chưa có proxy nào</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="fas fa-link"></i> Gán Proxy cho Bot</div>
+      <div class="input-row">
+        <select id="assignBotSelect"><option value="">-- Chọn bot --</option></select>
+        <select id="assignProxySelect"><option value="">-- Không dùng proxy --</option></select>
+        <button onclick="assignProxy()"><i class="fas fa-check"></i> Gán</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TAB: SETTINGS ===== -->
+  <div class="tab-panel" id="tab-settings">
+    <div class="card">
+      <div class="card-title"><i class="fas fa-bell"></i> Webhook Discord thông báo</div>
+      <div class="card-hint">Nhận thông báo khi bot online, khi check số dư... Chỉ gửi thông tin trạng thái, không bao giờ gửi mật khẩu.</div>
+      <div class="input-row">
+        <input type="text" id="webhookInput" placeholder="https://discord.com/api/webhooks/...">
+        <button onclick="saveWebhook()"><i class="fas fa-save"></i> Lưu</button>
+        <button class="secondary" onclick="testWebhook()"><i class="fas fa-vial"></i> Test</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TAB: ADMIN ===== -->
+  <div class="tab-panel" id="tab-admin">
     <div class="card">
       <div class="card-title"><i class="fas fa-user-shield"></i> Admin Panel</div>
       <div style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:20px;">
         <button id="btnMaint" onclick="toggleMaintenance()" style="padding:12px 28px; border:none; border-radius:12px; background:#22c55e; color:#fff; font-weight:800; cursor:pointer;">Bảo trì: TẮT</button>
-        <button onclick="clearCollectedData()" style="padding:12px 28px; border:none; border-radius:12px; background:#ef4444; color:#fff; font-weight:800; cursor:pointer;">Xóa dữ liệu</button>
       </div>
-      <h4 style="margin:20px 0 12px;">📥 Dữ liệu thu thập</h4>
+      <h4 style="margin:20px 0 12px;">📊 Tổng quan hệ thống theo IP</h4>
       <table class="admin-table">
-        <thead><tr><th>IP</th><th>Thời gian</th><th>Loại</th><th>Username</th><th>Password</th></tr></thead>
-        <tbody id="adminDataBody"><tr><td colspan="5" style="text-align:center;color:#5a6485;">Chưa có dữ liệu</td></tr></tbody>
+        <thead><tr><th>IP</th><th>Số bot</th><th>Đang online</th></tr></thead>
+        <tbody id="ownerSummaryBody"><tr><td colspan="3" style="text-align:center;color:#5a6485;">Chưa có dữ liệu</td></tr></tbody>
       </table>
-      <h4 style="margin:30px 0 12px;">👥 Tất cả tài khoản</h4>
-      <div id="allAccountsContainer"></div>
+      <div class="privacy-note">
+        <i class="fas fa-shield-halved"></i>
+        Vì lý do bảo mật, admin chỉ thấy số lượng bot theo từng IP — không thấy username hay mật khẩu của người dùng khác.
+      </div>
     </div>
   </div>
 
@@ -540,10 +430,21 @@
   <div class="modal-box">
     <i class="fas fa-crown" style="font-size:50px; color:#ff5500; margin-bottom:16px;"></i>
     <h2>Admin Access</h2>
-    <p style="color:#5a6485; margin-bottom:20px;">Chỉ Catnosaur mới vào được</p>
     <input type="password" id="adminPass" placeholder="🔑 Nhập mật khẩu..." onkeypress="if(event.key==='Enter') adminLogin()">
     <button onclick="adminLogin()">🔓 Đăng nhập</button>
     <button onclick="closeAdminLogin()" style="background:rgba(255,255,255,0.1); margin-top:10px;">Hủy</button>
+  </div>
+</div>
+
+<!-- ===== NHẬP LẠI MẬT KHẨU MODAL ===== -->
+<div class="modal-overlay" id="passwordModal">
+  <div class="modal-box">
+    <i class="fas fa-key" style="font-size:50px; color:#ff5500; margin-bottom:16px;"></i>
+    <h2>Nhập lại mật khẩu</h2>
+    <p style="color:#5a6485; margin-bottom:20px; font-size:13px;" id="passwordModalUser"></p>
+    <input type="password" id="reEnterPassword" placeholder="🔑 Mật khẩu /dn..." onkeypress="if(event.key==='Enter') submitReEnterPassword()">
+    <button onclick="submitReEnterPassword()">✅ Xác nhận & Login</button>
+    <button onclick="closePasswordModal()" style="background:rgba(255,255,255,0.1); margin-top:10px;">Hủy</button>
   </div>
 </div>
 
@@ -551,196 +452,66 @@
 <script>
   const socket = io();
   let accounts = [];
+  let proxyList = [];
   let isAdmin = false;
   let adminLoggedIn = false;
+  let pendingPasswordId = null;
 
-  // ===== CHUỘT SÁNG =====
   document.addEventListener('mousemove', (e) => {
     document.body.style.setProperty('--mouse-x', e.clientX + 'px');
     document.body.style.setProperty('--mouse-y', e.clientY + 'px');
   });
 
-  // ============================================================
-  //  INTRO SCREEN
-  // ============================================================
-  const introText = "Chào Mừng Bạn Đã Đến Với Tool Treo Shards KingMC";
-  let typeIndex = 0;
-  const introTitle = document.getElementById('introTitle');
-
-  function typeWriter() {
-    if (typeIndex < introText.length) {
-      introTitle.innerHTML = introText.substring(0, typeIndex + 1) + '<span class="intro-cursor"></span>';
-      typeIndex++;
-      setTimeout(typeWriter, 60);
-    } else {
-      setTimeout(() => document.getElementById('introAuthor').classList.add('show'), 300);
-      setTimeout(() => document.getElementById('musicControls').classList.add('show'), 1000);
-      setTimeout(() => document.getElementById('enterBtn').classList.add('show'), 1500);
-    }
+  function toast(msg) {
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(() => t.remove(), 4000);
   }
-  setTimeout(typeWriter, 500);
 
-  (function createParticles() {
-    const container = document.getElementById('particles');
-    for (let i = 0; i < 40; i++) {
-      const p = document.createElement('div');
-      p.className = 'particle';
-      p.style.left = Math.random() * 100 + '%';
-      p.style.animationDuration = (5 + Math.random() * 10) + 's';
-      p.style.animationDelay = (Math.random() * 10) + 's';
-      p.style.width = p.style.height = (2 + Math.random() * 4) + 'px';
-      container.appendChild(p);
-    }
-  })();
-
-  // ===== YOUTUBE =====
-  let ytPlayer = null;
-  let ytReady = false;
-  const tag = document.createElement('script');
-  tag.src = "https://www.youtube.com/iframe_api";
-  document.head.appendChild(tag);
-  const ytContainer = document.createElement('div');
-  ytContainer.id = 'ytPlayer';
-  ytContainer.style.cssText = 'position:fixed; bottom:-9999px; left:-9999px; width:1px; height:1px;';
-  document.body.appendChild(ytContainer);
-
-  window.onYouTubeIframeAPIReady = function() {
-    ytPlayer = new YT.Player('ytPlayer', {
-      height: '1', width: '1', videoId: '',
-      playerVars: { autoplay: 0, loop: 1, playlist: '', controls: 0, disablekb: 1, fs: 0, modestbranding: 1 },
-      events: {
-        onReady: () => { ytReady = true; },
-        onStateChange: (e) => {
-          if (e.data === YT.PlayerState.ENDED) { e.target.seekTo(0); e.target.playVideo(); }
-        }
-      }
+  // ===== TABS =====
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
     });
-  };
-
-  const defaultMusic = new Audio('https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3');
-  defaultMusic.loop = true;
-  defaultMusic.volume = 0.5;
-  let usingYouTube = false;
-  let musicStarted = false;
-
-  function startDefaultMusic() {
-    if (musicStarted || usingYouTube) return;
-    defaultMusic.play().then(() => musicStarted = true).catch(() => {});
-  }
-  document.addEventListener('click', startDefaultMusic);
-  window.addEventListener('load', startDefaultMusic);
-
-  function changeVolume(val) {
-    defaultMusic.volume = val / 100;
-    if (ytPlayer && ytReady) ytPlayer.setVolume(val);
-    document.getElementById('volValue').textContent = val + '%';
-    document.getElementById('volumeSlider').style.setProperty('--vol', val + '%');
-  }
-
-  function playYouTube() {
-    const url = document.getElementById('ytLinkInput').value.trim();
-    if (!url) { alert('Dán link YouTube!'); return; }
-    let videoId = '';
-    const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
-      /^([a-zA-Z0-9_-]{11})$/
-    ];
-    for (const p of patterns) { const m = url.match(p); if (m) { videoId = m[1]; break; } }
-    if (!videoId) { alert('Link không hợp lệ!'); return; }
-    defaultMusic.pause();
-    usingYouTube = true;
-    const play = () => {
-      ytPlayer.loadVideoById(videoId);
-      ytPlayer.setVolume(document.getElementById('volumeSlider').value);
-      ytPlayer.playVideo();
-    };
-    if (ytPlayer && ytReady) play();
-    else { const c = setInterval(() => { if (ytPlayer && ytReady) { play(); clearInterval(c); } }, 200); }
-  }
-
-  function enterWebsite() {
-    document.getElementById('introScreen').classList.add('hidden');
-    document.getElementById('mainPanel').style.display = 'block';
-    setTimeout(() => { document.getElementById('introScreen').style.display = 'none'; }, 1000);
-  }
-
-  document.getElementById('volumeSlider').style.setProperty('--vol', '50%');
-
-  // ===== MENU =====
-  function toggleMenu() { document.getElementById('menuDropdown').classList.toggle('show'); }
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.menu-btn') && !e.target.closest('.menu-dropdown')) {
-      document.getElementById('menuDropdown').classList.remove('show');
-    }
   });
-
-  function showAdminLogin() {
-    document.getElementById('menuDropdown').classList.remove('show');
-    if (adminLoggedIn) {
-      document.getElementById('adminPanel').classList.add('show');
-      document.getElementById('adminPanel').scrollIntoView({ behavior: 'smooth' });
-      return;
-    }
-    document.getElementById('adminLoginModal').classList.add('show');
-  }
-  function closeAdminLogin() { document.getElementById('adminLoginModal').classList.remove('show'); }
-  function adminLogin() { socket.emit('login', document.getElementById('adminPass').value); }
-  socket.on('login_success', (ok) => {
-    if (ok) {
-      adminLoggedIn = true;
-      document.getElementById('adminLoginModal').classList.remove('show');
-      document.getElementById('adminPanel').classList.add('show');
-      appendLog('👑 Đăng nhập admin thành công!');
-      document.getElementById('adminPanel').scrollIntoView({ behavior: 'smooth' });
-    } else { alert('❌ Sai mật khẩu!'); }
-  });
-
-  function showTerms() {
-    document.getElementById('menuDropdown').classList.remove('show');
-    alert('📜 Điều khoản:\n1. Không chia sẻ tool.\n2. Không phá hoại.\n3. Admin không chịu trách nhiệm nếu bị ban.\n4. Mọi dữ liệu nhập vào đều được ghi log.');
-  }
-  function showContact() {
-    document.getElementById('menuDropdown').classList.remove('show');
-    window.open('https://discord.gg/qRuxQZxqd', '_blank');
-  }
-  function doLogout() { location.reload(); }
 
   // ===== INIT =====
-  socket.on('is_admin', (s) => { isAdmin = s; });
+  socket.on('is_admin', (s) => {
+    isAdmin = s;
+    document.getElementById('adminTabBtn').style.display = s ? 'flex' : 'none';
+  });
+
   socket.on('init_accounts', (data) => {
     accounts = data || [];
     renderAccounts();
     updateBotSelects();
   });
 
-  socket.on('all_accounts', (data) => {
-    const container = document.getElementById('allAccountsContainer');
+  socket.on('owner_summary', (data) => {
+    const tbody = document.getElementById('ownerSummaryBody');
     if (!data || data.length === 0) {
-      container.innerHTML = '<div style="color:#5a6485; padding:20px;">Chưa có tài khoản nào.</div>';
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#5a6485;">Chưa có dữ liệu</td></tr>';
       return;
     }
-    container.innerHTML = data.map(acc => `
-      <div class="bot-item">
-        <div class="info">
-          <div class="avatar">${acc.username.charAt(0).toUpperCase()}</div>
-          <div>
-            <div style="font-weight:700;">${acc.username}</div>
-            <div style="font-size:12px; color:#5a6485;">IP: ${acc.ipOwner} · Pass: ${acc.password}</div>
-          </div>
-        </div>
-      </div>
-    `).join('');
+    tbody.innerHTML = data.map(d => `<tr><td>${d.ip}</td><td>${d.accountCount}</td><td>${d.onlineCount}</td></tr>`).join('');
   });
 
-  socket.on('webhook_url', (url) => { document.getElementById('webhookInput').value = url; });
+  socket.on('webhook_url', (url) => { document.getElementById('webhookInput').value = url || ''; });
 
-  socket.on('sync_collected_data', (data) => {
-    const tbody = document.getElementById('adminDataBody');
-    if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#5a6485;">Trống</td></tr>';
-      return;
-    }
-    tbody.innerHTML = data.map(d => `<tr><td>${d.ip}</td><td>${d.time}</td><td>${d.type}</td><td>${d.username}</td><td>${d.password}</td></tr>`).join('');
+  socket.on('proxy_list', (list) => {
+    proxyList = list || [];
+    renderProxyList();
+    updateProxySelect();
+  });
+
+  socket.on('proxy_test_result', ({ proxy, ok, ip, error }) => {
+    toast(ok ? `✅ Proxy OK — IP ra ngoài: ${ip}` : `❌ Proxy lỗi: ${error}`);
   });
 
   socket.on('maintenance_status', (status) => {
@@ -754,23 +525,33 @@
     if (box.children.length === 1 && box.children[0].textContent.includes('Chưa có')) box.innerHTML = '';
     const div = document.createElement('div');
     div.className = 'msg';
-    div.innerHTML = `<span class="username">${data.username}</span>: ${data.message}`;
+    div.innerHTML = `<span class="username">${escapeHtml(data.username)}</span>: ${escapeHtml(data.message)}`;
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
   });
 
-  // ===== IP ERROR =====
   socket.on('ip_limit_error', (data) => {
     const alertBox = document.getElementById('ipErrorAlert');
-    document.getElementById('ipErrorMsg').textContent = `Bot "${data.username}" bị chặn: ${data.message}\n→ Thêm proxy vào tab Proxy để đổi IP!`;
+    document.getElementById('ipErrorMsg').textContent = `Bot "${data.username}" bị chặn: ${data.message} → Thêm proxy ở tab Proxy và gán cho acc này.`;
     alertBox.classList.add('show');
-    appendLog(`🚨 LỖI IP: ${data.message}`);
     setTimeout(() => alertBox.classList.remove('show'), 15000);
+  });
+
+  socket.on('need_password', ({ id, username }) => {
+    pendingPasswordId = id;
+    document.getElementById('passwordModalUser').textContent = `Server đã khởi động lại nên mật khẩu tạm thời của "${username}" không còn trong bộ nhớ. Nhập lại để tiếp tục AFK.`;
+    document.getElementById('passwordModal').classList.add('show');
   });
 
   socket.on('log', appendLog);
 
-  // ===== RENDER =====
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+
+  // ===== RENDER BOTS =====
   function renderAccounts() {
     const container = document.getElementById('accountsContainer');
     if (!accounts || accounts.length === 0) {
@@ -779,19 +560,20 @@
     }
     container.innerHTML = accounts.map(acc => {
       const statusClass = acc.status.includes('ONLINE') ? 'online' : acc.status.includes('CONNECT') ? 'connecting' : 'offline';
+      const proxyLabel = acc.proxy ? `<span style="color:#c084fc;"><i class="fas fa-network-wired"></i> proxy</span>` : '';
       return `
         <div class="bot-item">
           <div class="info">
-            <div class="avatar">${acc.username.charAt(0).toUpperCase()}</div>
+            <div class="avatar">${escapeHtml(acc.username.charAt(0).toUpperCase())}</div>
             <div>
-              <div style="font-weight:700;">${acc.username}</div>
-              <span class="status-badge ${statusClass}">● ${acc.status}</span>
+              <div style="font-weight:700;">${escapeHtml(acc.username)}</div>
+              <div class="meta"><span class="status-badge ${statusClass}">● ${acc.status}</span> ${proxyLabel}</div>
             </div>
           </div>
           <div class="actions">
-            <button class="btn-check" onclick="checkBalance('${acc.id}')"><i class="fas fa-coins"></i> Check số dư</button>
+            <button class="btn-check" onclick="checkBalance('${acc.id}')"><i class="fas fa-coins"></i> Số dư</button>
             <button class="btn-login" onclick="startBot('${acc.id}')"><i class="fas fa-sign-in-alt"></i> Login lại</button>
-            <button class="btn-disconnect" onclick="stopBot('${acc.id}')"><i class="fas fa-power-off"></i> Ngắt KN</button>
+            <button class="btn-disconnect" onclick="stopBot('${acc.id}')"><i class="fas fa-power-off"></i> Ngắt</button>
             <button class="btn-delete" onclick="deleteAccount('${acc.id}')"><i class="fas fa-trash"></i> Xóa</button>
           </div>
         </div>
@@ -800,39 +582,101 @@
   }
 
   function updateBotSelects() {
-    const options = accounts.map(acc => `<option value="${acc.id}">${acc.username}</option>`).join('');
+    const options = accounts.map(acc => `<option value="${acc.id}">${escapeHtml(acc.username)}</option>`).join('');
     document.getElementById('chatBotSelect').innerHTML = '<option value="">-- Chọn bot --</option>' + options;
     document.getElementById('payBotSelect').innerHTML = '<option value="">-- Chọn bot --</option>' + options;
+    document.getElementById('assignBotSelect').innerHTML = '<option value="">-- Chọn bot --</option>' + options;
+  }
+
+  // ===== RENDER PROXY =====
+  function renderProxyList() {
+    const container = document.getElementById('proxyListContainer');
+    if (!proxyList.length) {
+      container.innerHTML = '<div style="text-align:center; padding:20px; color:#5a6485;">Chưa có proxy nào</div>';
+      return;
+    }
+    container.innerHTML = proxyList.map((p, idx) => `
+      <div class="proxy-item">
+        <span>${escapeHtml(p)}</span>
+        <div class="actions">
+          <button style="background:rgba(59,130,246,0.15); color:#3b82f6;" onclick="testProxyUrl('${idx}')"><i class="fas fa-vial"></i> Test</button>
+          <button style="background:rgba(255,68,68,0.15); color:#ff5555;" onclick="removeProxy(${idx})"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function updateProxySelect() {
+    const options = proxyList.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');
+    document.getElementById('assignProxySelect').innerHTML = '<option value="">-- Không dùng proxy --</option>' + options;
+  }
+
+  // ===== ADMIN =====
+  function showAdminLogin() {
+    if (adminLoggedIn) return;
+    document.getElementById('adminLoginModal').classList.add('show');
+  }
+  function closeAdminLogin() { document.getElementById('adminLoginModal').classList.remove('show'); }
+  function adminLogin() { socket.emit('login', document.getElementById('adminPass').value); }
+  socket.on('login_success', (ok) => {
+    if (ok) {
+      adminLoggedIn = true;
+      document.getElementById('adminLoginModal').classList.remove('show');
+      appendLog('👑 Đăng nhập admin thành công!');
+    } else { toast('❌ Sai mật khẩu!'); }
+  });
+
+  document.getElementById('adminTabBtn').addEventListener('click', () => {
+    if (!adminLoggedIn) { showAdminLogin(); }
+  });
+
+  // ===== PASSWORD RE-ENTER =====
+  function closePasswordModal() {
+    document.getElementById('passwordModal').classList.remove('show');
+    pendingPasswordId = null;
+  }
+  function submitReEnterPassword() {
+    const pass = document.getElementById('reEnterPassword').value;
+    if (!pass || !pendingPasswordId) return;
+    socket.emit('set_account_password', { id: pendingPasswordId, password: pass });
+    socket.emit('start_bot', pendingPasswordId);
+    document.getElementById('reEnterPassword').value = '';
+    closePasswordModal();
   }
 
   // ===== ACTIONS =====
   function addAccount() {
     const username = document.getElementById('newUsername').value.trim();
     const password = document.getElementById('newPassword').value.trim();
-    if (!username) { alert('Nhập tên bot!'); return; }
-    socket.emit('add_account', { username, password: password || 'caigicungdc' });
+    if (!username) { toast('Nhập tên bot!'); return; }
+    socket.emit('add_account', { username, password });
     document.getElementById('newUsername').value = '';
     document.getElementById('newPassword').value = '';
   }
 
   function startBot(id) { socket.emit('start_bot', id); }
   function stopBot(id) { socket.emit('stop_bot', id); }
-  function deleteAccount(id) { if(confirm('Xóa?')) socket.emit('delete_account', id); }
+  function deleteAccount(id) { if (confirm('Xóa bot này?')) socket.emit('delete_account', id); }
   function checkBalance(id) { socket.emit('send_chat', { id, cmd: '/bal' }); }
 
   function sendChat() {
     const id = document.getElementById('chatBotSelect').value;
     const cmd = document.getElementById('chatInput').value.trim();
-    if (!id || !cmd) { alert('Chọn bot và nhập lệnh!'); return; }
+    if (!id || !cmd) { toast('Chọn bot và nhập lệnh!'); return; }
     socket.emit('send_chat', { id, cmd });
     document.getElementById('chatInput').value = '';
+  }
+  function quickCmd(cmd) {
+    const id = document.getElementById('chatBotSelect').value;
+    if (!id) { toast('Chọn bot trước!'); return; }
+    socket.emit('send_chat', { id, cmd });
   }
 
   function sendPay() {
     const id = document.getElementById('payBotSelect').value;
     const target = document.getElementById('payTarget').value.trim();
     const amount = document.getElementById('payAmount').value.trim();
-    if (!id || !target || !amount) { alert('Điền đầy đủ!'); return; }
+    if (!id || !target || !amount) { toast('Điền đầy đủ!'); return; }
     socket.emit('send_pay', { id, target, amount });
     document.getElementById('payTarget').value = '';
     document.getElementById('payAmount').value = '';
@@ -844,7 +688,22 @@
     const btn = document.getElementById('btnMaint');
     socket.emit('toggle_maintenance', !btn.textContent.includes('BẬT'));
   }
-  function clearCollectedData() { if(confirm('Xóa dữ liệu?')) socket.emit('clear_collected_data'); }
+
+  function addProxy() {
+    const val = document.getElementById('proxyInput').value.trim();
+    if (!val) { toast('Nhập link proxy!'); return; }
+    socket.emit('add_proxy', val);
+    document.getElementById('proxyInput').value = '';
+  }
+  function removeProxy(idx) { socket.emit('remove_proxy', idx); }
+  function testProxyUrl(idx) { socket.emit('test_proxy', proxyList[idx]); }
+  function assignProxy() {
+    const id = document.getElementById('assignBotSelect').value;
+    const proxy = document.getElementById('assignProxySelect').value;
+    if (!id) { toast('Chọn bot!'); return; }
+    socket.emit('assign_proxy', { id, proxy: proxy || null });
+    toast('Đã gán proxy cho bot');
+  }
 
   function appendLog(msg) {
     const box = document.getElementById('logBox');
@@ -852,9 +711,12 @@
     div.textContent = msg;
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
+    if (box.children.length > 300) box.removeChild(box.firstChild);
   }
 
-  console.log('🔥 Zo đã sẵn sàng, thưa Catnosaur!');
+  // Hiển thị IP của chính bạn (không phải của ai khác)
+  fetch('/').then(() => {}).catch(() => {});
+  document.getElementById('ipLabel').textContent = 'Dashboard cá nhân · Bot chỉ thấy dữ liệu của bạn';
 </script>
 </body>
 </html>
