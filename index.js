@@ -329,7 +329,7 @@ io.on('connection', (socket) => {
     return true;
   }
 
-  // ===== ADMIN PANEL =====
+  // ===== ADMIN =====
   socket.on('admin_login', (pass) => {
     if (!isOwnerUser(username)) { socket.emit('admin_login_result', false); return; }
     if (OWNER_PASSWORD && pass === OWNER_PASSWORD) {
@@ -343,7 +343,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // 🛠️ Bảo trì + custom message + countdown
   socket.on('admin_toggle_maintenance', ({ active, message, countdownMinutes }) => {
     if (!requireAdmin()) return;
     maintenance.active = !!active;
@@ -358,7 +357,6 @@ io.on('connection', (socket) => {
     sendLogWebhook(`🛠️ **BẢO TRÌ ${maintenance.active ? 'BẬT' : 'TẮT'}**\nMessage: \`${maintenance.message}\`\nCountdown: \`${countdownMinutes || 0} phút\``);
   });
 
-  // 🔒 Lockdown
   socket.on('admin_toggle_lockdown', (active) => {
     if (!requireAdmin()) return;
     maintenance.lockdown = !!active;
@@ -367,7 +365,6 @@ io.on('connection', (socket) => {
     sendLogWebhook(`🔒 **Lockdown ${maintenance.lockdown ? 'BẬT' : 'TẮT'}**`);
   });
 
-  // 🧊 Freeze Proxy
   socket.on('admin_toggle_freeze_proxy', (active) => {
     if (!requireAdmin()) return;
     maintenance.freezeProxy = !!active;
@@ -376,7 +373,6 @@ io.on('connection', (socket) => {
     sendLogWebhook(`🧊 **Freeze Proxy ${maintenance.freezeProxy ? 'BẬT' : 'TẮT'}**`);
   });
 
-  // 👢 Kick all
   socket.on('admin_kick_all', () => {
     if (!requireAdmin()) return;
     let kicked = 0;
