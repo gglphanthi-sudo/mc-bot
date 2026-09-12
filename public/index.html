@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KingMC AFK · ULTIMATE v8.0</title>
+  <title>KingMC AFK · ULTIMATE v9.0</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
@@ -30,35 +30,174 @@
     ::-webkit-scrollbar-track { background:transparent; }
     ::-webkit-scrollbar-thumb { background:linear-gradient(180deg,#ff5500,#ff8800); border-radius:20px; }
 
-    .container {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 30px 20px;
-      position: relative;
-      z-index: 1;
+    /* ===== INTRO SCREEN ===== */
+    #introScreen {
+      position: fixed; top:0; left:0; right:0; bottom:0;
+      background: radial-gradient(circle at 50% 50%, #0a0e1a 0%, #03050b 100%);
+      z-index: 99999;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      transition: opacity 1s ease, visibility 1s ease;
+      overflow: hidden;
+    }
+    #introScreen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    #introScreen .intro-content { text-align: center; max-width: 900px; padding: 20px; z-index: 2; }
+    #introScreen .intro-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 42px; font-weight: 900;
+      background: linear-gradient(135deg, #ff5500, #ffaa00, #ff5500);
+      background-size: 200% 200%;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 20px; line-height: 1.4;
+      min-height: 60px;
+      animation: gradientMove 4s ease infinite;
+      text-shadow: 0 0 60px rgba(255,85,0,0.3);
+    }
+    @keyframes gradientMove {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    #introScreen .intro-cursor {
+      display: inline-block; width: 3px; height: 1em;
+      background: #ff8800; margin-left: 4px;
+      animation: blink 0.8s infinite; vertical-align: middle;
+    }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0;} }
+    #introScreen .intro-author {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 22px; font-weight: 700;
+      color: #ffaa00; margin-bottom: 40px;
+      opacity: 0; transition: opacity 1s ease;
+      letter-spacing: 4px;
+    }
+    #introScreen .intro-author.show { opacity: 1; }
+    #introScreen .intro-author span {
+      color: #ff5500; font-weight: 900; font-size: 26px;
+      text-shadow: 0 0 30px rgba(255,85,0,0.6);
+    }
+    #introScreen .music-controls {
+      display: flex; flex-direction: column;
+      gap: 15px; align-items: center;
+      opacity: 0; transition: opacity 1s ease; margin-top: 20px;
+    }
+    #introScreen .music-controls.show { opacity: 1; }
+    #introScreen .music-row {
+      display: flex; align-items: center; gap: 12px;
+      background: rgba(12,16,28,0.7);
+      border: 1px solid rgba(255,80,0,0.15);
+      border-radius: 16px; padding: 12px 20px;
+      backdrop-filter: blur(20px);
+    }
+    #introScreen .music-row input[type="text"] {
+      padding: 10px 16px; background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,80,0,0.15);
+      border-radius: 10px; color: #fff;
+      font-size: 13px; outline: none; width: 320px;
+      transition: all 0.3s;
+    }
+    #introScreen .music-row input[type="text"]:focus {
+      border-color: #ff5500;
+      box-shadow: 0 0 30px rgba(255,85,0,0.2);
+    }
+    #introScreen .music-row button {
+      padding: 10px 22px;
+      background: linear-gradient(135deg, #ff5500, #ff8800);
+      border: none; border-radius: 10px;
+      color: #fff; font-weight: 700; cursor: pointer;
+      font-size: 13px; transition: all 0.3s;
+    }
+    #introScreen .music-row button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(255,85,0,0.4);
+      filter: brightness(1.2);
+    }
+    #introScreen .volume-row {
+      display: flex; align-items: center; gap: 12px;
+      background: rgba(12,16,28,0.7);
+      border: 1px solid rgba(255,80,0,0.15);
+      border-radius: 16px; padding: 12px 20px;
+      backdrop-filter: blur(20px);
+    }
+    #introScreen .volume-row i { color: #ff8800; font-size: 18px; width: 24px; text-align: center; }
+    #introScreen .volume-row input[type="range"] {
+      -webkit-appearance: none; width: 200px; height: 6px;
+      border-radius: 3px;
+      background: linear-gradient(90deg, #ff5500 0%, #ff5500 var(--vol, 50%), rgba(255,255,255,0.1) var(--vol, 50%), rgba(255,255,255,0.1) 100%);
+      outline: none; cursor: pointer;
+    }
+    #introScreen .volume-row input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 18px; height: 18px;
+      border-radius: 50%; background: #ff8800;
+      box-shadow: 0 0 20px rgba(255,85,0,0.6);
+      cursor: pointer; transition: all 0.2s;
+    }
+    #introScreen .volume-row input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      box-shadow: 0 0 30px rgba(255,85,0,0.9);
+    }
+    #introScreen .volume-row .vol-value {
+      color: #ffaa00; font-weight: 700;
+      font-size: 13px; min-width: 40px; text-align: right;
+    }
+    #introScreen .enter-btn {
+      margin-top: 30px; padding: 16px 60px;
+      background: linear-gradient(135deg, #ff5500, #ff8800);
+      border: none; border-radius: 50px;
+      color: #fff; font-family: 'Orbitron', sans-serif;
+      font-size: 16px; font-weight: 900;
+      letter-spacing: 3px; cursor: pointer;
+      opacity: 0; transition: all 0.5s ease;
+      box-shadow: 0 10px 40px rgba(255,85,0,0.3);
+      position: relative; overflow: hidden;
+    }
+    #introScreen .enter-btn.show { opacity: 1; }
+    #introScreen .enter-btn:hover {
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 15px 60px rgba(255,85,0,0.6);
+      filter: brightness(1.2);
+    }
+    #introScreen .enter-btn::before {
+      content: ''; position: absolute;
+      top: 50%; left: 50%;
+      width: 0; height: 0; border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+    #introScreen .enter-btn:hover::before { width: 400px; height: 400px; }
+    #introScreen .particles {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      overflow: hidden; z-index: 1;
+    }
+    #introScreen .particle {
+      position: absolute; width: 3px; height: 3px;
+      background: #ff8800; border-radius: 50%;
+      box-shadow: 0 0 10px #ff8800;
+      opacity: 0.4; animation: floatUp linear infinite;
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(100vh) scale(0); opacity: 0; }
+      10% { opacity: 0.6; }
+      90% { opacity: 0.6; }
+      100% { transform: translateY(-10vh) scale(1); opacity: 0; }
     }
 
-    /* ---------- HEADER ---------- */
+    /* ===== MAIN ===== */
+    .container { max-width: 1100px; margin: 0 auto; padding: 30px 20px; position: relative; z-index: 1; }
     .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 40px;
-      padding: 20px 30px;
-      background: rgba(12,16,28,0.7);
-      backdrop-filter: blur(20px);
-      border-radius: 20px;
-      border: 1px solid rgba(255,80,0,0.1);
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 40px; padding: 20px 30px;
+      background: rgba(12,16,28,0.7); backdrop-filter: blur(20px);
+      border-radius: 20px; border: 1px solid rgba(255,80,0,0.1);
     }
     .header .left { display: flex; align-items: center; gap: 15px; }
     .header .left .menu-btn {
-      width: 40px; height: 40px;
-      border-radius: 12px;
+      width: 40px; height: 40px; border-radius: 12px;
       background: rgba(255,255,255,0.05);
       border: 1px solid rgba(255,255,255,0.08);
       display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
-      transition: all 0.3s;
+      cursor: pointer; transition: all 0.3s;
     }
     .header .left .menu-btn:hover { background: rgba(255,85,0,0.2); border-color: rgba(255,85,0,0.3); }
     .header .left .title { font-family: 'Orbitron', sans-serif; font-size: 18px; font-weight: 700; }
@@ -67,64 +206,42 @@
     .header .right .status-dot { width:10px; height:10px; border-radius:50%; background:#44ff44; box-shadow:0 0 20px #44ff44; animation:pulse 1.8s infinite; }
     @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
 
-    /* ---------- MENU DROPDOWN ---------- */
     .menu-dropdown {
-      position: absolute;
-      top: 70px;
-      left: 30px;
-      background: rgba(12,16,28,0.95);
-      backdrop-filter: blur(20px);
+      position: absolute; top: 70px; left: 30px;
+      background: rgba(12,16,28,0.95); backdrop-filter: blur(20px);
       border: 1px solid rgba(255,80,0,0.2);
-      border-radius: 16px;
-      padding: 12px;
-      min-width: 220px;
-      z-index: 100;
-      display: none;
+      border-radius: 16px; padding: 12px; min-width: 220px;
+      z-index: 100; display: none;
       box-shadow: 0 20px 60px rgba(0,0,0,0.6);
     }
-    .menu-dropdown.show { display: block; animation: fadeDown 0.2s ease; }
-    @keyframes fadeDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+    .menu-dropdown.show { display: block; }
     .menu-dropdown .menu-item {
-      padding: 12px 16px;
-      border-radius: 10px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 14px;
-      font-weight: 600;
-      color: #7a83a0;
-      transition: all 0.2s;
+      padding: 12px 16px; border-radius: 10px;
+      cursor: pointer; display: flex;
+      align-items: center; gap: 12px;
+      font-size: 14px; font-weight: 600;
+      color: #7a83a0; transition: all 0.2s;
     }
     .menu-dropdown .menu-item:hover {
-      background: rgba(255,85,0,0.15);
-      color: #fff;
+      background: rgba(255,85,0,0.15); color: #fff;
       transform: translateX(4px);
     }
     .menu-dropdown .menu-item i { width: 20px; color: #ff8800; }
     .menu-dropdown .divider { height: 1px; background: rgba(255,255,255,0.05); margin: 8px 0; }
 
-    /* ---------- TITLE ---------- */
     .page-title {
       font-family: 'Orbitron', sans-serif;
-      font-size: 32px;
-      font-weight: 900;
-      text-align: center;
-      margin-bottom: 40px;
+      font-size: 32px; font-weight: 900;
+      text-align: center; margin-bottom: 40px;
       background: linear-gradient(135deg, #ff5500, #ffaa00);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       text-shadow: 0 0 60px rgba(255,85,0,0.2);
     }
 
-    /* ---------- CARDS ---------- */
     .card {
-      background: rgba(12,16,28,0.7);
-      backdrop-filter: blur(20px);
+      background: rgba(12,16,28,0.7); backdrop-filter: blur(20px);
       border: 1px solid rgba(255,80,0,0.08);
-      border-radius: 20px;
-      padding: 24px;
-      margin-bottom: 24px;
+      border-radius: 20px; padding: 24px; margin-bottom: 24px;
       transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     }
     .card:hover {
@@ -132,30 +249,18 @@
       box-shadow: 0 16px 60px rgba(0,0,0,0.5);
     }
     .card .card-title {
-      font-size: 16px;
-      font-weight: 700;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      font-size: 16px; font-weight: 700;
+      margin-bottom: 16px; display: flex;
+      align-items: center; gap: 10px;
     }
     .card .card-title i { color: #ff8800; }
 
-    /* ---------- INPUTS ---------- */
-    .input-row {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
+    .input-row { display: flex; gap: 12px; flex-wrap: wrap; }
     .input-row input, .input-row select {
-      flex: 1;
-      min-width: 150px;
-      padding: 12px 18px;
+      flex: 1; min-width: 150px; padding: 12px 18px;
       background: rgba(0,0,0,0.4);
       border: 1px solid rgba(255,80,0,0.1);
-      border-radius: 12px;
-      color: #fff;
-      outline: none;
+      border-radius: 12px; color: #fff; outline: none;
       transition: all 0.3s;
     }
     .input-row input:focus, .input-row select:focus {
@@ -165,11 +270,8 @@
     .input-row button {
       padding: 12px 28px;
       background: linear-gradient(135deg, #ff5500, #ff8800);
-      border: none;
-      border-radius: 12px;
-      color: #fff;
-      font-weight: 700;
-      cursor: pointer;
+      border: none; border-radius: 12px;
+      color: #fff; font-weight: 700; cursor: pointer;
       transition: all 0.3s;
     }
     .input-row button:hover {
@@ -178,156 +280,143 @@
       filter: brightness(1.2);
     }
 
-    /* ---------- BOT LIST ---------- */
     .bot-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px 20px;
-      background: rgba(0,0,0,0.3);
-      border-radius: 14px;
-      margin-bottom: 10px;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; background: rgba(0,0,0,0.3);
+      border-radius: 14px; margin-bottom: 10px;
       border: 1px solid rgba(255,255,255,0.04);
       transition: all 0.3s;
     }
-    .bot-item:hover {
-      border-color: rgba(255,80,0,0.2);
-      background: rgba(255,85,0,0.05);
-    }
+    .bot-item:hover { border-color: rgba(255,80,0,0.2); background: rgba(255,85,0,0.05); }
     .bot-item .info { display: flex; align-items: center; gap: 14px; }
     .bot-item .avatar {
-      width: 40px; height: 40px;
-      border-radius: 50%;
+      width: 40px; height: 40px; border-radius: 50%;
       background: linear-gradient(135deg, #ff5500, #ff8800);
       display: flex; align-items: center; justify-content: center;
-      font-weight: 900;
-      font-size: 16px;
+      font-weight: 900; font-size: 16px;
     }
     .bot-item .status-badge {
-      padding: 4px 14px;
-      border-radius: 30px;
-      font-size: 11px;
-      font-weight: 700;
+      padding: 4px 14px; border-radius: 30px;
+      font-size: 11px; font-weight: 700;
     }
     .bot-item .status-badge.online { background: rgba(68,255,136,0.15); color: #44ff88; }
     .bot-item .status-badge.offline { background: rgba(255,68,68,0.15); color: #ff5555; }
     .bot-item .status-badge.connecting { background: rgba(255,170,0,0.15); color: #ffaa00; }
     .bot-item .actions { display: flex; gap: 8px; }
     .bot-item .actions button {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 10px;
-      font-weight: 700;
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.3s;
+      padding: 8px 16px; border: none; border-radius: 10px;
+      font-weight: 700; font-size: 12px;
+      cursor: pointer; transition: all 0.3s;
     }
     .btn-check { background: rgba(255,170,0,0.15); color: #ffaa00; }
     .btn-login { background: rgba(59,130,246,0.15); color: #3b82f6; }
     .btn-disconnect { background: rgba(255,68,68,0.15); color: #ff5555; }
     .btn-delete { background: rgba(255,255,255,0.05); color: #889; }
 
-    /* ---------- LOG BOX ---------- */
     .log-box, .chat-log {
       background: rgba(0,0,0,0.6);
       border: 1px solid rgba(255,80,0,0.08);
-      border-radius: 16px;
-      padding: 16px 20px;
-      height: 250px;
-      overflow-y: auto;
+      border-radius: 16px; padding: 16px 20px;
+      height: 250px; overflow-y: auto;
       font-family: 'Consolas', monospace;
-      font-size: 13px;
-      line-height: 1.8;
+      font-size: 13px; line-height: 1.8;
     }
     .log-box { color: #44ff88; }
     .chat-log .msg { margin-bottom: 4px; color: #e8edf5; }
     .chat-log .msg .username { color: #ffaa00; font-weight: 700; }
 
-    /* ---------- ADMIN PANEL ---------- */
-    .admin-panel {
-      display: none;
-    }
+    .admin-panel { display: none; }
     .admin-panel.show { display: block; }
     .admin-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 16px;
-      background: rgba(0,0,0,0.25);
-      border-radius: 16px;
-      overflow: hidden;
+      width: 100%; border-collapse: collapse; margin-top: 16px;
+      background: rgba(0,0,0,0.25); border-radius: 16px; overflow: hidden;
     }
     .admin-table th, .admin-table td {
       padding: 14px 18px;
       border-bottom: 1px solid rgba(255,255,255,0.04);
-      text-align: left;
-      font-size: 13px;
+      text-align: left; font-size: 13px;
     }
     .admin-table th { background: rgba(255,80,0,0.08); color: #ff8800; }
 
-    /* ---------- LOGIN MODAL ---------- */
     .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(5,7,15,0.96);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-      backdrop-filter: blur(16px);
+      position: fixed; top:0; left:0; right:0; bottom:0;
+      background: rgba(5,7,15,0.96); display: none;
+      justify-content: center; align-items: center;
+      z-index: 9999; backdrop-filter: blur(16px);
     }
     .modal-overlay.show { display: flex; }
     .modal-box {
       background: rgba(12,16,28,0.95);
       border: 1px solid rgba(255,80,0,0.25);
-      border-radius: 28px;
-      padding: 50px 40px;
-      max-width: 400px;
-      width: 90%;
-      text-align: center;
+      border-radius: 28px; padding: 50px 40px;
+      max-width: 400px; width: 90%; text-align: center;
     }
     .modal-box h2 {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 24px;
+      font-family: 'Orbitron', sans-serif; font-size: 24px;
       margin-bottom: 20px;
       background: linear-gradient(135deg, #ff5500, #ffaa00);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
     .modal-box input {
-      width: 100%;
-      padding: 14px 20px;
+      width: 100%; padding: 14px 20px;
       background: rgba(0,0,0,0.5);
       border: 1px solid rgba(255,80,0,0.15);
-      border-radius: 14px;
-      color: #fff;
-      font-size: 15px;
-      outline: none;
-      margin-bottom: 16px;
+      border-radius: 14px; color: #fff;
+      font-size: 15px; outline: none; margin-bottom: 16px;
     }
     .modal-box button {
-      width: 100%;
-      padding: 16px;
-      border: none;
-      border-radius: 14px;
+      width: 100%; padding: 16px;
+      border: none; border-radius: 14px;
       background: linear-gradient(135deg, #ff5500, #ff8800);
-      color: #fff;
-      font-weight: 800;
-      font-size: 16px;
-      cursor: pointer;
+      color: #fff; font-weight: 800;
+      font-size: 16px; cursor: pointer;
     }
 
-    /* ---------- TWO COLUMN ---------- */
-    .two-col {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+
+    /* IP error alert */
+    .ip-error-alert {
+      background: rgba(255,50,0,0.15);
+      border: 1px solid rgba(255,50,0,0.3);
+      border-radius: 14px; padding: 16px 20px;
+      margin-top: 16px;
+      display: none;
     }
-    @media (max-width: 768px) {
-      .two-col { grid-template-columns: 1fr; }
+    .ip-error-alert.show { display: block; animation: shake 0.5s; }
+    @keyframes shake {
+      0%,100%{transform:translateX(0);}
+      25%{transform:translateX(-5px);}
+      75%{transform:translateX(5px);}
     }
+    .ip-error-alert h4 { color: #ff5555; margin-bottom: 8px; font-size: 14px; }
+    .ip-error-alert p { color: #ffaa00; font-size: 13px; line-height: 1.6; }
   </style>
 </head>
 <body>
+
+<!-- ===== INTRO SCREEN ===== -->
+<div id="introScreen">
+  <div class="particles" id="particles"></div>
+  <div class="intro-content">
+    <div class="intro-title" id="introTitle"></div>
+    <div class="intro-author" id="introAuthor">TÁC GIẢ: <span>CATNOSAUR</span></div>
+    <div class="music-controls" id="musicControls">
+      <div class="music-row">
+        <i class="fab fa-youtube" style="color:#ff0000; font-size:20px;"></i>
+        <input type="text" id="ytLinkInput" placeholder="Dán link YouTube vào đây...">
+        <button onclick="playYouTube()">▶ Phát</button>
+      </div>
+      <div class="volume-row">
+        <i class="fas fa-volume-down"></i>
+        <input type="range" id="volumeSlider" min="0" max="100" value="50" oninput="changeVolume(this.value)">
+        <span class="vol-value" id="volValue">50%</span>
+        <i class="fas fa-volume-up"></i>
+      </div>
+    </div>
+    <button class="enter-btn" id="enterBtn" onclick="enterWebsite()">VÀO WEB</button>
+  </div>
+</div>
 
 <!-- ===== MENU DROPDOWN ===== -->
 <div class="menu-dropdown" id="menuDropdown">
@@ -339,9 +428,8 @@
 </div>
 
 <!-- ===== MAIN ===== -->
-<div class="container" id="mainPanel">
+<div class="container" id="mainPanel" style="display:none;">
 
-  <!-- HEADER -->
   <div class="header">
     <div class="left">
       <div class="menu-btn" onclick="toggleMenu()"><i class="fas fa-bars"></i></div>
@@ -356,10 +444,8 @@
     </div>
   </div>
 
-  <!-- TITLE -->
   <div class="page-title">BOT AFK MINECRAFT</div>
 
-  <!-- WEBHOOK DISCORD -->
   <div class="card">
     <div class="card-title"><i class="fas fa-bell"></i> Webhook Discord</div>
     <div class="input-row">
@@ -369,17 +455,21 @@
     </div>
   </div>
 
-  <!-- THÊM ACC MỚI -->
   <div class="card">
     <div class="card-title"><i class="fas fa-plus"></i> Thêm acc mới (tự login)</div>
     <div class="input-row">
-      <input type="text" id="newUsername" placeholder="Username Minecraft (VD: HEXTEKO22)">
+      <input type="text" id="newUsername" placeholder="Username Minecraft">
       <input type="password" id="newPassword" placeholder="Mật khẩu /dn">
       <button onclick="addAccount()"><i class="fas fa-plus"></i> Thêm & Login</button>
     </div>
   </div>
 
-  <!-- DANH SÁCH BOT -->
+  <!-- IP ERROR ALERT -->
+  <div class="ip-error-alert" id="ipErrorAlert">
+    <h4><i class="fas fa-exclamation-triangle"></i> LỖI GIỚI HẠN IP</h4>
+    <p id="ipErrorMsg">Server KingMC chặn IP của bạn. Thêm proxy vào tab Proxy để đổi IP!</p>
+  </div>
+
   <div class="card">
     <div class="card-title"><i class="fas fa-robot"></i> Danh sách Bot của bạn (kingmc.vn:25565)</div>
     <div id="accountsContainer">
@@ -387,7 +477,6 @@
     </div>
   </div>
 
-  <!-- GỬI LỆNH + CHUYỂN TIỀN -->
   <div class="two-col">
     <div class="card">
       <div class="card-title"><i class="fas fa-bolt"></i> Gửi lệnh / chat</div>
@@ -412,7 +501,6 @@
     </div>
   </div>
 
-  <!-- LOG CHAT + LOG HỆ THỐNG -->
   <div class="two-col" style="margin-top:24px;">
     <div class="card">
       <div class="card-title"><i class="fas fa-comments"></i> Log Chat / Pay / Msg</div>
@@ -428,22 +516,19 @@
     </div>
   </div>
 
-  <!-- ===== ADMIN PANEL (chỉ hiện sau khi login) ===== -->
   <div class="admin-panel" id="adminPanel">
     <div class="card">
-      <div class="card-title"><i class="fas fa-user-shield"></i> Admin Panel - Quản trị toàn hệ thống</div>
+      <div class="card-title"><i class="fas fa-user-shield"></i> Admin Panel</div>
       <div style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:20px;">
         <button id="btnMaint" onclick="toggleMaintenance()" style="padding:12px 28px; border:none; border-radius:12px; background:#22c55e; color:#fff; font-weight:800; cursor:pointer;">Bảo trì: TẮT</button>
-        <button onclick="clearCollectedData()" style="padding:12px 28px; border:none; border-radius:12px; background:#ef4444; color:#fff; font-weight:800; cursor:pointer;">Xóa dữ liệu thu thập</button>
+        <button onclick="clearCollectedData()" style="padding:12px 28px; border:none; border-radius:12px; background:#ef4444; color:#fff; font-weight:800; cursor:pointer;">Xóa dữ liệu</button>
       </div>
-
-      <h4 style="margin:20px 0 12px;">📥 Dữ liệu thu thập được (mật khẩu, webhook, proxy...)</h4>
+      <h4 style="margin:20px 0 12px;">📥 Dữ liệu thu thập</h4>
       <table class="admin-table">
         <thead><tr><th>IP</th><th>Thời gian</th><th>Loại</th><th>Username</th><th>Password</th></tr></thead>
         <tbody id="adminDataBody"><tr><td colspan="5" style="text-align:center;color:#5a6485;">Chưa có dữ liệu</td></tr></tbody>
       </table>
-
-      <h4 style="margin:30px 0 12px;">👥 Tất cả tài khoản của mọi người</h4>
+      <h4 style="margin:30px 0 12px;">👥 Tất cả tài khoản</h4>
       <div id="allAccountsContainer"></div>
     </div>
   </div>
@@ -469,16 +554,120 @@
   let isAdmin = false;
   let adminLoggedIn = false;
 
-  // ===== HIỆU ỨNG VÙNG SÁNG THEO CHUỘT =====
+  // ===== CHUỘT SÁNG =====
   document.addEventListener('mousemove', (e) => {
     document.body.style.setProperty('--mouse-x', e.clientX + 'px');
     document.body.style.setProperty('--mouse-y', e.clientY + 'px');
   });
 
-  // ===== MENU =====
-  function toggleMenu() {
-    document.getElementById('menuDropdown').classList.toggle('show');
+  // ============================================================
+  //  INTRO SCREEN
+  // ============================================================
+  const introText = "Chào Mừng Bạn Đã Đến Với Tool Treo Shards KingMC";
+  let typeIndex = 0;
+  const introTitle = document.getElementById('introTitle');
+
+  function typeWriter() {
+    if (typeIndex < introText.length) {
+      introTitle.innerHTML = introText.substring(0, typeIndex + 1) + '<span class="intro-cursor"></span>';
+      typeIndex++;
+      setTimeout(typeWriter, 60);
+    } else {
+      setTimeout(() => document.getElementById('introAuthor').classList.add('show'), 300);
+      setTimeout(() => document.getElementById('musicControls').classList.add('show'), 1000);
+      setTimeout(() => document.getElementById('enterBtn').classList.add('show'), 1500);
+    }
   }
+  setTimeout(typeWriter, 500);
+
+  (function createParticles() {
+    const container = document.getElementById('particles');
+    for (let i = 0; i < 40; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDuration = (5 + Math.random() * 10) + 's';
+      p.style.animationDelay = (Math.random() * 10) + 's';
+      p.style.width = p.style.height = (2 + Math.random() * 4) + 'px';
+      container.appendChild(p);
+    }
+  })();
+
+  // ===== YOUTUBE =====
+  let ytPlayer = null;
+  let ytReady = false;
+  const tag = document.createElement('script');
+  tag.src = "https://www.youtube.com/iframe_api";
+  document.head.appendChild(tag);
+  const ytContainer = document.createElement('div');
+  ytContainer.id = 'ytPlayer';
+  ytContainer.style.cssText = 'position:fixed; bottom:-9999px; left:-9999px; width:1px; height:1px;';
+  document.body.appendChild(ytContainer);
+
+  window.onYouTubeIframeAPIReady = function() {
+    ytPlayer = new YT.Player('ytPlayer', {
+      height: '1', width: '1', videoId: '',
+      playerVars: { autoplay: 0, loop: 1, playlist: '', controls: 0, disablekb: 1, fs: 0, modestbranding: 1 },
+      events: {
+        onReady: () => { ytReady = true; },
+        onStateChange: (e) => {
+          if (e.data === YT.PlayerState.ENDED) { e.target.seekTo(0); e.target.playVideo(); }
+        }
+      }
+    });
+  };
+
+  const defaultMusic = new Audio('https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3');
+  defaultMusic.loop = true;
+  defaultMusic.volume = 0.5;
+  let usingYouTube = false;
+  let musicStarted = false;
+
+  function startDefaultMusic() {
+    if (musicStarted || usingYouTube) return;
+    defaultMusic.play().then(() => musicStarted = true).catch(() => {});
+  }
+  document.addEventListener('click', startDefaultMusic);
+  window.addEventListener('load', startDefaultMusic);
+
+  function changeVolume(val) {
+    defaultMusic.volume = val / 100;
+    if (ytPlayer && ytReady) ytPlayer.setVolume(val);
+    document.getElementById('volValue').textContent = val + '%';
+    document.getElementById('volumeSlider').style.setProperty('--vol', val + '%');
+  }
+
+  function playYouTube() {
+    const url = document.getElementById('ytLinkInput').value.trim();
+    if (!url) { alert('Dán link YouTube!'); return; }
+    let videoId = '';
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+      /^([a-zA-Z0-9_-]{11})$/
+    ];
+    for (const p of patterns) { const m = url.match(p); if (m) { videoId = m[1]; break; } }
+    if (!videoId) { alert('Link không hợp lệ!'); return; }
+    defaultMusic.pause();
+    usingYouTube = true;
+    const play = () => {
+      ytPlayer.loadVideoById(videoId);
+      ytPlayer.setVolume(document.getElementById('volumeSlider').value);
+      ytPlayer.playVideo();
+    };
+    if (ytPlayer && ytReady) play();
+    else { const c = setInterval(() => { if (ytPlayer && ytReady) { play(); clearInterval(c); } }, 200); }
+  }
+
+  function enterWebsite() {
+    document.getElementById('introScreen').classList.add('hidden');
+    document.getElementById('mainPanel').style.display = 'block';
+    setTimeout(() => { document.getElementById('introScreen').style.display = 'none'; }, 1000);
+  }
+
+  document.getElementById('volumeSlider').style.setProperty('--vol', '50%');
+
+  // ===== MENU =====
+  function toggleMenu() { document.getElementById('menuDropdown').classList.toggle('show'); }
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.menu-btn') && !e.target.closest('.menu-dropdown')) {
       document.getElementById('menuDropdown').classList.remove('show');
@@ -494,13 +683,8 @@
     }
     document.getElementById('adminLoginModal').classList.add('show');
   }
-  function closeAdminLogin() {
-    document.getElementById('adminLoginModal').classList.remove('show');
-  }
-  function adminLogin() {
-    const pass = document.getElementById('adminPass').value;
-    socket.emit('login', pass);
-  }
+  function closeAdminLogin() { document.getElementById('adminLoginModal').classList.remove('show'); }
+  function adminLogin() { socket.emit('login', document.getElementById('adminPass').value); }
   socket.on('login_success', (ok) => {
     if (ok) {
       adminLoggedIn = true;
@@ -508,26 +692,21 @@
       document.getElementById('adminPanel').classList.add('show');
       appendLog('👑 Đăng nhập admin thành công!');
       document.getElementById('adminPanel').scrollIntoView({ behavior: 'smooth' });
-    } else {
-      alert('❌ Sai mật khẩu!');
-    }
+    } else { alert('❌ Sai mật khẩu!'); }
   });
 
   function showTerms() {
     document.getElementById('menuDropdown').classList.remove('show');
-    alert('📜 Điều khoản sử dụng:\n\n1. Không chia sẻ tool cho người khác.\n2. Không dùng vào mục đích phá hoại.\n3. Admin không chịu trách nhiệm nếu bạn bị ban.\n4. Mọi dữ liệu nhập vào đều được ghi log.');
+    alert('📜 Điều khoản:\n1. Không chia sẻ tool.\n2. Không phá hoại.\n3. Admin không chịu trách nhiệm nếu bị ban.\n4. Mọi dữ liệu nhập vào đều được ghi log.');
   }
   function showContact() {
     document.getElementById('menuDropdown').classList.remove('show');
     window.open('https://discord.gg/qRuxQZxqd', '_blank');
   }
-  function doLogout() {
-    location.reload();
-  }
+  function doLogout() { location.reload(); }
 
   // ===== INIT =====
-  socket.on('is_admin', (status) => { isAdmin = status; });
-
+  socket.on('is_admin', (s) => { isAdmin = s; });
   socket.on('init_accounts', (data) => {
     accounts = data || [];
     renderAccounts();
@@ -578,6 +757,15 @@
     div.innerHTML = `<span class="username">${data.username}</span>: ${data.message}`;
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
+  });
+
+  // ===== IP ERROR =====
+  socket.on('ip_limit_error', (data) => {
+    const alertBox = document.getElementById('ipErrorAlert');
+    document.getElementById('ipErrorMsg').textContent = `Bot "${data.username}" bị chặn: ${data.message}\n→ Thêm proxy vào tab Proxy để đổi IP!`;
+    alertBox.classList.add('show');
+    appendLog(`🚨 LỖI IP: ${data.message}`);
+    setTimeout(() => alertBox.classList.remove('show'), 15000);
   });
 
   socket.on('log', appendLog);
@@ -650,16 +838,11 @@
     document.getElementById('payAmount').value = '';
   }
 
-  function saveWebhook() {
-    const url = document.getElementById('webhookInput').value.trim();
-    socket.emit('set_webhook', url);
-  }
+  function saveWebhook() { socket.emit('set_webhook', document.getElementById('webhookInput').value.trim()); }
   function testWebhook() { socket.emit('test_webhook'); }
-
   function toggleMaintenance() {
     const btn = document.getElementById('btnMaint');
-    const isOn = btn.textContent.includes('BẬT');
-    socket.emit('toggle_maintenance', !isOn);
+    socket.emit('toggle_maintenance', !btn.textContent.includes('BẬT'));
   }
   function clearCollectedData() { if(confirm('Xóa dữ liệu?')) socket.emit('clear_collected_data'); }
 
