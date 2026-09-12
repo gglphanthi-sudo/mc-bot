@@ -179,7 +179,6 @@ body::before{
 .card:hover{border-color:var(--border-hover);box-shadow:0 16px 50px rgba(0,0,0,.4);}
 .card .card-title{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:10px;}
 .card .card-title i{color:var(--accent1);}
-.card .card-title.blue i{color:var(--info);}
 .card .card-hint{font-size:12px;color:var(--muted);margin-top:-6px;margin-bottom:16px;line-height:1.5;}
 
 .input-row{display:flex;gap:10px;flex-wrap:wrap;}
@@ -230,7 +229,6 @@ body::before{
 .modal-box .sub{color:var(--muted);font-size:12.5px;margin-bottom:18px;}
 .modal-box input{width:100%;padding:13px 18px;background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:12px;color:#fff;font-size:14px;outline:none;margin-bottom:14px;}
 .modal-box button{width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--accent1),var(--accent2));color:#0a0b0f;font-weight:800;font-size:14px;cursor:pointer;}
-.modal-box textarea{width:100%;padding:13px 18px;background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:12px;color:#fff;font-size:13px;outline:none;margin-bottom:14px;resize:vertical;min-height:80px;font-family:'Inter';}
 
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
 @media (max-width:768px){.two-col{grid-template-columns:1fr;}}
@@ -419,7 +417,7 @@ body::before{
   <div class="tab-panel" id="tab-proxy">
     <div class="card">
       <div class="card-title"><i class="fas fa-network-wired"></i> Thêm Proxy</div>
-      <div class="card-hint">Hỗ trợ http://user:pass@host:port hoặc socks5://user:pass@host:port. Dùng khi mạng của bạn bị lỗi kết nối hoặc acc bị chặn IP tạm thời.</div>
+      <div class="card-hint">Hỗ trợ http://user:pass@host:port hoặc socks5://user:pass@host:port.</div>
       <div class="input-row">
         <input type="text" id="proxyInput" placeholder="http://user:pass@1.2.3.4:8080">
         <button onclick="addProxy()"><i class="fas fa-plus"></i> Thêm</button>
@@ -443,7 +441,7 @@ body::before{
   <div class="tab-panel" id="tab-settings">
     <div class="card">
       <div class="card-title"><i class="fas fa-bell"></i> Webhook Discord thông báo</div>
-      <div class="card-hint">Nhận thông báo khi bot online, khi check số dư... Chỉ gửi thông tin trạng thái, không bao giờ gửi mật khẩu.</div>
+      <div class="card-hint">Nhận thông báo khi bot online, khi check số dư... Chỉ gửi thông tin trạng thái.</div>
       <div class="input-row">
         <input type="text" id="webhookInput" placeholder="https://discord.com/api/webhooks/...">
         <button onclick="saveWebhook()"><i class="fas fa-save"></i> Lưu</button>
@@ -468,12 +466,24 @@ body::before{
   <!-- ADMIN -->
   <div class="tab-panel" id="tab-admin">
     <div class="card">
-      <div class="card-title"><i class="fas fa-screwdriver-wrench"></i> Chế độ bảo trì</div>
+      <div class="card-title"><i class="fas fa-screwdriver-wrench"></i> 🛠️ Catnosaur Control Panel</div>
+      <div class="card-hint">Chỉ Catnosaur mới thấy được khu vực này. Mọi thao tác đều được ghi log.</div>
+
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:8px;">Nội dung thông báo:</div>
       <div class="input-row">
-        <input type="text" id="maintMsgInput" placeholder="Nội dung thông báo bảo trì...">
+        <input type="text" id="maintMsgInput" placeholder="Hệ thống đang bảo trì...">
       </div>
-      <div class="input-row" style="margin-top:10px;">
-        <button id="btnMaint" onclick="toggleMaintenance()" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;">Bảo trì: TẮT</button>
+
+      <div style="font-size:12.5px;color:var(--muted);margin:12px 0 8px;">Đếm ngược (phút, để trống = không đếm):</div>
+      <div class="input-row">
+        <input type="number" id="maintCountdown" placeholder="VD: 30" min="0" style="max-width:150px;">
+      </div>
+
+      <div class="input-row" style="margin-top:16px;gap:8px;flex-wrap:wrap;">
+        <button id="btnMaint" onclick="toggleMaintenance()" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;">🛠️ Bảo trì: TẮT</button>
+        <button id="btnLockdown" onclick="toggleLockdown()" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;">🔒 Lockdown: TẮT</button>
+        <button id="btnFreezeProxy" onclick="toggleFreezeProxy()" style="background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;">🧊 Freeze Proxy: TẮT</button>
+        <button onclick="kickAll()" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;">👢 KICK ALL USER</button>
       </div>
     </div>
 
@@ -539,13 +549,11 @@ let adminUnlocked = false;
 let authState = null;
 let pendingPasswordId = null;
 
-// ===== HIỆU ỨNG CHUỘT SÁNG =====
 document.addEventListener('mousemove', (e) => {
   document.body.style.setProperty('--mouse-x', e.clientX + 'px');
   document.body.style.setProperty('--mouse-y', e.clientY + 'px');
 });
 
-// ===== HELPERS =====
 function toast(msg, icon) {
   const c = document.getElementById('toastContainer');
   const t = document.createElement('div');
@@ -575,7 +583,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-// ===== INTRO TYPEWRITER =====
+// ===== INTRO =====
 const introText = "Chào Mừng Bạn Đã Đến Với Tool Treo Shards KingMC";
 let typeIndex = 0;
 const introTitle = document.getElementById('introTitle');
@@ -605,7 +613,7 @@ setTimeout(typeWriter, 400);
   }
 })();
 
-// ===== YOUTUBE LOOP =====
+// ===== YOUTUBE =====
 let ytPlayer = null, ytReady = false, usingYouTube = false, musicStarted = false;
 const tag = document.createElement('script');
 tag.src = "https://www.youtube.com/iframe_api";
@@ -646,11 +654,10 @@ function playYouTube() {
 }
 document.getElementById('volumeSlider').style.setProperty('--vol', '50%');
 
-// ===== ENTER WEBSITE =====
+// ===== ENTER =====
 function enterWebsite() {
   document.getElementById('introScreen').classList.add('hidden');
   setTimeout(() => { document.getElementById('introScreen').style.display = 'none'; }, 800);
-  // ⭐ FIX: Chờ 400ms cho auth_status về trước khi quyết định
   setTimeout(revealNextScreen, 400);
 }
 function revealNextScreen() {
@@ -671,7 +678,7 @@ function switchAuthTab(mode) {
   document.getElementById('authSubmitLabel').textContent = mode==='login' ? 'Đăng nhập' : 'Đăng ký';
   document.getElementById('authHint').textContent = mode==='login'
     ? 'Đăng nhập một lần — lần sau vào web sẽ tự động đăng nhập.'
-    : 'Tên đăng nhập & mật khẩu tối thiểu 3 ký tự. Được lưu để lần sau không cần đăng nhập lại.';
+    : 'Tên đăng nhập & mật khẩu tối thiểu 3 ký tự.';
   document.getElementById('authError').classList.remove('show');
 }
 function submitAuth() {
@@ -689,7 +696,6 @@ function submitAuth() {
   socket.emit(authMode === 'login' ? 'auth_login' : 'auth_register', { username, password });
   setTimeout(() => btn.disabled = false, 1500);
 }
-
 socket.on('auth_result', (res) => {
   const errBox = document.getElementById('authError');
   if (!res.ok) {
@@ -699,14 +705,12 @@ socket.on('auth_result', (res) => {
   }
   setCookie('kingmc_auth', res.token, 3650);
   errBox.classList.remove('show');
-  // ⭐ FIX: Chuyển sang Main Panel sau khi đăng nhập thành công
   setTimeout(() => {
     document.getElementById('authGate').classList.remove('show');
     document.getElementById('mainPanel').style.display = 'block';
     toast(`Chào mừng ${res.username}!`, 'check');
   }, 250);
 });
-
 socket.on('auth_status', (state) => {
   authState = state;
   if (state.authenticated) {
@@ -716,7 +720,6 @@ socket.on('auth_status', (state) => {
     isAdmin = !!state.isOwner;
     document.getElementById('adminTabBtn').style.display = isAdmin ? 'flex' : 'none';
     document.getElementById('authGate').classList.remove('show');
-    // ⭐ FIX: Nếu intro đã ẩn → hiện main panel ngay
     if (document.getElementById('introScreen').style.display === 'none') {
       showMainPanel();
     }
@@ -727,7 +730,6 @@ socket.on('auth_status', (state) => {
     }
   }
 });
-
 function showMainPanel() {
   document.getElementById('authGate').classList.remove('show');
   document.getElementById('mainPanel').style.display = 'block';
@@ -756,22 +758,69 @@ function changePassword() {
 }
 
 // ===== MAINTENANCE =====
-socket.on('maintenance_status', ({ active, message }) => {
-  document.getElementById('maintenanceMsg').textContent = message || '';
+let maintenanceCountdownInterval = null;
+
+socket.on('maintenance_status', (state) => {
+  const { active, message, countdownEnd, lockdown, freezeProxy } = state;
   document.getElementById('maintenanceOverlay').classList.toggle('show', !!active && !isAdmin);
+  document.getElementById('maintenanceMsg').textContent = message || '';
+
+  if (maintenanceCountdownInterval) clearInterval(maintenanceCountdownInterval);
+  if (active && countdownEnd) {
+    const tick = () => {
+      const remain = countdownEnd - Date.now();
+      if (remain <= 0) {
+        document.getElementById('maintenanceMsg').textContent = (message || '') + ' — Sắp xong rồi!';
+        clearInterval(maintenanceCountdownInterval);
+        return;
+      }
+      const m = Math.floor(remain / 60000);
+      const s = Math.floor((remain % 60000) / 1000);
+      document.getElementById('maintenanceMsg').textContent = (message || '') + ` — Còn ${m}p ${s}s`;
+    };
+    tick();
+    maintenanceCountdownInterval = setInterval(tick, 1000);
+  }
+
   const btn = document.getElementById('btnMaint');
   if (btn) {
-    btn.textContent = active ? 'Bảo trì: BẬT' : 'Bảo trì: TẮT';
+    btn.textContent = active ? '🛠️ Bảo trì: BẬT' : '🛠️ Bảo trì: TẮT';
     btn.style.background = active ? 'linear-gradient(135deg,#ef4444,#dc2626)' : 'linear-gradient(135deg,#22c55e,#16a34a)';
+  }
+  const bLock = document.getElementById('btnLockdown');
+  if (bLock) {
+    bLock.textContent = lockdown ? '🔒 Lockdown: BẬT' : '🔒 Lockdown: TẮT';
+    bLock.style.background = lockdown ? 'linear-gradient(135deg,#dc2626,#991b1b)' : 'linear-gradient(135deg,#f59e0b,#d97706)';
+  }
+  const bFreeze = document.getElementById('btnFreezeProxy');
+  if (bFreeze) {
+    bFreeze.textContent = freezeProxy ? '🧊 Freeze Proxy: BẬT' : '🧊 Freeze Proxy: TẮT';
+    bFreeze.style.background = freezeProxy ? 'linear-gradient(135deg,#1d4ed8,#1e3a8a)' : 'linear-gradient(135deg,#3b82f6,#2563eb)';
   }
   const input = document.getElementById('maintMsgInput');
   if (input && !input.value) input.value = message || '';
 });
+
 function toggleMaintenance() {
   const btn = document.getElementById('btnMaint');
   const active = !btn.textContent.includes('BẬT');
   const message = document.getElementById('maintMsgInput').value.trim();
-  socket.emit('admin_toggle_maintenance', { active, message });
+  const countdownMinutes = parseInt(document.getElementById('maintCountdown').value, 10) || 0;
+  socket.emit('admin_toggle_maintenance', { active, message, countdownMinutes });
+}
+function toggleLockdown() {
+  const btn = document.getElementById('btnLockdown');
+  const active = !btn.textContent.includes('BẬT');
+  socket.emit('admin_toggle_lockdown', active);
+}
+function toggleFreezeProxy() {
+  const btn = document.getElementById('btnFreezeProxy');
+  const active = !btn.textContent.includes('BẬT');
+  socket.emit('admin_toggle_freeze_proxy', active);
+}
+function kickAll() {
+  if (!confirm('KICK TẤT CẢ user (trừ Catnosaur)?')) return;
+  socket.emit('admin_kick_all');
 }
 
 // ===== ANNOUNCEMENT =====
@@ -796,7 +845,6 @@ socket.on('init_accounts', (data) => {
   updateStats();
 });
 
-// ⭐ Owner summary có nút "Xem acc"
 socket.on('owner_summary', (data) => {
   const tbody = document.getElementById('ownerSummaryBody');
   if (!data || !data.length) {
@@ -815,7 +863,6 @@ socket.on('owner_summary', (data) => {
   </tr>`).join('');
 });
 
-// ⭐ Hàm xem acc của user
 function viewUserAccs(username) {
   socket.emit('admin_get_user_accounts', username);
 }
@@ -877,7 +924,7 @@ socket.on('need_password', ({ id, username }) => {
 
 socket.on('log', appendLog);
 
-// ===== RENDER BOTS =====
+// ===== RENDER =====
 function updateStats() {
   document.getElementById('statTotal').textContent = accounts.length;
   document.getElementById('statOnline').textContent = accounts.filter(a => (a.status||'').includes('ONLINE')).length;
