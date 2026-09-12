@@ -1,6 +1,6 @@
 {
-  "name": "kingmc-afk-bot-ultimate",
-  "version": "7.0.0",
+  "name": "kingmc-afk-dashboard",
+  "version": "10.0.0",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
@@ -11,9 +11,10 @@
     "mineflayer": "^4.15.0",
     "socks-proxy-agent": "^7.0.0",
     "https-proxy-agent": "^7.0.2",
-    "axios": "^1.6.0"
+    "axios": "^1.6.0",
+    "bcryptjs": "^2.4.3"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
   }
 }
