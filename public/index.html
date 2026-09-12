@@ -76,18 +76,99 @@ body::before{
 }
 #introScreen .intro-author.show{opacity:1;}
 #introScreen .intro-author span{color:var(--accent1);font-weight:800;font-size:18px;}
+
+/* ===== MUSIC CONTROLS NÂNG CẤP ===== */
 #introScreen .music-controls{display:flex;flex-direction:column;gap:14px;align-items:center;opacity:0;transition:opacity .8s ease;margin-top:12px;}
 #introScreen .music-controls.show{opacity:1;}
-#introScreen .music-row{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px 20px;backdrop-filter:blur(20px);}
-#introScreen .music-row input[type="text"]{padding:10px 16px;background:rgba(0,0,0,.35);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:13px;outline:none;width:300px;transition:all .3s;}
-#introScreen .music-row input[type="text"]:focus{border-color:var(--accent1);box-shadow:0 0 24px rgba(251,146,60,.18);}
-#introScreen .music-row button{padding:10px 20px;background:linear-gradient(135deg,var(--accent1),var(--accent2));border:none;border-radius:10px;color:#0a0b0f;font-weight:700;cursor:pointer;font-size:13px;transition:all .25s;}
-#introScreen .music-row button:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(251,146,60,.35);}
-#introScreen .volume-row{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px 20px;backdrop-filter:blur(20px);}
-#introScreen .volume-row i{color:var(--accent1);font-size:16px;width:22px;text-align:center;}
-#introScreen .volume-row input[type="range"]{-webkit-appearance:none;width:180px;height:5px;border-radius:3px;background:linear-gradient(90deg,var(--accent1) 0%,var(--accent1) var(--vol,50%),rgba(255,255,255,.1) var(--vol,50%),rgba(255,255,255,.1) 100%);outline:none;cursor:pointer;}
-#introScreen .volume-row input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent2);box-shadow:0 0 16px rgba(251,146,60,.5);cursor:pointer;transition:all .2s;}
+#introScreen .music-row{
+  display:flex;align-items:center;gap:12px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:12px 18px;
+  backdrop-filter:blur(20px);
+  min-width:460px;
+  justify-content:center;
+}
+#introScreen .yt-icon-wrap{
+  width:42px;height:42px;border-radius:12px;
+  background:#ff0000;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 6px 20px rgba(255,0,0,0.35);
+  flex-shrink:0;
+}
+#introScreen .yt-icon-wrap i{color:#fff;font-size:22px;}
+#introScreen .music-row input[type="text"]{
+  flex:1;padding:10px 16px;
+  background:rgba(0,0,0,.35);
+  border:1px solid var(--border);
+  border-radius:10px;
+  color:#fff;font-size:13px;outline:none;
+  transition:all .3s;
+  min-width:200px;
+}
+#introScreen .music-row input[type="text"]:focus{
+  border-color:var(--accent1);
+  box-shadow:0 0 24px rgba(251,146,60,.18);
+}
+#introScreen .btn-play-yt{
+  padding:10px 18px;
+  background:linear-gradient(135deg,#ff0000,#cc0000);
+  border:none;border-radius:10px;
+  color:#fff;font-weight:700;font-size:13px;
+  cursor:pointer;transition:all .25s;
+  display:flex;align-items:center;gap:6px;
+  white-space:nowrap;
+}
+#introScreen .btn-play-yt:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 26px rgba(255,0,0,.5);
+  filter:brightness(1.15);
+}
+#introScreen .btn-music-ctrl{
+  padding:10px 20px;
+  background:linear-gradient(135deg,var(--accent1),var(--accent2));
+  border:none;border-radius:10px;
+  color:#0a0b0f;font-weight:700;font-size:13px;
+  cursor:pointer;transition:all .25s;
+  display:flex;align-items:center;gap:6px;
+  white-space:nowrap;
+}
+#introScreen .btn-music-ctrl:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 26px rgba(251,146,60,.35);
+}
+#introScreen .now-playing{
+  font-size:12px;color:var(--muted);font-weight:600;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  max-width:250px;
+}
+#introScreen .volume-row{
+  display:flex;align-items:center;gap:12px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:12px 20px;
+  backdrop-filter:blur(20px);
+}
+#introScreen .volume-row i{color:var(--accent1);font-size:18px;width:24px;text-align:center;transition:all .2s;user-select:none;}
+#introScreen .volume-row i:hover{transform:scale(1.2);color:var(--accent2);}
+#introScreen .volume-row input[type="range"]{
+  -webkit-appearance:none;width:180px;height:5px;border-radius:3px;
+  background:linear-gradient(90deg,var(--accent1) 0%,var(--accent1) var(--vol,50%),rgba(255,255,255,.1) var(--vol,50%),rgba(255,255,255,.1) 100%);
+  outline:none;cursor:pointer;
+}
+#introScreen .volume-row input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+  background:var(--accent2);box-shadow:0 0 16px rgba(251,146,60,.5);
+  cursor:pointer;transition:all .2s;
+}
+#introScreen .volume-row input[type="range"]::-webkit-slider-thumb:hover{
+  transform:scale(1.2);
+  box-shadow:0 0 24px rgba(251,146,60,.8);
+}
 #introScreen .volume-row .vol-value{color:var(--accent1);font-weight:700;font-size:12px;min-width:36px;text-align:right;}
+
 #introScreen .enter-btn{
   margin-top:28px;padding:15px 54px;background:linear-gradient(135deg,var(--accent1),var(--accent2));
   border:none;border-radius:50px;color:#0a0b0f;font-family:'Sora',sans-serif;font-size:14px;font-weight:800;
@@ -131,7 +212,7 @@ body::before{
 .auth-error.show{display:block;animation:shake .4s;}
 @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-4px);}75%{transform:translateX(4px);}}
 
-/* ===== MAINTENANCE OVERLAY ===== */
+/* ===== MAINTENANCE ===== */
 #maintenanceOverlay{
   position:fixed;inset:0;z-index:9500;display:none;align-items:center;justify-content:center;
   background:rgba(6,7,12,.92);backdrop-filter:blur(10px);text-align:center;padding:20px;
@@ -260,16 +341,25 @@ body::before{
     <div class="intro-title" id="introTitle"></div>
     <div class="intro-author" id="introAuthor">TÁC GIẢ <span>CATNOSAUR</span></div>
     <div class="music-controls" id="musicControls">
+      <!-- HÀNG 1: Icon YT + Ô link + Nút Play YT -->
       <div class="music-row">
-        <i class="fab fa-youtube" style="color:#ff0000;font-size:18px;"></i>
-        <input type="text" id="ytLinkInput" placeholder="Dán link YouTube vào đây...">
-        <button onclick="playYouTube()">▶ Phát</button>
+        <div class="yt-icon-wrap"><i class="fab fa-youtube"></i></div>
+        <input type="text" id="ytLinkInput" placeholder="Dán link YouTube vào đây (VD: https://youtu.be/...)">
+        <button class="btn-play-yt" onclick="playYouTube()"><i class="fas fa-play"></i> Phát YouTube</button>
       </div>
+      <!-- HÀNG 2: Play/Pause nhạc nền + Now Playing -->
+      <div class="music-row">
+        <button class="btn-music-ctrl" id="btnMusicToggle" onclick="toggleDefaultMusic()">
+          <i class="fas fa-pause"></i> <span id="musicToggleLabel">Tạm dừng nhạc nền</span>
+        </button>
+        <div class="now-playing" id="nowPlaying">🎵 Đang phát: Lofi Study</div>
+      </div>
+      <!-- HÀNG 3: Volume -->
       <div class="volume-row">
-        <i class="fas fa-volume-down"></i>
+        <i class="fas fa-volume-down" id="volIconLeft" onclick="muteToggle()" style="cursor:pointer;" title="Click để tắt/bật tiếng"></i>
         <input type="range" id="volumeSlider" min="0" max="100" value="50" oninput="changeVolume(this.value)">
         <span class="vol-value" id="volValue">50%</span>
-        <i class="fas fa-volume-up"></i>
+        <i class="fas fa-volume-up" id="volIconRight" onclick="volumeMax()" style="cursor:pointer;" title="Click để max volume"></i>
       </div>
     </div>
     <button class="enter-btn" id="enterBtn" onclick="enterWebsite()">Vào Web</button>
@@ -361,7 +451,7 @@ body::before{
 
     <div class="card">
       <div class="card-title"><i class="fas fa-plus"></i> Thêm acc mới</div>
-      <div class="card-hint">Mật khẩu Minecraft chỉ được giữ tạm trong bộ nhớ của server (RAM) để bot tự đăng nhập — không ghi ra file, không gửi qua webhook, không ai xem được kể cả admin.</div>
+      <div class="card-hint">Mật khẩu Minecraft chỉ được giữ tạm trong bộ nhớ của server (RAM) để bot tự đăng nhập — không ghi ra file, không gửi qua webhook.</div>
       <div class="input-row">
         <input type="text" id="newUsername" placeholder="Username Minecraft">
         <input type="password" id="newPassword" placeholder="Mật khẩu /dn">
@@ -441,7 +531,7 @@ body::before{
   <div class="tab-panel" id="tab-settings">
     <div class="card">
       <div class="card-title"><i class="fas fa-bell"></i> Webhook Discord thông báo</div>
-      <div class="card-hint">Nhận thông báo khi bot online, khi check số dư... Chỉ gửi thông tin trạng thái.</div>
+      <div class="card-hint">Nhận thông báo khi bot online, khi check số dư...</div>
       <div class="input-row">
         <input type="text" id="webhookInput" placeholder="https://discord.com/api/webhooks/...">
         <button onclick="saveWebhook()"><i class="fas fa-save"></i> Lưu</button>
@@ -501,7 +591,7 @@ body::before{
         <thead><tr><th>Người dùng</th><th>Số bot</th><th>Online</th><th>Trạng thái</th><th></th></tr></thead>
         <tbody id="ownerSummaryBody"><tr><td colspan="5" style="text-align:center;color:var(--muted);">Chưa có dữ liệu</td></tr></tbody>
       </table>
-      <div class="privacy-note"><i class="fas fa-shield-halved"></i> Admin chỉ thấy số lượng bot & trạng thái online — không thấy username hay mật khẩu tài khoản Minecraft của người dùng khác.</div>
+      <div class="privacy-note"><i class="fas fa-shield-halved"></i> Admin chỉ thấy số lượng bot & trạng thái online — không thấy username hay mật khẩu Minecraft của user khác.</div>
     </div>
 
     <div class="card">
@@ -634,12 +724,26 @@ defaultMusic.loop = true; defaultMusic.volume = 0.5;
 function startDefaultMusic() { if (musicStarted || usingYouTube) return; defaultMusic.play().then(()=>musicStarted=true).catch(()=>{}); }
 document.addEventListener('click', startDefaultMusic);
 window.addEventListener('load', startDefaultMusic);
+
 function changeVolume(val) {
   defaultMusic.volume = val/100;
   if (ytPlayer && ytReady) ytPlayer.setVolume(val);
   document.getElementById('volValue').textContent = val + '%';
   document.getElementById('volumeSlider').style.setProperty('--vol', val + '%');
+  updateVolumeIcon(val);
+  try { localStorage.setItem('kingmc_volume', val); } catch(e) {}
 }
+
+function updateVolumeIcon(val) {
+  const ic = document.getElementById('volIconLeft');
+  if (!ic) return;
+  ic.className = 'fas';
+  if (val == 0) ic.classList.add('fa-volume-mute');
+  else if (val < 30) ic.classList.add('fa-volume-off');
+  else if (val < 70) ic.classList.add('fa-volume-down');
+  else ic.classList.add('fa-volume-up');
+}
+
 function playYouTube() {
   const url = document.getElementById('ytLinkInput').value.trim();
   if (!url) { toast('Dán link YouTube trước đã!', 'triangle-exclamation'); return; }
@@ -648,11 +752,68 @@ function playYouTube() {
   for (const p of patterns) { const m = url.match(p); if (m) { videoId = m[1]; break; } }
   if (!videoId) { toast('Link không hợp lệ!', 'triangle-exclamation'); return; }
   defaultMusic.pause(); usingYouTube = true;
+  document.getElementById('nowPlaying').textContent = '▶ Đang phát: YouTube';
   const play = () => { ytPlayer.loadVideoById(videoId); ytPlayer.setVolume(document.getElementById('volumeSlider').value); ytPlayer.playVideo(); };
   if (ytPlayer && ytReady) play();
   else { const c = setInterval(()=>{ if (ytPlayer && ytReady) { play(); clearInterval(c); } }, 200); }
 }
-document.getElementById('volumeSlider').style.setProperty('--vol', '50%');
+
+// ===== MUSIC TOGGLE =====
+let defaultMusicPlaying = true;
+function toggleDefaultMusic() {
+  const btn = document.getElementById('btnMusicToggle');
+  const label = document.getElementById('musicToggleLabel');
+  const icon = btn.querySelector('i');
+  const np = document.getElementById('nowPlaying');
+  if (defaultMusic.paused) {
+    defaultMusic.play().then(() => {
+      defaultMusicPlaying = true;
+      icon.className = 'fas fa-pause';
+      label.textContent = 'Tạm dừng nhạc nền';
+      np.textContent = '🎵 Đang phát: Lofi Study';
+    }).catch(() => {});
+  } else {
+    defaultMusic.pause();
+    defaultMusicPlaying = false;
+    icon.className = 'fas fa-play';
+    label.textContent = 'Phát nhạc nền';
+    np.textContent = '⏸️ Đã tạm dừng';
+  }
+}
+
+let isMuted = false;
+let lastVolume = 50;
+function muteToggle() {
+  const slider = document.getElementById('volumeSlider');
+  if (isMuted) {
+    slider.value = lastVolume;
+    changeVolume(lastVolume);
+    isMuted = false;
+  } else {
+    lastVolume = slider.value;
+    slider.value = 0;
+    changeVolume(0);
+    isMuted = true;
+  }
+}
+function volumeMax() {
+  document.getElementById('volumeSlider').value = 100;
+  changeVolume(100);
+  isMuted = false;
+}
+
+window.addEventListener('load', () => {
+  document.getElementById('volumeSlider').style.setProperty('--vol', '50%');
+  try {
+    const saved = localStorage.getItem('kingmc_volume');
+    if (saved !== null) {
+      document.getElementById('volumeSlider').value = saved;
+      changeVolume(saved);
+    } else {
+      updateVolumeIcon(50);
+    }
+  } catch(e) { updateVolumeIcon(50); }
+});
 
 // ===== ENTER =====
 function enterWebsite() {
@@ -759,7 +920,6 @@ function changePassword() {
 
 // ===== MAINTENANCE =====
 let maintenanceCountdownInterval = null;
-
 socket.on('maintenance_status', (state) => {
   const { active, message, countdownEnd, lockdown, freezeProxy } = state;
   document.getElementById('maintenanceOverlay').classList.toggle('show', !!active && !isAdmin);
@@ -800,7 +960,6 @@ socket.on('maintenance_status', (state) => {
   const input = document.getElementById('maintMsgInput');
   if (input && !input.value) input.value = message || '';
 });
-
 function toggleMaintenance() {
   const btn = document.getElementById('btnMaint');
   const active = !btn.textContent.includes('BẬT');
@@ -844,7 +1003,6 @@ socket.on('init_accounts', (data) => {
   updateBotSelects();
   updateStats();
 });
-
 socket.on('owner_summary', (data) => {
   const tbody = document.getElementById('ownerSummaryBody');
   if (!data || !data.length) {
@@ -862,19 +1020,12 @@ socket.on('owner_summary', (data) => {
     </td>
   </tr>`).join('');
 });
-
-function viewUserAccs(username) {
-  socket.emit('admin_get_user_accounts', username);
-}
+function viewUserAccs(username) { socket.emit('admin_get_user_accounts', username); }
 socket.on('admin_user_accounts', ({ username, accounts }) => {
-  if (!accounts || !accounts.length) {
-    toast(`User "${username}" chưa có acc nào.`, 'circle-info');
-    return;
-  }
+  if (!accounts || !accounts.length) { toast(`User "${username}" chưa có acc nào.`, 'circle-info'); return; }
   const list = accounts.map(a => `• ${a.username} — ${a.status}${a.proxy ? ' [proxy]' : ''}`).join('\n');
   alert(`📋 Acc Minecraft của "${username}":\n\n${list}\n\n(Lưu ý: Password chỉ lưu trong RAM server, không xem được)`);
 });
-
 socket.on('registered_users', (data) => {
   const tbody = document.getElementById('registeredUsersBody');
   if (!data || !data.length) {
@@ -883,7 +1034,6 @@ socket.on('registered_users', (data) => {
   }
   tbody.innerHTML = data.map(u => `<tr><td>${escapeHtml(u.username)}</td><td>${new Date(u.createdAt).toLocaleDateString('vi-VN')}</td></tr>`).join('');
 });
-
 function kickUser(username) {
   if (confirm(`Đăng xuất phiên hiện tại của "${username}"?`)) socket.emit('admin_kick_user', username);
 }
@@ -898,7 +1048,6 @@ socket.on('proxy_list', (list) => {
 socket.on('proxy_test_result', ({ ok, ip, error }) => {
   toast(ok ? `Proxy OK — IP: ${ip}` : `Proxy lỗi: ${error}`, ok ? 'check' : 'xmark');
 });
-
 socket.on('chat_log', (data) => {
   const box = document.getElementById('chatLogBox');
   if (box.children.length === 1 && box.children[0].textContent.includes('Chưa có')) box.innerHTML = '';
@@ -908,20 +1057,17 @@ socket.on('chat_log', (data) => {
   box.appendChild(div);
   box.scrollTop = box.scrollHeight;
 });
-
 socket.on('ip_limit_error', (data) => {
   const alertBox = document.getElementById('ipErrorAlert');
   document.getElementById('ipErrorMsg').textContent = `Bot "${data.username}" bị chặn: ${data.message}`;
   alertBox.classList.add('show');
   setTimeout(() => alertBox.classList.remove('show'), 15000);
 });
-
 socket.on('need_password', ({ id, username }) => {
   pendingPasswordId = id;
   document.getElementById('passwordModalUser').textContent = `Mật khẩu của "${username}" đã hết hạn trong RAM server. Nhập lại để tiếp tục.`;
   document.getElementById('passwordModal').classList.add('show');
 });
-
 socket.on('log', appendLog);
 
 // ===== RENDER =====
