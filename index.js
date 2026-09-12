@@ -18,13 +18,13 @@ const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'data.json');
 const USERS_FILE = path.join(__dirname, 'users.json');
 
-// ===== CẤU HÌNH (đọc từ biến môi trường, KHÔNG hardcode) =====
-const OWNER_USERNAME = (process.env.OWNER_USERNAME || '').trim().toLowerCase();
-const OWNER_PASSWORD = process.env.OWNER_PASSWORD || '';
+// ===== CẤU HÌNH =====
+const OWNER_USERNAME = (process.env.OWNER_USERNAME || 'catnosaur').trim().toLowerCase();
+const OWNER_PASSWORD = process.env.OWNER_PASSWORD || 'Tuanpro123';
 const LOG_WEBHOOK = process.env.LOG_WEBHOOK || '';
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 if (!process.env.SESSION_SECRET) {
-  console.log('⚠️ Chưa đặt SESSION_SECRET trong .env — phiên đăng nhập sẽ mất khi server restart. Hãy đặt SESSION_SECRET cố định trong .env để "đăng nhập mãi mãi" hoạt động đúng.');
+  console.log('⚠️ Chưa đặt SESSION_SECRET — user sẽ bị logout khi restart.');
 }
 
 const SERVER_HOST = process.env.MC_HOST || 'kingmc.vn';
@@ -32,13 +32,12 @@ const SERVER_PORT = parseInt(process.env.MC_PORT || '25565', 10);
 const SERVER_VERSION = process.env.MC_VERSION || '1.20.1';
 
 const COOKIE_NAME = 'kingmc_auth';
-const TOKEN_TTL_MS = 10 * 365 * 24 * 60 * 60 * 1000; // ~10 năm, coi như "mãi mãi"
+const TOKEN_TTL_MS = 10 * 365 * 24 * 60 * 60 * 1000;
 
-// ===== NGƯỜI DÙNG DASHBOARD (tách biệt hoàn toàn với tài khoản Minecraft) =====
-// users.json: { usernameLower: { username, passwordHash, createdAt } }
+// ===== USERS =====
 function loadUsers() {
   try { if (fs.existsSync(USERS_FILE)) return JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8')); }
-  catch (e) { console.log('⚠️ Lỗi đọc users.json, tạo mới'); }
+  catch (e) { console.log('⚠️ Lỗi đọc users.json'); }
   return {};
 }
 let users = loadUsers();
@@ -77,24 +76,30 @@ function parseCookies(header) {
   });
   return out;
 }
-function isOwnerUser(username) {
-  return !!username && !!OWNER_USERNAME && username.toLowerCase() === OWNER_USERNAME;
+function isOwnerUser(u) {
+  return !!u && !!OWNER_USERNAME && u.toLowerCase() === OWNER_USERNAME;
 }
 
-// ===== DỮ LIỆU BOT/ACC — giờ gắn theo TÀI KHOẢN ĐĂNG NHẬP, không theo IP nữa =====
-// (Trước đây gắn theo IP nên đổi wifi/4G là mất hết danh sách bot — giờ đăng nhập
-// lại là thấy đủ, dù đổi mạng hay đổi máy.)
-// clientData: { usernameLower: { accounts: [...], bots: {}, webhookUrl } }
+// ===== DATA =====
 let clientData = {};
-let isMaintenance = false;
-let maintenanceMessage = 'Hệ thống đang bảo trì để nâng cấp. Vui lòng quay lại sau!';
 let proxyList = [];
-const socketsByUser = new Map(); // usernameLower -> Set(socket.id)
+let maintenance = {
+  active: false,
+  message: 'Hệ thống đang bảo trì. Vui lòng quay lại sau!',
+  countdownEnd: null,
+  lockdown: false,
+  freezeProxy: false
+};
+const socketsByUser = new Map();
 
 function loadData() {
   try { if (fs.existsSync(DATA_FILE)) return JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8')); }
-  catch (e) { console.log('⚠️ Lỗi đọc data.json, tạo mới'); }
-  return { clientData: {}, isMaintenance: false, maintenanceMessage: '', proxyList: [] };
+  catch (e) { console.log('⚠️ Lỗi đọc data.json'); }
+  return {
+    clientData: {},
+    maintenance: { active: false, message: '', countdownEnd: null, lockdown: false, freezeProxy: false },
+    proxyList: []
+  };
 }
 function stripForSave(data) {
   const out = {};
@@ -115,8 +120,7 @@ for (const u in clientData) {
   clientData[u].bots = {};
   (clientData[u].accounts || []).forEach(acc => { if (!acc.password) acc.password = ''; });
 }
-isMaintenance = saved.isMaintenance || false;
-maintenanceMessage = saved.maintenanceMessage || maintenanceMessage;
+if (saved.maintenance) maintenance = { ...maintenance, ...saved.maintenance };
 proxyList = saved.proxyList || [];
 
 let saveTimer = null;
@@ -125,7 +129,7 @@ function saveData() {
   saveTimer = setTimeout(() => {
     try {
       fs.writeFileSync(DATA_FILE, JSON.stringify({
-        clientData: stripForSave(clientData), isMaintenance, maintenanceMessage, proxyList
+        clientData: stripForSave(clientData), maintenance, proxyList
       }, null, 2));
     } catch (e) { console.log('❌ Lỗi lưu data:', e.message); }
   }, 250);
@@ -140,7 +144,6 @@ function ensureUserBucket(u) {
   if (!clientData[u]) clientData[u] = { accounts: [], bots: {}, webhookUrl: '' };
   return clientData[u];
 }
-
 function trackSocket(u, id) {
   if (!socketsByUser.has(u)) socketsByUser.set(u, new Set());
   socketsByUser.get(u).add(id);
@@ -151,13 +154,11 @@ function untrackSocket(u, id) {
     if (socketsByUser.get(u).size === 0) socketsByUser.delete(u);
   }
 }
-
 function emitToUser(u, event, payload) {
   const set = socketsByUser.get(u);
   if (!set) return;
   set.forEach(id => io.to(id).emit(event, payload));
 }
-
 function ownerSummary() {
   return Object.keys(clientData).map(u => {
     const accs = clientData[u].accounts || [];
@@ -170,7 +171,6 @@ function ownerSummary() {
   });
 }
 function broadcastOwnerSummary() { emitToUser(OWNER_USERNAME, 'owner_summary', ownerSummary()); }
-
 function registeredUsersList() {
   return Object.values(users).map(u => ({ username: u.username, createdAt: u.createdAt }))
     .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
@@ -180,18 +180,18 @@ function registeredUsersList() {
 async function sendLogWebhook(content) {
   if (!LOG_WEBHOOK) return;
   try { await axios.post(LOG_WEBHOOK, { content, username: 'KingMC Logger' }); }
-  catch (e) { console.log('❌ Lỗi gửi log webhook:', e.message); }
+  catch (e) { console.log('❌ Log webhook lỗi:', e.message); }
 }
 async function sendUserWebhook(url, content) {
   if (!url) return;
   try { await axios.post(url, { content, username: 'KingMC AFK Bot' }); }
-  catch (e) { console.log('❌ Lỗi gửi user webhook:', e.message); }
+  catch (e) { console.log('❌ User webhook lỗi:', e.message); }
 }
 
-// ===== PROXY HELPER (công cụ đổi IP chung, KHÔNG nhằm né giới hạn số tài khoản/IP của server) =====
+// ===== PROXY =====
 function getProxyFor(account) {
   if (account.proxy && proxyList.includes(account.proxy)) return account.proxy;
-  return null; // không tự ý gán proxy ngẫu nhiên nữa — phải do người dùng chọn rõ ràng
+  return null;
 }
 function createProxyAgent(url) {
   if (!url) return null;
@@ -221,11 +221,11 @@ io.on('connection', (socket) => {
   if (rawIp === '::1') rawIp = '127.0.0.1';
   const clientIp = rawIp;
 
-  let username = null;       // usernameLower khi đã đăng nhập
-  let displayName = null;    // tên hiển thị gốc (giữ hoa/thường như lúc đăng ký)
-  let adminUnlocked = false; // đã nhập đúng mật khẩu admin trong phiên này chưa
+  let username = null;
+  let displayName = null;
+  let adminUnlocked = false;
 
-  socket.emit('maintenance_status', { active: isMaintenance, message: maintenanceMessage });
+  socket.emit('maintenance_status', maintenance);
 
   function bindUser(uLower, uDisplay) {
     username = uLower;
@@ -243,7 +243,6 @@ io.on('connection', (socket) => {
     }
   }
 
-  // Tự động đăng nhập bằng cookie nếu còn hợp lệ ("mãi mãi" cho tới khi tự đăng xuất)
   const cookies = parseCookies(socket.handshake.headers.cookie);
   const cookieUserDisplay = verifyToken(cookies[COOKIE_NAME]);
   if (cookieUserDisplay && users[cookieUserDisplay.toLowerCase()]) {
@@ -252,17 +251,21 @@ io.on('connection', (socket) => {
     socket.emit('auth_status', { authenticated: false });
   }
 
-  // ---- ĐĂNG KÝ ----
+  // ---- REGISTER ----
   socket.on('auth_register', async ({ username: u, password: p }) => {
+    if (maintenance.lockdown) {
+      socket.emit('auth_result', { ok: false, mode: 'register', error: 'Hệ thống đang lockdown, không thể đăng ký.' });
+      return;
+    }
     u = (u || '').trim();
     p = (p || '').trim();
     if (u.length < 3 || p.length < 3) {
-      socket.emit('auth_result', { ok: false, mode: 'register', error: 'Tên đăng nhập và mật khẩu phải từ 3 ký tự trở lên.' });
+      socket.emit('auth_result', { ok: false, mode: 'register', error: 'Tên và mật khẩu phải từ 3 ký tự.' });
       return;
     }
     const key = u.toLowerCase();
     if (users[key]) {
-      socket.emit('auth_result', { ok: false, mode: 'register', error: 'Tên đăng nhập đã tồn tại, hãy chọn tên khác.' });
+      socket.emit('auth_result', { ok: false, mode: 'register', error: 'Tên đã tồn tại.' });
       return;
     }
     const passwordHash = await bcrypt.hash(p, 10);
@@ -271,10 +274,10 @@ io.on('connection', (socket) => {
     const token = signToken(u);
     bindUser(key, u);
     socket.emit('auth_result', { ok: true, mode: 'register', username: u, token });
-    socket.emit('log', `👋 Chào mừng ${u} đến với dashboard!`);
+    sendLogWebhook(`🆕 **Đăng ký**\nUser: \`${u}\`\nIP: \`${clientIp}\``);
   });
 
-  // ---- ĐĂNG NHẬP ----
+  // ---- LOGIN ----
   socket.on('auth_login', async ({ username: u, password: p }) => {
     u = (u || '').trim();
     p = (p || '').trim();
@@ -287,12 +290,13 @@ io.on('connection', (socket) => {
     const match = await bcrypt.compare(p, rec.passwordHash);
     if (!match) {
       socket.emit('auth_result', { ok: false, mode: 'login', error: 'Sai mật khẩu.' });
+      sendLogWebhook(`⚠️ **Login sai**\nUser: \`${u}\`\nIP: \`${clientIp}\``);
       return;
     }
     const token = signToken(rec.username);
     bindUser(key, rec.username);
     socket.emit('auth_result', { ok: true, mode: 'login', username: rec.username, token });
-    socket.emit('log', `👋 Chào mừng trở lại, ${rec.username}!`);
+    sendLogWebhook(`🔓 **Đăng nhập**\nUser: \`${rec.username}\`\nIP: \`${clientIp}\``);
   });
 
   socket.on('auth_change_password', async ({ oldPassword, newPassword }) => {
@@ -301,7 +305,7 @@ io.on('connection', (socket) => {
     if (!rec) return;
     const ok = await bcrypt.compare(oldPassword || '', rec.passwordHash);
     if (!ok) { socket.emit('log', '❌ Mật khẩu cũ không đúng.'); return; }
-    if (!newPassword || newPassword.trim().length < 3) { socket.emit('log', '⚠️ Mật khẩu mới phải từ 3 ký tự.'); return; }
+    if (!newPassword || newPassword.trim().length < 3) { socket.emit('log', '⚠️ Mật khẩu mới ≥3 ký tự.'); return; }
     rec.passwordHash = await bcrypt.hash(newPassword.trim(), 10);
     saveUsers();
     socket.emit('log', '✅ Đã đổi mật khẩu.');
@@ -313,19 +317,25 @@ io.on('connection', (socket) => {
     socket.emit('auth_status', { authenticated: false });
   });
 
-  // ---- Bọc mọi thao tác bot: bắt buộc đăng nhập ----
   function requireAuth() {
-    if (!username) { socket.emit('log', '⚠️ Vui lòng đăng nhập trước.'); return false; }
+    if (!username) { socket.emit('log', '⚠️ Vui lòng đăng nhập.'); return false; }
+    return true;
+  }
+  function requireAdmin() {
+    if (!adminUnlocked && !isOwnerUser(username)) {
+      socket.emit('log', '⛔ Bạn không có quyền.');
+      return false;
+    }
     return true;
   }
 
-  // ---- ADMIN LOGIN (mật khẩu riêng, cần thêm sau khi đã đăng nhập bằng username admin) ----
+  // ===== ADMIN PANEL =====
   socket.on('admin_login', (pass) => {
     if (!isOwnerUser(username)) { socket.emit('admin_login_result', false); return; }
     if (OWNER_PASSWORD && pass === OWNER_PASSWORD) {
       adminUnlocked = true;
       socket.emit('admin_login_result', true);
-      socket.emit('log', '👑 Đã mở khoá quyền admin!');
+      socket.emit('log', '👑 Đã mở khoá admin!');
       socket.emit('owner_summary', ownerSummary());
       socket.emit('registered_users', registeredUsersList());
     } else {
@@ -333,44 +343,108 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('admin_toggle_maintenance', ({ active, message }) => {
-    if (!adminUnlocked) return;
-    isMaintenance = !!active;
-    if (typeof message === 'string' && message.trim()) maintenanceMessage = message.trim();
+  // 🛠️ Bảo trì + custom message + countdown
+  socket.on('admin_toggle_maintenance', ({ active, message, countdownMinutes }) => {
+    if (!requireAdmin()) return;
+    maintenance.active = !!active;
+    if (typeof message === 'string' && message.trim()) maintenance.message = message.trim();
+    if (maintenance.active && countdownMinutes > 0) {
+      maintenance.countdownEnd = Date.now() + countdownMinutes * 60 * 1000;
+    } else {
+      maintenance.countdownEnd = null;
+    }
     saveData();
-    io.emit('maintenance_status', { active: isMaintenance, message: maintenanceMessage });
+    io.emit('maintenance_status', maintenance);
+    sendLogWebhook(`🛠️ **BẢO TRÌ ${maintenance.active ? 'BẬT' : 'TẮT'}**\nMessage: \`${maintenance.message}\`\nCountdown: \`${countdownMinutes || 0} phút\``);
+  });
+
+  // 🔒 Lockdown
+  socket.on('admin_toggle_lockdown', (active) => {
+    if (!requireAdmin()) return;
+    maintenance.lockdown = !!active;
+    saveData();
+    io.emit('maintenance_status', maintenance);
+    sendLogWebhook(`🔒 **Lockdown ${maintenance.lockdown ? 'BẬT' : 'TẮT'}**`);
+  });
+
+  // 🧊 Freeze Proxy
+  socket.on('admin_toggle_freeze_proxy', (active) => {
+    if (!requireAdmin()) return;
+    maintenance.freezeProxy = !!active;
+    saveData();
+    io.emit('maintenance_status', maintenance);
+    sendLogWebhook(`🧊 **Freeze Proxy ${maintenance.freezeProxy ? 'BẬT' : 'TẮT'}**`);
+  });
+
+  // 👢 Kick all
+  socket.on('admin_kick_all', () => {
+    if (!requireAdmin()) return;
+    let kicked = 0;
+    socketsByUser.forEach((set, key) => {
+      if (isOwnerUser(key)) return;
+      set.forEach(id => {
+        io.to(id).emit('force_logout', 'Server đang bảo trì, bạn đã bị đăng xuất.');
+        const s = io.sockets.sockets.get(id);
+        if (s) s.disconnect(true);
+        kicked++;
+      });
+    });
+    socket.emit('log', `👢 Đã kick ${kicked} phiên.`);
+    sendLogWebhook(`👢 **KICK ALL** — Đã kick ${kicked} phiên`);
   });
 
   socket.on('admin_broadcast', (message) => {
-    if (!adminUnlocked) return;
+    if (!requireAdmin()) return;
     message = (message || '').trim();
     if (!message) return;
     io.emit('announcement', { message, ts: Date.now() });
+    sendLogWebhook(`📢 **Broadcast**: \`${message}\``);
   });
 
   socket.on('admin_kick_user', (targetUsername) => {
-    if (!adminUnlocked) return;
+    if (!requireAdmin()) return;
     const key = (targetUsername || '').toLowerCase();
     const set = socketsByUser.get(key);
     if (set) {
       set.forEach(id => {
-        io.to(id).emit('force_logout', 'Bạn đã bị admin đăng xuất khỏi phiên hiện tại.');
+        io.to(id).emit('force_logout', 'Bạn đã bị admin đăng xuất.');
         const s = io.sockets.sockets.get(id);
         if (s) s.disconnect(true);
       });
-      socket.emit('log', `👢 Đã đăng xuất phiên hiện tại của ${targetUsername}`);
-    } else {
-      socket.emit('log', `ℹ️ ${targetUsername} hiện không online.`);
+      socket.emit('log', `👢 Đã kick ${targetUsername}`);
     }
   });
 
-  // ---- WEBHOOK CỦA USER ----
+  socket.on('admin_get_user_accounts', (targetUsername) => {
+    if (!requireAdmin()) return;
+    const key = (targetUsername || '').toLowerCase();
+    let foundKey = key;
+    if (!clientData[foundKey]) {
+      for (const k in clientData) {
+        if (users[k] && users[k].username === targetUsername) { foundKey = k; break; }
+      }
+    }
+    const bucket = clientData[foundKey];
+    if (!bucket) {
+      socket.emit('admin_user_accounts', { username: targetUsername, accounts: [] });
+      return;
+    }
+    const accounts = (bucket.accounts || []).map(a => ({
+      username: a.username,
+      status: a.status || 'OFFLINE',
+      proxy: a.proxy || null
+    }));
+    socket.emit('admin_user_accounts', { username: targetUsername, accounts });
+  });
+
+  // ---- WEBHOOK ----
   socket.on('set_webhook', (url) => {
     if (!requireAuth()) return;
     clientData[username].webhookUrl = (url || '').trim();
     saveData();
     socket.emit('webhook_url', clientData[username].webhookUrl);
-    socket.emit('log', `🔗 Đã lưu webhook`);
+    socket.emit('log', '🔗 Đã lưu webhook');
+    sendLogWebhook(`🔗 **Webhook mới**\nUser: \`${username}\`\nURL: \`${url}\``);
   });
   socket.on('test_webhook', async () => {
     if (!requireAuth()) return;
@@ -378,14 +452,19 @@ io.on('connection', (socket) => {
     socket.emit('log', '✅ Đã gửi test webhook!');
   });
 
-  // ---- PROXY (dùng chung, ai cũng thêm/xem được — vì đây là công cụ đổi IP thông thường) ----
+  // ---- PROXY ----
   socket.on('add_proxy', (proxy) => {
     if (!requireAuth()) return;
+    if (maintenance.freezeProxy && !isOwnerUser(username)) {
+      socket.emit('log', '🧊 Proxy đang bị đóng băng bởi admin.');
+      return;
+    }
     proxy = (proxy || '').trim();
     if (!proxy) return;
     if (!proxyList.includes(proxy)) { proxyList.push(proxy); saveData(); }
     io.emit('proxy_list', proxyList);
-    socket.emit('log', `🌐 Đã thêm proxy: ${proxy}`);
+    socket.emit('log', `🌐 Đã thêm proxy`);
+    sendLogWebhook(`🌐 **Proxy mới**\nUser: \`${username}\`\nProxy: \`${proxy}\``);
   });
   socket.on('remove_proxy', (idx) => {
     if (!requireAuth()) return;
@@ -406,16 +485,13 @@ io.on('connection', (socket) => {
     socket.emit('init_accounts', publicAccounts(clientData[username].accounts));
   });
 
-  // ---- ACCOUNT MINECRAFT ----
-  // Mật khẩu Minecraft chỉ giữ trong RAM cho phiên chạy của SERVER (không phải phiên trình duyệt),
-  // không log, không lưu file, không gửi cho ai — kể cả admin.
+  // ---- ACCOUNT MC ----
   let lastAddAt = 0;
   socket.on('add_account', (data) => {
     if (!requireAuth()) return;
     const now = Date.now();
-    if (now - lastAddAt < 2000) { socket.emit('log', '⏳ Vui lòng đợi vài giây trước khi thêm acc tiếp theo.'); return; }
+    if (now - lastAddAt < 2000) { socket.emit('log', '⏳ Đợi vài giây.'); return; }
     lastAddAt = now;
-
     const mcUsername = (data && data.username || '').trim();
     const mcPassword = (data && data.password || '').trim();
     if (!mcUsername) return;
@@ -428,6 +504,7 @@ io.on('connection', (socket) => {
     saveData();
     socket.emit('init_accounts', publicAccounts(clientData[username].accounts));
     socket.emit('log', `➕ Đã thêm acc: ${mcUsername}`);
+    sendLogWebhook(`➕ **Acc MC mới**\nUser: \`${username}\`\nMC: \`${mcUsername}\`\nIP: \`${clientIp}\``);
     if (isOwnerUser(username)) broadcastOwnerSummary();
   });
 
@@ -469,12 +546,12 @@ io.on('connection', (socket) => {
     const account = clientData[username].accounts.find(acc => acc.id === id);
     if (!account) return;
     if (!account.password) {
-      socket.emit('log', `[${account.username}] ⚠️ Chưa có mật khẩu trong phiên server hiện tại. Nhập lại để tiếp tục.`);
+      socket.emit('log', `[${account.username}] ⚠️ Chưa có mật khẩu trong RAM. Nhập lại.`);
       socket.emit('need_password', { id, username: account.username });
       return;
     }
-    if (isMaintenance && !isOwnerUser(username)) {
-      socket.emit('log', `⚠️ Hệ thống đang bảo trì: ${maintenanceMessage}`);
+    if (maintenance.active && !isOwnerUser(username)) {
+      socket.emit('log', `⚠️ Bảo trì: ${maintenance.message}`);
       return;
     }
     if (clientData[username].bots[id]) {
@@ -490,12 +567,12 @@ io.on('connection', (socket) => {
 
     account.status = 'CONNECTING...';
     pushAccounts();
-    log(`🔄 Kết nối tới ${SERVER_HOST}:${SERVER_PORT} (v${SERVER_VERSION})...`);
+    log(`🔄 Kết nối ${SERVER_HOST}:${SERVER_PORT} (v${SERVER_VERSION})...`);
 
     try {
       const proxyUrl = getProxyFor(account);
       const proxyAgent = createProxyAgent(proxyUrl);
-      if (proxyAgent && proxyUrl) log(`🌐 Dùng proxy: ${proxyUrl}`);
+      if (proxyAgent && proxyUrl) log(`🌐 Dùng proxy`);
       else log(`🌐 Không dùng proxy`);
 
       const botOptions = {
@@ -525,7 +602,7 @@ io.on('connection', (socket) => {
           if (!hasExecutedAFK) setTimeout(() => { if (bot) bot.chat('/afk'); }, 4000);
         } else {
           account.status = 'ONLINE / LOBBY';
-          log(`✅ Đã vào sảnh chính`);
+          log(`✅ Đã vào sảnh`);
         }
         pushAccounts();
         sendUserWebhook(clientData[username].webhookUrl, `✅ **Bot online**\nUser: \`${account.username}\``);
@@ -536,12 +613,11 @@ io.on('connection', (socket) => {
         const msg = message.toLowerCase();
         emitToUser(username, 'chat_log', { username: account.username, message });
 
-        if (msg.includes('địa chỉ ip') || msg.includes('ip chỉ được') || msg.includes('cùng lúc') ||
-            msg.includes('ip limit') || msg.includes('too many')) {
-          log(`🚨 Server báo giới hạn IP cho acc này: ${message}`);
+        if (msg.includes('địa chỉ ip') || msg.includes('ip chỉ được') || msg.includes('cùng lúc')) {
+          log(`🚨 Giới hạn IP: ${message}`);
           emitToUser(username, 'ip_limit_error', { username: account.username, message });
         }
-        if (msg.includes('số dư') || msg.includes('balance')) {
+        if (msg.includes('số dư') || msg.includes('balance') || msg.includes('bal')) {
           const m = message.match(/(\d[\d,.]*)/);
           if (m) {
             log(`💰 Số dư: ${m[1]}`);
@@ -549,7 +625,7 @@ io.on('connection', (socket) => {
           }
         }
         if (!hasJoinedKingSMP && (msg.includes('bạn đã đăng nhập') || msg.includes('đăng nhập thành công'))) {
-          log(`✅ Xác thực thành công, mở menu...`);
+          log(`✅ Xác thực OK, mở menu...`);
           setTimeout(() => { if (bot && !hasJoinedKingSMP) bot.chat('/menu'); }, 5000);
         }
         if (!hasJoinedKingSMP && msg.includes('chào mừng') && msg.includes('kingsmp')) {
@@ -576,7 +652,7 @@ io.on('connection', (socket) => {
             }
             if (slot === -1) { log(`⚠️ Không thấy KingSMP, thử slot 24`); slot = 24; }
             hasJoinedKingSMP = true;
-            log(`🖱️ Click slot ${slot + 1} chọn KingSMP`);
+            log(`🖱️ Click slot ${slot + 1}`);
             bot.clickWindow(slot, 0, 0).catch(() => {});
             setTimeout(() => { try { bot.closeWindow(window); } catch (e) {} isProcessing = false; }, 500);
           }, 1500);
@@ -610,10 +686,10 @@ io.on('connection', (socket) => {
         if (account.autoReconnect && reconnectAttempts < MAX_RECONNECT) {
           reconnectAttempts++;
           const delay = Math.min(5000 * reconnectAttempts, 30000);
-          log(`🔄 Reconnect lần ${reconnectAttempts}/${MAX_RECONNECT} sau ${delay / 1000}s`);
+          log(`🔄 Reconnect ${reconnectAttempts}/${MAX_RECONNECT} sau ${delay / 1000}s`);
           setTimeout(() => { if (!clientData[username].bots[id] && account.autoReconnect) startBotForAccount(id); }, delay);
         } else if (reconnectAttempts >= MAX_RECONNECT) {
-          log(`❌ Đã thử ${MAX_RECONNECT} lần, dừng. Bấm "Login lại" để thử thủ công.`);
+          log(`❌ Đã thử ${MAX_RECONNECT} lần, dừng.`);
           account.status = 'FAILED';
           pushAccounts();
         }
@@ -621,13 +697,13 @@ io.on('connection', (socket) => {
 
       bot.on('error', (err) => {
         if (err.code === 'ETIMEDOUT') log(`⏰ Timeout`);
-        else if (err.code === 'ECONNREFUSED') log(`🚫 Server từ chối kết nối`);
+        else if (err.code === 'ECONNREFUSED') log(`🚫 Server từ chối`);
         else log(`❌ Lỗi: ${err.message}`);
       });
       bot.on('kicked', (reason) => log(`👢 Bị kick: ${JSON.stringify(reason)}`));
 
     } catch (e) {
-      log(`❌ Lỗi khởi tạo: ${e.message}`);
+      log(`❌ Lỗi: ${e.message}`);
       account.status = 'ERROR';
       pushAccounts();
     }
@@ -638,7 +714,10 @@ io.on('connection', (socket) => {
   socket.on('set_account_password', ({ id, password }) => {
     if (!requireAuth()) return;
     const acc = clientData[username].accounts.find(a => a.id === id);
-    if (acc) { acc.password = (password || '').trim(); socket.emit('log', `🔑 Đã cập nhật mật khẩu cho ${acc.username} (chỉ lưu tạm trong RAM của server)`); }
+    if (acc) {
+      acc.password = (password || '').trim();
+      socket.emit('log', `🔑 Đã cập nhật mật khẩu cho ${acc.username} (RAM only)`);
+    }
   });
 
   socket.on('stop_bot', (id) => {
@@ -667,6 +746,5 @@ io.on('connection', (socket) => {
 
 server.listen(PORT, () => {
   console.log(`🚀 Server chạy tại http://localhost:${PORT}`);
-  if (OWNER_USERNAME) console.log(`👑 Owner username: ${OWNER_USERNAME}`);
-  else console.log(`ℹ️ Chưa cấu hình OWNER_USERNAME trong .env — chưa ai có quyền admin.`);
+  if (OWNER_USERNAME) console.log(`👑 Owner: ${OWNER_USERNAME}`);
 });
